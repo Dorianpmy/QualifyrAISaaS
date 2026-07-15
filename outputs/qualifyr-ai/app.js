@@ -283,15 +283,22 @@ const integrationCatalog = [
 ];
 
 const navItems = [
-  ["dashboard", "Accueil", "dashboard", "🏠"],
-  ["crm", "Mes clients", "users", "👥"],
-  ["quotes", "Mes devis", "file", "📄"],
-  ["calendar", "Mon planning", "calendar", "📅"],
-  ["ai-center", "Mon assistant IA", "spark", "🤖"],
-  ["automations", "Mes automatisations", "workflow", "⚡"],
-  ["marketplace", "Ajouter une IA", "grid", "🧩"],
-  ["notifications", "Mon activite", "dashboard", "📈"],
-  ["settings", "Mon entreprise", "shield", "🏢"]
+  ["dashboard", "Accueil", "dashboard", "🏠", "Ce qui demande votre attention"],
+  ["ai-center", "Mon assistant IA", "spark", "🤖", "Demandez quoi faire maintenant"],
+  ["crm", "Mes clients", "users", "👥", "Contacts, rappels et historique"],
+  ["quotes", "Mes devis", "file", "📄", "Creer, envoyer, relancer"],
+  ["calendar", "Mon planning", "calendar", "📅", "Rendez-vous et trajets"],
+  ["automations", "Mes automatisations", "workflow", "⚡", "Taches qui se font seules"],
+  ["marketplace", "Ajouter une IA", "grid", "🧩", "Copilotes par metier"],
+  ["notifications", "Mon activite", "dashboard", "📈", "Resultats et alertes"],
+  ["settings", "Mon entreprise", "shield", "🏢", "Infos, equipe, abonnement"]
+];
+
+const navGroups = [
+  ["Chaque jour", ["dashboard", "ai-center"]],
+  ["Travailler", ["crm", "quotes", "calendar"]],
+  ["Gagner du temps", ["automations", "marketplace"]],
+  ["Suivre", ["notifications", "settings"]]
 ];
 
 const bottomNavItems = [
@@ -369,12 +376,26 @@ function viewFromAssistantPrompt(prompt) {
 }
 
 function renderNav() {
-  el("navList").innerHTML = navItems
-    .map(([id, label, , emoji]) => `
-      <button class="nav-item ${state.view === id ? "active" : ""}" data-view="${id}">
-        <span class="nav-emoji" aria-hidden="true">${emoji}</span>
-        <span>${label}</span>
-      </button>
+  const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
+  el("navList").innerHTML = navGroups
+    .map(([group, ids]) => `
+      <div class="nav-section">
+        <span class="nav-section-label">${group}</span>
+        ${ids
+          .map((id) => {
+            const [itemId, label, , emoji, hint] = byId[id];
+            return `
+              <button class="nav-item ${state.view === itemId ? "active" : ""}" data-view="${itemId}" title="${label}">
+                <span class="nav-emoji" aria-hidden="true">${emoji}</span>
+                <span class="nav-text">
+                  <strong>${label}</strong>
+                  <small>${hint}</small>
+                </span>
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
     `)
     .join("");
 }
@@ -467,12 +488,34 @@ function showView(view) {
     onboarding: "Premiers pas",
     "copilot-setup": "Installation du copilote"
   };
+  const friendlySubtitles = {
+    dashboard: "Ce qui demande votre attention aujourd'hui",
+    crm: "Retrouvez un client, son telephone et la prochaine action",
+    quotes: "Creez, envoyez et relancez vos devis sans chercher",
+    calendar: "Voyez votre journee, vos adresses et vos trajets",
+    "ai-center": "Demandez simplement ce que vous voulez faire",
+    automations: "Activez les taches repetitives qui se font seules",
+    marketplace: "Ajoutez un copilote adapte a votre metier",
+    notifications: "Voyez ce qui a change dans votre entreprise",
+    integrations: "Connectez les outils utiles, sans jargon technique",
+    documents: "Retrouvez vos fichiers, photos, devis et factures",
+    settings: "Reglez les informations importantes de l'entreprise",
+    billing: "Suivez les factures, paiements et relances",
+    help: "Trouvez une reponse simple pour avancer",
+    "custom-ai": "Preparez une IA sur mesure pour votre activite",
+    pricing: "Choisissez la formule qui correspond a votre entreprise",
+    commercial: "Suivez votre abonnement et vos licences",
+    onboarding: "Configurez Qualifyr en quelques minutes",
+    "copilot-setup": "Installez votre copilote, une etape a la fois"
+  };
   state.view = view;
   document.querySelectorAll(".view").forEach((node) => node.classList.remove("active"));
   el(`view-${view}`).classList.add("active");
   const nav = navItems.find(([id]) => id === view);
   const bottomNav = bottomNavItems.find(([id]) => id === view);
   el("viewTitle").textContent = friendlyTitles[view] || (nav ? nav[1] : bottomNav ? bottomNav[1] : "Qualifyr AI");
+  const subtitle = el("viewSubtitle");
+  if (subtitle) subtitle.textContent = friendlySubtitles[view] || "Qualifyr vous guide vers la bonne action";
   renderNav();
   renderBottomNav();
   simplifyVisibleLanguage(el(`view-${view}`));
@@ -4791,6 +4834,15 @@ document.addEventListener("click", (event) => {
 el("menuToggle").addEventListener("click", () => {
   document.querySelector(".sidebar").classList.toggle("open");
 });
+
+const sidebarCollapse = el("sidebarCollapse");
+if (sidebarCollapse) {
+  sidebarCollapse.addEventListener("click", () => {
+    const collapsed = document.body.classList.toggle("sidebar-collapsed");
+    sidebarCollapse.setAttribute("aria-expanded", String(!collapsed));
+    sidebarCollapse.setAttribute("aria-label", collapsed ? "Agrandir le menu" : "Reduire le menu");
+  });
+}
 
 document.addEventListener("input", (event) => {
   if (event.target.id === "crmSearch") {
