@@ -383,10 +383,10 @@ function renderNav() {
         <span class="nav-section-label">${group}</span>
         ${ids
           .map((id) => {
-            const [itemId, label, , emoji, hint] = byId[id];
+            const [itemId, label, icon, , hint] = byId[id];
             return `
               <button class="nav-item ${state.view === itemId ? "active" : ""}" data-view="${itemId}" title="${label}">
-                <span class="nav-emoji" aria-hidden="true">${emoji}</span>
+                <span class="nav-emoji nav-icon" aria-hidden="true">${svg(icon)}</span>
                 <span class="nav-text">
                   <strong>${label}</strong>
                   <small>${hint}</small>
@@ -2976,7 +2976,7 @@ function renderCopilotLibrary(targetId) {
       <div class="trade-copilot-grid">
         ${relevantTradeCopilots.map((copilot) => `
           <article class="card trade-copilot-card">
-            <span class="trade-emoji">${copilot.emoji}</span>
+            <span class="trade-emoji">${svg("spark")}</span>
             <h3>${copilot.name}</h3>
             <p>${copilot.description}</p>
             <div class="trade-includes">${copilot.includes}</div>
@@ -3164,7 +3164,7 @@ function renderCopilotLibrary(targetId) {
             <small>${employee.name}</small>
           </div>
           <div class="module-head">
-            <span class="module-icon ai-emoji">${employee.icon}</span>
+            <span class="module-icon ai-emoji">${svg("spark")}</span>
             <span class="status ${employee.health.includes("🔴") ? "danger" : employee.health.includes("🟠") ? "warning" : "success"}">${employee.health}</span>
           </div>
           <p class="eyebrow">${employee.category}</p>
