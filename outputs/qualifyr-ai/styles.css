@@ -8189,6 +8189,20 @@ body.simple-ux .global-assistant-bar {
   }
 }
 
+/* TRUE EOF real Qualifyr logo */
+body.simple-ux .brand-mark {
+  overflow: hidden !important;
+  background: transparent !important;
+  box-shadow: 0 16px 36px rgba(32, 207, 99, 0.22) !important;
+}
+
+body.simple-ux .brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* TRUE EOF tighter density pass - remove empty vertical space */
 body.simple-ux .simple-home-hero {
   align-items: start !important;
