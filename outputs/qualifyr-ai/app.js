@@ -653,10 +653,40 @@ function renderLanding() {
 
 function renderPricing() {
   const planExplanations = [
-    "Cette offre est ideale si vous travaillez seul.",
-    "Cette offre est pensee pour une equipe.",
-    "Cette offre est faite pour les entreprises qui veulent automatiser la majorite de leur activite.",
-    "Cette offre est construite autour de vos processus specifiques."
+    "Pour demarrer avec un copilote simple, recevoir les demandes et gagner du temps sans changer vos habitudes.",
+    "Le meilleur choix pour un artisan qui veut recuperer plus d'appels, envoyer plus vite ses devis et relancer automatiquement.",
+    "Pour les PME avec plusieurs personnes, plusieurs canaux et un vrai besoin de pilotage.",
+    "Pour une entreprise qui veut un copilote construit autour de ses outils, son metier et ses process."
+  ];
+  const planCapabilities = [
+    [
+      ["Copilotes inclus", "2"],
+      ["Demandes clients", "500 / mois"],
+      ["Devis IA", "Inclus"],
+      ["WhatsApp", "Email"],
+      ["Utilisateurs", "2"]
+    ],
+    [
+      ["Copilotes inclus", "5"],
+      ["Demandes clients", "2 500 / mois"],
+      ["Telephone IA", "Inclus"],
+      ["WhatsApp", "Inclus"],
+      ["Utilisateurs", "5"]
+    ],
+    [
+      ["Copilotes inclus", "Illimites"],
+      ["Demandes clients", "10 000 / mois"],
+      ["Equipe", "15 utilisateurs"],
+      ["Support", "Prioritaire"],
+      ["Pilotage", "Avance"]
+    ],
+    [
+      ["Copilote dedie", "Sur mesure"],
+      ["Connexions", "Dediees"],
+      ["Formation equipe", "Incluse"],
+      ["Accompagnement", "Premium"],
+      ["SLA", "Sur devis"]
+    ]
   ];
   const roiRows = [
     ["Temps gagne par semaine", subscriptionCenter.roi.weeklySaved],
@@ -666,25 +696,36 @@ function renderPricing() {
     ["Retour estime", "x6,4"]
   ];
   el("view-pricing").innerHTML = `
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">Tarifs et options</p>
-        <h2>Choisir ce que Qualifyr AI peut faire pour votre entreprise.</h2>
-        <p>Comparez les offres, ajoutez seulement les options utiles et voyez le retour estime avant de debloquer une fonctionnalite.</p>
+    <section class="pricing-marketing-hero">
+      <p class="eyebrow">Tarifs Qualifyr AI</p>
+      <h2>Ajoutez un employe IA a votre entreprise.</h2>
+      <p>Choisissez le niveau d'automatisation qui vous fait gagner du temps, recuperer plus de demandes et signer plus de devis.</p>
+      <div class="pricing-toggle premium-toggle">
+        <strong>Mensuel</strong>
+        <span>Trimestriel <em>-15%</em></span>
+        <span>Annuel <em>-30%</em></span>
       </div>
-      <button class="primary-button" data-view="commercial">Voir mon abonnement</button>
-    </div>
-    <div class="pricing-toggle"><span>Mensuel</span><strong>Annuel - 2 mois offerts</strong></div>
-    <div class="grid grid-4">
+    </section>
+
+    <div class="pricing-plan-grid">
       ${commercialSuite.plans.map((plan, index) => `
-        <article class="card pricing-card ${plan.highlighted ? "featured" : ""}">
-          <p class="eyebrow">${plan.trial}</p>
+        <article class="card pricing-card premium-price-card ${plan.highlighted ? "featured" : ""}">
+          ${plan.highlighted ? `<span class="status success">Le plus rentable</span>` : `<span class="plan-trial">${plan.trial}</span>`}
           <h3>${plan.name}</h3>
-          <div class="price">${plan.price}</div>
-          <p>${planExplanations[index]}</p>
-          <p>${plan.description}</p>
-          <div class="tag-list">${plan.features.map((feature) => `<span class="tag">${feature}</span>`).join("")}</div>
-          <div class="list-row"><span>Cible</span><strong>${plan.target}</strong></div>
+          <div class="price-line">
+            <strong>${plan.price.includes("EUR") ? plan.price.replace(" EUR", "") : plan.price}</strong>
+            <span>${plan.price.includes("EUR") ? "EUR / mois" : "accompagnement personnalise"}</span>
+          </div>
+          <p class="plan-story">${planExplanations[index]}</p>
+          <div class="plan-seat">${svg("users")} ${plan.target}</div>
+          <div class="premium-feature-list">
+            ${planCapabilities[index].map(([label, value]) => `
+              <div class="premium-feature-row">
+                <span>${svg("spark")} ${label}</span>
+                <strong>${value}</strong>
+              </div>
+            `).join("")}
+          </div>
           <button class="${plan.highlighted ? "primary-button" : "secondary-button"} trial-action" data-plan="${plan.name}">Demarrer</button>
         </article>
       `).join("")}
@@ -3028,12 +3069,22 @@ function renderCopilotLibrary(targetId) {
       </div>
       <div class="trade-pricing-grid">
         ${copilotPlans.map((plan) => `
-          <article class="card trade-plan-card ${plan.recommended ? "recommended" : ""}">
-            ${plan.recommended ? `<span class="status success">Le plus vendu</span>` : ""}
+          <article class="card trade-plan-card premium-price-card ${plan.recommended ? "recommended featured" : ""}">
+            ${plan.recommended ? `<span class="status success">Le plus vendu</span>` : `<span class="plan-trial">Sans engagement</span>`}
             <h3>${plan.name}</h3>
-            <strong class="trade-price">${plan.price}</strong>
-            <p>${plan.description}</p>
-            <ul>${plan.features.map((feature) => `<li>${feature}</li>`).join("")}</ul>
+            <div class="price-line">
+              <strong>${plan.price.replace(" EUR / mois", "").replace("Sur devis", "Sur devis")}</strong>
+              <span>${plan.price.includes("EUR") ? "EUR / mois" : "accompagnement"}</span>
+            </div>
+            <p class="plan-story">${plan.description}</p>
+            <div class="premium-feature-list">
+              ${plan.features.map((feature) => `
+                <div class="premium-feature-row">
+                  <span>${svg("spark")} ${feature}</span>
+                  <strong>Inclus</strong>
+                </div>
+              `).join("")}
+            </div>
             <button class="${plan.recommended ? "primary-button" : "secondary-button"} trade-plan-select" data-plan="${plan.name}">${plan.cta}</button>
           </article>
         `).join("")}
