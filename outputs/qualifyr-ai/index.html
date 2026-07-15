@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qualifyr AI - Copilote IA pour PME et artisans</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="simple-ux">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigation principale">
+        <div class="brand">
+          <div class="brand-mark">Q</div>
+          <div>
+            <strong>Qualifyr AI</strong>
+            <span>Copilote PME</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" id="navList"></nav>
+
+        <div class="sidebar-card">
+          <span class="eyebrow">Votre assistant</span>
+          <strong>Qualifyr travaille pour vous</strong>
+          <p>Il trie, relance et organise les actions importantes.</p>
+          <button class="dark-ghost" data-view="ai-center">Ouvrir l'assistant</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" id="menuToggle" aria-label="Ouvrir le menu">
+            <span></span><span></span><span></span>
+          </button>
+          <div>
+            <p class="eyebrow">Votre assistant pour gagner du temps</p>
+            <h1 id="viewTitle">Tableau de bord</h1>
+          </div>
+          <div class="top-actions">
+            <button class="icon-button" title="Notifications" aria-label="Notifications" data-view="notifications">
+              <svg viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 21h4"/></svg>
+            </button>
+            <button class="primary-button" data-view="ai-center">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Demander a l'IA
+            </button>
+          </div>
+        </header>
+
+        <section class="view active" id="view-dashboard"></section>
+        <section class="view" id="view-landing"></section>
+        <section class="view" id="view-pricing"></section>
+        <section class="view" id="view-commercial"></section>
+        <section class="view" id="view-onboarding"></section>
+        <section class="view" id="view-modules"></section>
+        <section class="view" id="view-crm"></section>
+        <section class="view" id="view-client-profile"></section>
+        <section class="view" id="view-quotes"></section>
+        <section class="view" id="view-calendar"></section>
+        <section class="view" id="view-copilots"></section>
+        <section class="view" id="view-ai-center"></section>
+        <section class="view" id="view-automations"></section>
+        <section class="view" id="view-integrations"></section>
+        <section class="view" id="view-marketplace"></section>
+        <section class="view" id="view-copilot-setup"></section>
+        <section class="view" id="view-custom-ai"></section>
+        <section class="view" id="view-notifications"></section>
+        <section class="view" id="view-documents"></section>
+        <section class="view" id="view-settings"></section>
+        <section class="view" id="view-more"></section>
+        <section class="view" id="view-admin"></section>
+        <section class="view" id="view-billing"></section>
+        <section class="view" id="view-help"></section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" id="bottomNav" aria-label="Navigation mobile"></nav>
+
+    <div class="universal-command" aria-label="Commande rapide Qualifyr AI">
+      <span>✨</span>
+      <input id="universalPrompt" value="Que voulez-vous faire ? Ex : relance mes devis" aria-label="Commande rapide" />
+      <button class="primary-button assistant-ask" data-input="universalPrompt">Demander</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
