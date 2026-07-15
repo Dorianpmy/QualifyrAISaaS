@@ -370,9 +370,8 @@ function viewFromAssistantPrompt(prompt) {
 
 function renderNav() {
   el("navList").innerHTML = navItems
-    .map(([id, label, icon, emoji]) => `
+    .map(([id, label, , emoji]) => `
       <button class="nav-item ${state.view === id ? "active" : ""}" data-view="${id}">
-        ${svg(icon)}
         <span class="nav-emoji" aria-hidden="true">${emoji}</span>
         <span>${label}</span>
       </button>
