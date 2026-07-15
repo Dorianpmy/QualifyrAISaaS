@@ -46,7 +46,7 @@
             <button class="icon-button" title="Notifications" aria-label="Notifications" data-view="notifications">
               <svg viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 21h4"/></svg>
             </button>
-            <button class="primary-button" data-view="ai-center">
+            <button class="primary-button" data-open-talk="Je veux savoir quel copilote installer">
               <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
               Demander a Qualifyr
             </button>
@@ -86,6 +86,16 @@
       <span>✨</span>
       <input id="universalPrompt" value="Que voulez-vous faire ? Ex : relance mes devis" aria-label="Commande rapide" />
       <button class="primary-button assistant-ask" data-input="universalPrompt">Demander</button>
+    </div>
+
+    <div class="action-modal" id="actionModal" aria-hidden="true">
+      <div class="action-modal-backdrop" data-close-modal></div>
+      <section class="action-modal-panel" role="dialog" aria-modal="true" aria-labelledby="actionModalTitle">
+        <button class="icon-button action-modal-close" data-close-modal aria-label="Fermer la fenetre">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div id="actionModalContent"></div>
+      </section>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

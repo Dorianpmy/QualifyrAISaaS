@@ -40,6 +40,13 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 
 ## A brancher cote serveur
 
+- Vercel pour publier l'interface publique et connecter le domaine.
+- Supabase pour stocker comptes, entreprises, prospects, copilotes installes, abonnements, demandes et historiques.
+- Mollie ou PayPlug pour le paiement mensuel. Les cles restent cote serveur.
+- Resend ou Brevo pour les emails transactionnels : bienvenue, demande recue, paiement confirme, installation du copilote.
+- Cal.com ou Calendly pour le bouton "Parler a Qualifyr" si le prospect veut un rendez-vous humain.
+- Plausible ou PostHog pour mesurer les pages vues, clics, conversions et abandons.
+- Crisp ou Tawk.to pour le support public.
 - Authentification, organisations, roles et permissions.
 - Appels IA via routes backend uniquement, jamais cote client.
 - Secrets OAuth et cles API stockes cote serveur.
@@ -51,6 +58,43 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - Observabilite des couts IA par assistant, organisation, utilisateur et workflow.
 - App Store interne pour installer, configurer ou desinstaller les copilotes.
 - Formulaire IA sur mesure connecte a un futur CRM interne ou pipeline commercial Qualifyr.
+
+## Parcours commercial prioritaire
+
+1. Le plombier arrive sur la page publique.
+2. Il choisit son metier.
+3. Qualifyr affiche uniquement les copilotes utiles pour ce metier.
+4. Il remplit le formulaire simple : entreprise, telephone, email, site, objectif.
+5. Il choisit : ajouter le copilote au site, recevoir les demandes par email, ou les deux.
+6. Il choisit une formule : Essentiel 79 EUR/mois, Pro 149 EUR/mois recommande, Equipe 299 EUR/mois.
+7. Le paiement cree l'abonnement.
+8. Le webhook paiement active le copilote.
+9. Le prospect recoit un email avec le recapitulatif, le lien de connexion et le script widget.
+10. Qualifyr peut finaliser l'installation en mode concierge au debut, puis automatiser progressivement.
+
+## Routes API a creer lors du passage backend
+
+- `POST /api/leads` : enregistrer une demande prospect.
+- `POST /api/checkout` : creer un paiement Mollie ou PayPlug cote serveur.
+- `POST /api/webhooks/payment` : valider le paiement et activer l'abonnement.
+- `POST /api/onboarding` : enregistrer metier, objectifs, outils et preferences.
+- `GET /api/copilots/recommend` : recommander les copilotes selon metier, budget et objectifs.
+- `POST /api/contact` : envoyer une demande a l'equipe Qualifyr.
+- `POST /api/widget/install` : generer le script d'installation du copilote.
+
+## Tables de donnees recommandees
+
+- `users`
+- `companies`
+- `leads`
+- `subscriptions`
+- `payments`
+- `copilots`
+- `copilot_installations`
+- `onboarding_answers`
+- `assistant_events`
+- `competitor_audits`
+- `support_requests`
 
 ## Extension
 

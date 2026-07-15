@@ -315,6 +315,8 @@ const state = {
   profession: "Plombier",
   selectedCopilotName: "WhatsApp IA",
   selectedCopilotMode: "install",
+  checkoutPlan: "Pro",
+  lastLead: null,
   quote: {
     client: "Marc Lefevre",
     need: "Fuite sous evier avec remplacement siphon",
@@ -346,6 +348,188 @@ function svg(name) {
 
 function el(id) {
   return document.getElementById(id);
+}
+
+function getStoredLeads() {
+  try {
+    return JSON.parse(localStorage.getItem("qualifyrLeads") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLead(lead) {
+  const fullLead = {
+    id: `lead-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    profession: state.profession,
+    source: state.view,
+    ...lead
+  };
+  const leads = [fullLead, ...getStoredLeads()].slice(0, 50);
+  localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
+  state.lastLead = fullLead;
+  return fullLead;
+}
+
+function closeModal() {
+  const modal = el("actionModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function openModal(content) {
+  const modal = el("actionModal");
+  const target = el("actionModalContent");
+  if (!modal || !target) return;
+  target.innerHTML = content;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  const firstInput = target.querySelector("input, select, textarea, button");
+  if (firstInput) window.setTimeout(() => firstInput.focus(), 40);
+}
+
+function recommendedPlanForProfession(profession = state.profession) {
+  const normalized = normalizeProfessionName(profession);
+  const premium = ["Dentiste", "Immobilier", "Garage", "Chauffagiste"];
+  return premium.includes(normalized) ? "Pro" : "Pro";
+}
+
+function selectedTradeCopilot(profession = state.profession) {
+  const normalized = normalizeProfessionName(profession);
+  return tradeCopilots.find((copilot) => copilot.profession === normalized) || tradeCopilots.find((copilot) => copilot.profession === "Autre");
+}
+
+function planByName(name) {
+  return copilotPlans.find((plan) => plan.name === name) || copilotPlans[1];
+}
+
+function openTalkToQualifyrModal(seed = "") {
+  openModal(`
+    <form class="modal-content" data-modal-form="talk">
+      <p class="eyebrow">Parler a Qualifyr</p>
+      <h2 id="actionModalTitle">Expliquez simplement ce que vous voulez.</h2>
+      <p>Qualifyr transforme votre demande en action claire : devis, client, planning, copilote, paiement ou rendez-vous avec l'equipe.</p>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Votre demande</label><input name="request" value="${seed || "Je veux installer un copilote plombier"}"></div>
+        <div class="modal-field"><label>Metier</label><select name="profession">${professions.map((profession) => `<option ${profession === state.profession ? "selected" : ""}>${profession}</option>`).join("")}</select></div>
+        <div class="modal-field"><label>Nom</label><input name="name" value="Dorian"></div>
+        <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyr-demo.fr"></div>
+        <div class="modal-field full"><label>Contexte utile</label><textarea name="context">Je veux comprendre quel copilote installer, combien cela coute et comment le mettre sur mon site.</textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("spark")} Envoyer ma demande</button>
+        <button class="secondary-button" type="button" data-open-checkout="Pro">Voir la formule conseillee</button>
+      </div>
+    </form>
+  `);
+}
+
+function openCopilotLeadModal(mode = "site", profession = state.profession) {
+  const copilot = selectedTradeCopilot(profession);
+  const installLabel = mode === "email" ? "Recevoir les demandes par email" : "Ajouter a mon site";
+  openModal(`
+    <form class="modal-content" data-modal-form="copilot-lead" data-install-mode="${mode}" data-copilot="${copilot.name}">
+      <p class="eyebrow">Installation du copilote</p>
+      <h2 id="actionModalTitle">${copilot.name} peut etre pret en moins de 2 minutes.</h2>
+      <p>Le prospect remplit ces informations. En production, elles seront envoyees a Supabase puis l'abonnement sera cree via Mollie ou PayPlug.</p>
+      <div class="modal-choice-grid">
+        <div class="modal-choice"><strong>${copilot.savedTime}</strong><small>Temps gagne estime</small></div>
+        <div class="modal-choice"><strong>${copilot.price}</strong><small>Prix du copilote</small></div>
+        <div class="modal-choice"><strong>${installLabel}</strong><small>Mode choisi</small></div>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Metier</label><select name="profession">${professions.map((item) => `<option ${item === profession ? "selected" : ""}>${item}</option>`).join("")}</select></div>
+        <div class="modal-field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
+        <div class="modal-field"><label>Nom</label><input name="name" value="Jean Martin"></div>
+        <div class="modal-field"><label>Telephone</label><input name="phone" value="06 18 42 90 15"></div>
+        <div class="modal-field"><label>Email</label><input name="email" value="contact@atelier-martin.fr"></div>
+        <div class="modal-field"><label>Site internet</label><input name="website" value="https://atelier-martin.fr"></div>
+        <div class="modal-field full"><label>Ce que le copilote doit faire</label><textarea name="goal">${copilot.description}</textarea></div>
+      </div>
+      <div class="integration-roadmap">
+        <div class="roadmap-step"><strong>1. Formulaire</strong><small>Le besoin est enregistre.</small></div>
+        <div class="roadmap-step"><strong>2. Paiement</strong><small>Abonnement mensuel securise.</small></div>
+        <div class="roadmap-step"><strong>3. Installation</strong><small>Widget site ou reception email.</small></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("spark")} Continuer</button>
+        <button class="secondary-button" type="button" data-open-checkout="${recommendedPlanForProfession(profession)}">Voir le paiement</button>
+      </div>
+    </form>
+  `);
+}
+
+function openCheckoutModal(planName = "Pro") {
+  const plan = planByName(planName);
+  state.checkoutPlan = plan.name;
+  openModal(`
+    <form class="modal-content" data-modal-form="checkout" data-plan="${plan.name}">
+      <p class="eyebrow">Paiement prepare</p>
+      <h2 id="actionModalTitle">Activer la formule ${plan.name}.</h2>
+      <p>Pour la production, ce bouton appellera une route serveur qui creera un checkout Mollie ou PayPlug. Aucune cle de paiement ne doit etre cote navigateur.</p>
+      <div class="checkout-summary">
+        <div class="list-row"><span>Formule</span><strong>${plan.name}</strong></div>
+        <div class="list-row"><span>Prix</span><strong>${plan.price}</strong></div>
+        <div class="list-row"><span>Usage conseille</span><strong>${plan.description}</strong></div>
+        <div class="list-row"><span>Prochaine etape</span><strong>Compte + paiement + installation</strong></div>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Email de facturation</label><input name="email" value="contact@atelier-martin.fr"></div>
+        <div class="modal-field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
+        <div class="modal-field"><label>Mode de paiement</label><select name="processor"><option>Mollie</option><option>PayPlug</option><option>Virement manuel</option></select></div>
+        <div class="modal-field"><label>Engagement</label><select name="billingCycle"><option>Mensuel sans engagement</option><option>Annuel -20%</option></select></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("card")} Simuler le paiement</button>
+        <button class="secondary-button" type="button" data-open-talk="J'ai une question avant de payer">Parler a Qualifyr</button>
+      </div>
+    </form>
+  `);
+}
+
+function openCompetitorModal() {
+  openModal(`
+    <form class="modal-content" data-modal-form="competitors">
+      <p class="eyebrow">Analyse concurrents</p>
+      <h2 id="actionModalTitle">Voyez ce que vos concurrents font mieux.</h2>
+      <p>Qualifyr analyse uniquement des informations publiques : site, fiche Google, avis, reseaux sociaux et publicites visibles. Pas de donnees privees, pas d'acces protege.</p>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Votre site</label><input name="website" value="https://atelier-martin.fr"></div>
+        <div class="modal-field"><label>Concurrent 1</label><input name="competitor1" value="https://plombier-lyon-demo.fr"></div>
+        <div class="modal-field"><label>Concurrent 2</label><input name="competitor2" value="https://urgence-fuite-demo.fr"></div>
+        <div class="modal-field"><label>Concurrent 3</label><input name="competitor3" value="https://artisan-local-demo.fr"></div>
+      </div>
+      <div class="modal-choice-grid">
+        <div class="modal-choice"><strong>Avis Google</strong><small>Note, frequence, reponses.</small></div>
+        <div class="modal-choice"><strong>Site web</strong><small>Promesse, formulaire, rapidite.</small></div>
+        <div class="modal-choice"><strong>Publicites visibles</strong><small>Meta Ad Library et messages publics.</small></div>
+      </div>
+      <button class="primary-button" type="submit">${svg("star")} Lancer l'analyse</button>
+    </form>
+  `);
+}
+
+function openWidgetModal(lead) {
+  const slug = (lead.company || "atelier-demo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  openModal(`
+    <div class="modal-content">
+      <p class="eyebrow">Copilote prepare</p>
+      <h2 id="actionModalTitle">Votre demande est prete a etre branchee.</h2>
+      <p>Dans la vraie version, ce recapitulatif sera envoye par email et stocke dans votre base. Le script ci-dessous montre le futur widget a poser sur le site.</p>
+      <div class="lead-confirmation">
+        <strong>${lead.company || "Entreprise"} · ${lead.profession}</strong>
+        <span>${lead.email || "email non renseigne"} · ${lead.phone || "telephone non renseigne"}</span>
+        <small>${lead.goal || lead.request || "Copilote Qualifyr AI a installer."}</small>
+      </div>
+      <code class="widget-snippet">&lt;script src="https://app.qualifyr.ai/widget.js" data-company="${slug}" data-copilot="${(lead.copilot || "qualifyr-ai").toLowerCase().replace(/[^a-z0-9]+/g, "-")}"&gt;&lt;/script&gt;</code>
+      <div class="modal-actions">
+        <button class="primary-button" data-open-checkout="${state.checkoutPlan || "Pro"}">${svg("card")} Passer au paiement</button>
+        <button class="secondary-button" data-close-modal>Fermer</button>
+      </div>
+    </div>
+  `);
 }
 
 function playbook() {
@@ -4539,9 +4723,27 @@ function renderAll() {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest("[data-close-modal]")) {
+    closeModal();
+    return;
+  }
+
+  const openTalk = event.target.closest("[data-open-talk]");
+  if (openTalk) {
+    openTalkToQualifyrModal(openTalk.dataset.openTalk || "");
+    return;
+  }
+
+  const openCheckout = event.target.closest("[data-open-checkout]");
+  if (openCheckout) {
+    openCheckoutModal(openCheckout.dataset.openCheckout || "Pro");
+    return;
+  }
+
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) {
     showView(viewButton.dataset.view);
+    if (viewButton.closest("#actionModal")) closeModal();
     return;
   }
 
@@ -4671,14 +4873,17 @@ document.addEventListener("click", (event) => {
   if (tradeInstall) {
     const copilot = tradeCopilots.find((item) => item.profession === tradeInstall.dataset.trade);
     state.profession = tradeInstall.dataset.trade || state.profession;
-    toast(`${copilot?.name || "Votre copilote"} est pret : formulaire, installation site et abonnement Pro recommandes.`);
+    openCopilotLeadModal("site", state.profession);
+    toast(`${copilot?.name || "Votre copilote"} : Qualifyr prepare l'installation.`);
     return;
   }
 
   const tradeEmail = event.target.closest(".trade-copilot-email");
   if (tradeEmail) {
     const copilot = tradeCopilots.find((item) => item.profession === tradeEmail.dataset.trade);
-    toast(`${copilot?.name || "Le copilote"} sera configure pour recevoir les demandes par email.`);
+    state.profession = tradeEmail.dataset.trade || state.profession;
+    openCopilotLeadModal("email", state.profession);
+    toast(`${copilot?.name || "Le copilote"} : reception email preparee.`);
     return;
   }
 
@@ -4689,27 +4894,29 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest(".competitor-action")) {
-    toast("Analyse preparee : ajoutez 3 concurrents pour comparer site, avis, reseaux et publicites visibles.");
+    openCompetitorModal();
     return;
   }
 
   if (event.target.closest(".trade-form-submit")) {
-    toast("Formulaire recu : Qualifyr AI prepare le copilote et le lien d'installation.");
+    openCopilotLeadModal("site", state.profession);
     return;
   }
 
   const tradePlan = event.target.closest(".trade-plan-select");
   if (tradePlan) {
-    toast(`Formule ${tradePlan.dataset.plan} selectionnee : paiement mensuel et activation du copilote prepares.`);
+    openCheckoutModal(tradePlan.dataset.plan);
     return;
   }
 
   if (event.target.closest(".trade-scroll-form")) {
-    toast("Choisissez un metier, puis le formulaire prepare le copilote automatiquement.");
+    el("tradeCopilotForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    toast("Formulaire ouvert : le prospect donne son metier et son objectif.");
     return;
   }
 
   if (event.target.closest(".trade-scroll-pricing")) {
+    el("tradeCopilotPricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
     toast("Tarifs : Essentiel 79 EUR, Pro 149 EUR recommande, Equipe 299 EUR par mois.");
     return;
   }
@@ -4842,7 +5049,7 @@ document.addEventListener("click", (event) => {
 
   const trialButton = event.target.closest(".trial-action");
   if (trialButton) {
-    toast(`Essai gratuit ${trialButton.dataset.plan} prepare. Le checkout Mollie sera cree cote serveur.`);
+    openCheckoutModal(trialButton.dataset.plan);
     return;
   }
 
@@ -4977,6 +5184,85 @@ document.addEventListener("input", (event) => {
     const search = el("crmSearch");
     search.focus();
     search.setSelectionRange(search.value.length, search.value.length);
+  }
+});
+
+document.addEventListener("submit", (event) => {
+  const form = event.target.closest("[data-modal-form]");
+  if (!form) return;
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(form).entries());
+  const type = form.dataset.modalForm;
+
+  if (type === "talk") {
+    const lead = saveLead({ type: "Demande Qualifyr", ...data });
+    toast("Demande envoyee. Qualifyr a prepare la prochaine action.");
+    openWidgetModal(lead);
+    return;
+  }
+
+  if (type === "copilot-lead") {
+    const lead = saveLead({
+      type: "Installation copilote",
+      installMode: form.dataset.installMode,
+      copilot: form.dataset.copilot,
+      ...data
+    });
+    toast("Copilote prepare. Le paiement et le widget sont prets.");
+    openWidgetModal(lead);
+    return;
+  }
+
+  if (type === "checkout") {
+    const lead = saveLead({
+      type: "Paiement",
+      plan: form.dataset.plan,
+      ...data
+    });
+    toast("Paiement simule. En production, Mollie ou PayPlug prendra le relais cote serveur.");
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Paiement valide en demo</p>
+        <h2 id="actionModalTitle">La formule ${lead.plan} est prete a etre activee.</h2>
+        <p>Prochaine etape technique : creer une route serveur de checkout, recevoir le webhook paiement, puis activer automatiquement le copilote dans l'espace client.</p>
+        <div class="integration-roadmap">
+          <div class="roadmap-step"><strong>Checkout</strong><small>Creation du paiement serveur.</small></div>
+          <div class="roadmap-step"><strong>Webhook</strong><small>Validation de l'abonnement.</small></div>
+          <div class="roadmap-step"><strong>Activation</strong><small>Copilote active et email envoye.</small></div>
+        </div>
+        <div class="modal-actions">
+          <button class="primary-button" data-view="onboarding">${svg("spark")} Continuer l'onboarding</button>
+          <button class="secondary-button" data-close-modal>Fermer</button>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  if (type === "competitors") {
+    const lead = saveLead({ type: "Analyse concurrents", ...data });
+    toast("Analyse concurrents preparee avec les sources publiques.");
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Analyse prete</p>
+        <h2 id="actionModalTitle">Qualifyr sait quoi comparer.</h2>
+        <p>L'analyse commerciale pourra comparer les avis, le site, les formulaires, les reseaux sociaux et les publicites visibles pour recommander le bon copilote.</p>
+        <div class="modal-choice-grid">
+          <div class="modal-choice"><strong>${lead.competitor1 || "Concurrent 1"}</strong><small>Site et proposition de valeur.</small></div>
+          <div class="modal-choice"><strong>${lead.competitor2 || "Concurrent 2"}</strong><small>Avis Google et reputation.</small></div>
+          <div class="modal-choice"><strong>${lead.competitor3 || "Concurrent 3"}</strong><small>Reseaux et publicites publiques.</small></div>
+        </div>
+        <div class="checkout-summary">
+          <div class="list-row"><span>Copilote recommande</span><strong>${selectedTradeCopilot().name}</strong></div>
+          <div class="list-row"><span>Action prioritaire</span><strong>Installer le formulaire intelligent</strong></div>
+          <div class="list-row"><span>Gain estime</span><strong>${selectedTradeCopilot().savedTime}</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="primary-button" data-open-checkout="Pro">Activer la solution conseillee</button>
+          <button class="secondary-button" data-close-modal>Fermer</button>
+        </div>
+      </div>
+    `);
   }
 });
 
