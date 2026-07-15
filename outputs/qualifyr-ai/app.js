@@ -372,6 +372,40 @@ function saveLead(lead) {
   return fullLead;
 }
 
+function safeText(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getStoredAutomations() {
+  try {
+    return JSON.parse(localStorage.getItem("qualifyrAutomations") || "[]");
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveAutomation(automation) {
+  const stored = getStoredAutomations();
+  const updated = {
+    id: automation.id || `automation-${Date.now()}`,
+    updatedAt: new Date().toISOString(),
+    ...automation
+  };
+  const next = [updated, ...stored.filter((item) => item.name !== updated.name && item.id !== updated.id)].slice(0, 30);
+  localStorage.setItem("qualifyrAutomations", JSON.stringify(next));
+  return updated;
+}
+
+function setAutomationStatus(name, status) {
+  const existing = getStoredAutomations().find((item) => item.name === name) || { name };
+  return saveAutomation({ ...existing, name, status });
+}
+
 function closeModal() {
   const modal = el("actionModal");
   if (!modal) return;
@@ -532,16 +566,68 @@ function openWidgetModal(lead) {
   `);
 }
 
+function openAutomationModal(mode = "create", automation = {}) {
+  const isEdit = mode === "edit";
+  const name = automation.name || "Relancer les devis sans reponse";
+  const description = automation.description || "Qualifyr AI envoie un message simple au bon moment.";
+  openModal(`
+    <form class="modal-content" data-modal-form="automation" data-automation-mode="${mode}">
+      <p class="eyebrow">${isEdit ? "Modifier l'aide" : "Creation guidee"}</p>
+      <h2 id="actionModalTitle">${isEdit ? "Ajuster cette automatisation." : "Creer une automatisation utile."}</h2>
+      <p>Repondez a quelques questions simples. Qualifyr AI s'occupe ensuite de l'action repetitif sans reglage technique.</p>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Nom</label><input name="name" value="${safeText(name)}"></div>
+        <div class="modal-field"><label>Quand agir ?</label><select name="trigger">
+          <option ${automation.trigger === "Nouveau client" ? "selected" : ""}>Nouveau client</option>
+          <option ${automation.trigger === "Message WhatsApp" ? "selected" : ""}>Message WhatsApp</option>
+          <option ${automation.trigger === "Devis sans reponse" ? "selected" : ""}>Devis sans reponse</option>
+          <option ${automation.trigger === "Facture en retard" ? "selected" : ""}>Facture en retard</option>
+          <option ${automation.trigger === "Intervention terminee" ? "selected" : ""}>Intervention terminee</option>
+        </select></div>
+        <div class="modal-field"><label>Que faire ?</label><select name="action">
+          <option ${automation.action === "Envoyer un rappel" ? "selected" : ""}>Envoyer un rappel</option>
+          <option ${automation.action === "Creer une fiche client" ? "selected" : ""}>Creer une fiche client</option>
+          <option ${automation.action === "Preparer un devis" ? "selected" : ""}>Preparer un devis</option>
+          <option ${automation.action === "Demander un avis" ? "selected" : ""}>Demander un avis</option>
+          <option ${automation.action === "Prevenir l'equipe" ? "selected" : ""}>Prevenir l'equipe</option>
+        </select></div>
+        <div class="modal-field"><label>Canal</label><select name="channel">
+          <option ${automation.channel === "Email" ? "selected" : ""}>Email</option>
+          <option ${automation.channel === "SMS" ? "selected" : ""}>SMS</option>
+          <option ${automation.channel === "WhatsApp" ? "selected" : ""}>WhatsApp</option>
+          <option ${automation.channel === "Interne" ? "selected" : ""}>Interne</option>
+        </select></div>
+        <div class="modal-field"><label>Delai</label><select name="delay">
+          <option ${automation.delay === "Immediat" ? "selected" : ""}>Immediat</option>
+          <option ${automation.delay === "Apres 1 jour" ? "selected" : ""}>Apres 1 jour</option>
+          <option ${automation.delay === "Apres 3 jours" ? "selected" : ""}>Apres 3 jours</option>
+          <option ${automation.delay === "Chaque vendredi" ? "selected" : ""}>Chaque vendredi</option>
+        </select></div>
+        <div class="modal-field full"><label>Description visible</label><textarea name="description">${safeText(description)}</textarea></div>
+      </div>
+      <div class="integration-roadmap">
+        <div class="roadmap-step"><strong>1. Declencheur</strong><small>Qualifyr sait quand agir.</small></div>
+        <div class="roadmap-step"><strong>2. Action</strong><small>La tache repetitif est preparee.</small></div>
+        <div class="roadmap-step"><strong>3. Controle</strong><small>Vous gardez la main.</small></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("spark")} Enregistrer</button>
+        <button class="secondary-button" type="button" data-close-modal>Annuler</button>
+      </div>
+    </form>
+  `);
+}
+
 function playbook() {
   return professionPlaybooks[state.profession] || professionPlaybooks.Autre;
 }
 
 function toast(message) {
   const node = el("toast");
+  if (!node) return;
   node.textContent = message;
-  node.classList.add("show");
-  window.clearTimeout(window.toastTimer);
-  window.toastTimer = window.setTimeout(() => node.classList.remove("show"), 2600);
+  node.classList.remove("show");
+  node.dataset.lastMessage = message;
 }
 
 function viewFromAssistantPrompt(prompt) {
@@ -4133,14 +4219,20 @@ function renderAiCenter() {
 }
 
 function renderAutomations() {
-  const simpleAutomations = [
-    ["Relancer les devis en attente", "Qualifyr AI envoie un rappel poli aux clients qui n'ont pas encore repondu.", "Actif"],
-    ["Demander un avis Google", "Apres une intervention terminee, le client recoit une demande d'avis au bon moment.", "Actif"],
-    ["Creer un client apres un appel", "Les coordonnees sont rangees automatiquement des qu'une nouvelle demande arrive.", "Actif"],
-    ["Preparer un devis apres WhatsApp", "Les photos et informations recues sont transformees en brouillon de devis.", "En pause"],
-    ["Rappeler les factures en attente", "Un message court est prepare pour recuperer les paiements oublies.", "Actif"],
-    ["Prevenir l'equipe", "Votre equipe recoit une alerte quand une demande urgente arrive.", "Actif"]
+  const stored = getStoredAutomations();
+  const baseAutomations = [
+    { name: "Relancer les devis en attente", description: "Qualifyr AI envoie un rappel poli aux clients qui n'ont pas encore repondu.", status: "Actif", trigger: "Devis sans reponse", action: "Envoyer un rappel", channel: "Email", delay: "Apres 3 jours" },
+    { name: "Demander un avis Google", description: "Apres une intervention terminee, le client recoit une demande d'avis au bon moment.", status: "Actif", trigger: "Intervention terminee", action: "Demander un avis", channel: "Email", delay: "Immediat" },
+    { name: "Creer un client apres un appel", description: "Les coordonnees sont rangees automatiquement des qu'une nouvelle demande arrive.", status: "Actif", trigger: "Nouveau client", action: "Creer une fiche client", channel: "Interne", delay: "Immediat" },
+    { name: "Preparer un devis apres WhatsApp", description: "Les photos et informations recues sont transformees en brouillon de devis.", status: "En pause", trigger: "Message WhatsApp", action: "Preparer un devis", channel: "WhatsApp", delay: "Immediat" },
+    { name: "Rappeler les factures en attente", description: "Un message court est prepare pour recuperer les paiements oublies.", status: "Actif", trigger: "Facture en retard", action: "Envoyer un rappel", channel: "Email", delay: "Apres 1 jour" },
+    { name: "Prevenir l'equipe", description: "Votre equipe recoit une alerte quand une demande urgente arrive.", status: "Actif", trigger: "Nouveau client", action: "Prevenir l'equipe", channel: "Interne", delay: "Immediat" }
   ];
+  const customAutomations = stored.filter((item) => !baseAutomations.some((base) => base.name === item.name));
+  const simpleAutomations = [...baseAutomations, ...customAutomations].map((automation) => ({
+    ...automation,
+    ...(stored.find((item) => item.name === automation.name) || {})
+  }));
   el("view-automations").innerHTML = `
     <div class="section-header">
       <div>
@@ -4151,13 +4243,13 @@ function renderAutomations() {
       <button class="primary-button" id="publishWorkflow">${svg("spark")} Creer une automatisation</button>
     </div>
     <div class="section data-table simple-automation-list">
-      ${simpleAutomations.map(([name, description, status]) => `
+      ${simpleAutomations.map((automation) => `
         <article class="table-row">
-          <span><strong>${name}</strong><small>${description}</small></span>
-          <span class="status ${status === "Actif" ? "success" : "warning"}">${status}</span>
+          <span><strong>${safeText(automation.name)}</strong><small>${safeText(automation.description)}</small></span>
+          <span class="status ${automation.status === "Actif" ? "success" : "warning"}">${automation.status}</span>
           <span class="automation-actions">
-            <button class="secondary-button">Modifier</button>
-            <button class="${status === "Actif" ? "danger-button" : "primary-button"}">${status === "Actif" ? "Desactiver" : "Activer"}</button>
+            <button class="secondary-button automation-edit" data-automation="${safeText(automation.name)}">Modifier</button>
+            <button class="${automation.status === "Actif" ? "danger-button" : "primary-button"} automation-toggle" data-automation="${safeText(automation.name)}" data-status="${automation.status === "Actif" ? "En pause" : "Actif"}">${automation.status === "Actif" ? "Desactiver" : "Activer"}</button>
           </span>
         </article>
       `).join("")}
@@ -4740,6 +4832,29 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const automationEdit = event.target.closest(".automation-edit");
+  if (automationEdit) {
+    const name = automationEdit.dataset.automation;
+    const automation = getStoredAutomations().find((item) => item.name === name) || [
+      { name: "Relancer les devis en attente", description: "Qualifyr AI envoie un rappel poli aux clients qui n'ont pas encore repondu.", status: "Actif", trigger: "Devis sans reponse", action: "Envoyer un rappel", channel: "Email", delay: "Apres 3 jours" },
+      { name: "Demander un avis Google", description: "Apres une intervention terminee, le client recoit une demande d'avis au bon moment.", status: "Actif", trigger: "Intervention terminee", action: "Demander un avis", channel: "Email", delay: "Immediat" },
+      { name: "Creer un client apres un appel", description: "Les coordonnees sont rangees automatiquement des qu'une nouvelle demande arrive.", status: "Actif", trigger: "Nouveau client", action: "Creer une fiche client", channel: "Interne", delay: "Immediat" },
+      { name: "Preparer un devis apres WhatsApp", description: "Les photos et informations recues sont transformees en brouillon de devis.", status: "En pause", trigger: "Message WhatsApp", action: "Preparer un devis", channel: "WhatsApp", delay: "Immediat" },
+      { name: "Rappeler les factures en attente", description: "Un message court est prepare pour recuperer les paiements oublies.", status: "Actif", trigger: "Facture en retard", action: "Envoyer un rappel", channel: "Email", delay: "Apres 1 jour" },
+      { name: "Prevenir l'equipe", description: "Votre equipe recoit une alerte quand une demande urgente arrive.", status: "Actif", trigger: "Nouveau client", action: "Prevenir l'equipe", channel: "Interne", delay: "Immediat" }
+    ].find((item) => item.name === name);
+    openAutomationModal("edit", automation || { name });
+    return;
+  }
+
+  const automationToggle = event.target.closest(".automation-toggle");
+  if (automationToggle) {
+    const nextStatus = automationToggle.dataset.status || "Actif";
+    setAutomationStatus(automationToggle.dataset.automation, nextStatus);
+    renderAutomations();
+    return;
+  }
+
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) {
     showView(viewButton.dataset.view);
@@ -5156,11 +5271,18 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest("#testWorkflow")) {
-    toast("Simulation lancee : appel entrant, urgence detectee, rendez-vous cree.");
+    openAutomationModal("create", {
+      name: "Traiter un appel entrant",
+      description: "Qualifyr AI note l'urgence, recupere les coordonnees et propose un rendez-vous.",
+      trigger: "Nouveau client",
+      action: "Creer une fiche client",
+      channel: "Interne",
+      delay: "Immediat"
+    });
   }
 
   if (event.target.closest("#publishWorkflow")) {
-    toast("Votre automatisation est prete.");
+    openAutomationModal("create");
   }
 });
 
@@ -5233,6 +5355,32 @@ document.addEventListener("submit", (event) => {
         <div class="modal-actions">
           <button class="primary-button" data-view="onboarding">${svg("spark")} Continuer l'onboarding</button>
           <button class="secondary-button" data-close-modal>Fermer</button>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  if (type === "automation") {
+    const automation = saveAutomation({
+      ...data,
+      status: "Actif"
+    });
+    renderAutomations();
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Automatisation activee</p>
+        <h2 id="actionModalTitle">${safeText(automation.name)} est prete.</h2>
+        <p>Qualifyr AI peut maintenant executer cette tache automatiquement. Vous pouvez la modifier ou la mettre en pause a tout moment.</p>
+        <div class="checkout-summary">
+          <div class="list-row"><span>Quand agir</span><strong>${safeText(automation.trigger)}</strong></div>
+          <div class="list-row"><span>Action</span><strong>${safeText(automation.action)}</strong></div>
+          <div class="list-row"><span>Canal</span><strong>${safeText(automation.channel)}</strong></div>
+          <div class="list-row"><span>Delai</span><strong>${safeText(automation.delay)}</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="primary-button" data-close-modal>${svg("spark")} Compris</button>
+          <button class="secondary-button automation-edit" data-automation="${safeText(automation.name)}">Modifier encore</button>
         </div>
       </div>
     `);

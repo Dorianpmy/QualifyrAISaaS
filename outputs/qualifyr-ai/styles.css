@@ -10226,3 +10226,13 @@ body.simple-ux .section-header p {
     font-size: 25px !important;
   }
 }
+
+/* Notifications are now handled in context with modals and inline state changes. */
+.toast,
+.toast.show,
+.simple-ux .toast,
+.simple-ux .toast.show {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
