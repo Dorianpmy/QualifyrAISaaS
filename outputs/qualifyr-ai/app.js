@@ -2853,12 +2853,40 @@ const copilotPlans = [
   ["Equipe", "299 EUR / mois", "Pour PME avec plusieurs utilisateurs, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
 ].map(([name, price, description, features, cta, recommended]) => ({ name, price, description, features, cta, recommended }));
 
+function normalizeProfessionName(value) {
+  const aliases = {
+    "Garage automobile": "Garage",
+    "Societe de nettoyage": "Nettoyage",
+    "Agence immobiliere": "Immobilier",
+    "Carrossier": "Garage"
+  };
+  return aliases[value] || value;
+}
+
+function getRelevantTradeCopilots() {
+  const normalizedProfession = normalizeProfessionName(state.profession);
+  const exact = tradeCopilots.filter((copilot) => copilot.profession === normalizedProfession);
+  const custom = tradeCopilots.filter((copilot) => copilot.profession === "Autre");
+  return exact.length ? exact.concat(custom) : custom;
+}
+
+function getRelevantBusinessPacks() {
+  const normalizedProfession = normalizeProfessionName(state.profession);
+  return businessPacks.filter((pack) => {
+    const packProfession = pack.name.replace("Pack ", "");
+    return packProfession === normalizedProfession || ["Artisan", "PME"].includes(packProfession);
+  });
+}
+
 function renderCopilotLibrary(targetId) {
   const categories = ["📞 Communication", "📄 Commercial", "📅 Organisation", "💰 Finance", "⭐ Reputation", "📸 Marketing", "🏢 Gestion", "⭐ IA Premium", "🤖 IA personnalisees", "🛠️ IA sur mesure"];
   const installed = digitalEmployees.filter((item) => item.status === "Installe").length;
   const tasks = digitalEmployees.reduce((sum, item) => sum + Number((item.stats[0] || "0").match(/\d+/)?.[0] || 0), 0);
   const featured = digitalEmployees[0];
   const autonomyScore = 86;
+  const relevantTradeCopilots = getRelevantTradeCopilots();
+  const relevantBusinessPacks = getRelevantBusinessPacks();
+  const hasDedicatedCopilot = relevantTradeCopilots.some((copilot) => copilot.profession === normalizeProfessionName(state.profession));
   el(targetId).innerHTML = `
     <section class="trade-copilot-hero card">
       <div>
@@ -2882,12 +2910,24 @@ function renderCopilotLibrary(targetId) {
       <div class="section-header compact-header">
         <div>
           <p class="eyebrow">Choisissez un metier</p>
-          <h2>Le prospect comprend tout de suite ce qu'il achete.</h2>
-          <p>Chaque copilote contient les questions, messages, devis et relances adaptes au metier.</p>
+          <h2>Le SaaS affiche uniquement les IA utiles pour ${state.profession}.</h2>
+          <p>Quand le prospect indique son metier, Qualifyr AI active les bons copilotes et masque les autres pour eviter la confusion.</p>
+        </div>
+      </div>
+      <div class="card profession-setup-card">
+        <div>
+          <span class="status success">Metier actif</span>
+          <h3>${state.profession}</h3>
+          <p>${hasDedicatedCopilot ? "Copilote dedie trouve. Les modules inutiles sont masques." : "Aucun copilote dedie pour ce metier. Qualifyr propose une IA sur mesure et les packs generiques."}</p>
+        </div>
+        <div class="profession-chip-grid">
+          ${["Plombier", "Electricien", "Chauffagiste", "Garage automobile", "Restaurant", "Dentiste", "Societe de nettoyage", "Paysagiste", "Macon", "Menuisier", "Agence immobiliere", "Autre"].map((profession) => `
+            <button class="profession-chip ${state.profession === profession ? "active" : ""}" data-profession="${profession}" data-stay-view="marketplace">${profession}</button>
+          `).join("")}
         </div>
       </div>
       <div class="trade-copilot-grid">
-        ${tradeCopilots.map((copilot) => `
+        ${relevantTradeCopilots.map((copilot) => `
           <article class="card trade-copilot-card">
             <span class="trade-emoji">${copilot.emoji}</span>
             <h3>${copilot.name}</h3>
@@ -3002,7 +3042,7 @@ function renderCopilotLibrary(targetId) {
         <button class="primary-button pack-auto-install">${svg("spark")} ✨ Installer automatiquement</button>
       </div>
       <div class="business-pack-grid">
-        ${businessPacks.map((pack) => `
+        ${relevantBusinessPacks.map((pack) => `
           <article class="card business-pack-card">
             <span class="status success">+${pack.scoreGain} points autonomie</span>
             <h3>${pack.name}</h3>
@@ -4346,8 +4386,10 @@ document.addEventListener("click", (event) => {
   const professionButton = event.target.closest("[data-profession]");
   if (professionButton) {
     state.profession = professionButton.dataset.profession;
+    const stayView = professionButton.dataset.stayView;
     renderAll();
-    showView("onboarding");
+    showView(stayView || "onboarding");
+    toast(`Copilotes adaptes au metier ${state.profession}.`);
     return;
   }
 
