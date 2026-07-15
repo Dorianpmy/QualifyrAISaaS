@@ -8532,6 +8532,139 @@ body.simple-ux:has(#view-marketplace.active) .universal-command {
   }
 }
 
+/* TRUE EOF client cards cleanup */
+body.simple-ux .client-simple-grid {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+body.simple-ux .client-simple-card {
+  gap: 14px !important;
+  padding: 18px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+body.simple-ux .client-simple-card .client-identity {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+body.simple-ux .client-simple-card .client-identity span {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+body.simple-ux .client-simple-card .client-identity strong,
+body.simple-ux .client-simple-card .client-identity small {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.simple-ux .client-simple-card .client-identity strong {
+  font-size: 16px !important;
+  line-height: 1.15 !important;
+}
+
+body.simple-ux .client-simple-card .client-identity small {
+  color: var(--muted) !important;
+  font-size: 12.5px !important;
+}
+
+body.simple-ux .client-simple-lines {
+  display: grid !important;
+  gap: 8px !important;
+  padding-top: 4px !important;
+}
+
+body.simple-ux .client-simple-lines span {
+  display: grid !important;
+  grid-template-columns: 88px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: baseline !important;
+  color: var(--muted) !important;
+  font-size: 13.5px !important;
+  line-height: 1.25 !important;
+}
+
+body.simple-ux .client-simple-lines strong {
+  color: var(--title) !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+body.simple-ux .client-card-summary {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.simple-ux .client-card-summary span {
+  display: grid !important;
+  gap: 3px !important;
+  padding: 10px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: var(--hover) !important;
+}
+
+body.simple-ux .client-card-summary strong {
+  color: var(--primary) !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+  overflow-wrap: anywhere !important;
+}
+
+body.simple-ux .client-card-summary small {
+  color: var(--muted) !important;
+  font-size: 11px !important;
+}
+
+body.simple-ux .client-card-note {
+  margin: 0 !important;
+  min-height: 34px !important;
+  color: var(--muted) !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  display: -webkit-box !important;
+  overflow: hidden !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+body.simple-ux .client-card-footer {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+}
+
+body.simple-ux .client-card-footer span {
+  padding: 6px 9px !important;
+  border-radius: 999px !important;
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 760px) {
+  body.simple-ux .client-simple-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .client-simple-lines span {
+    grid-template-columns: 1fr !important;
+    gap: 2px !important;
+  }
+}
+
 body.simple-ux .assistant-daily-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
 }

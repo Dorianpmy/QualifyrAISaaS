@@ -2412,14 +2412,18 @@ function renderCrm() {
             <div class="client-simple-lines">
               <span><strong>Telephone</strong>${client.phone}</span>
               <span><strong>Email</strong>${client.email}</span>
-              <span><strong>Adresse</strong>${client.address} · ${client.postalCode}</span>
-              <span><strong>Date de creation</strong>${client.createdAt}</span>
-              <span><strong>Derniere intervention</strong>${lastHistory}</span>
-              <span><strong>Prochain rendez-vous</strong>${appointment ? `${appointment[0]} · ${appointment[2]}` : "A planifier"}</span>
-              <span><strong>Devis</strong>${client.quoteCount} devis · ${clientQuotes[0]?.number || fallbackQuote.number}</span>
-              <span><strong>Factures</strong>${money(client.totalBilled)} facture · ${invoice.status}</span>
-              <span><strong>Documents</strong>${client.documents.length} fichiers · ${client.photos.length} photos</span>
-              <span><strong>Commentaires</strong>${client.comments}</span>
+              <span><strong>Adresse</strong>${client.city} · ${client.postalCode}</span>
+            </div>
+            <div class="client-card-summary">
+              <span><strong>${appointment ? appointment[0] : "--:--"}</strong><small>Prochain RDV</small></span>
+              <span><strong>${client.quoteCount}</strong><small>Devis</small></span>
+              <span><strong>${money(client.totalBilled)}</strong><small>Facture</small></span>
+            </div>
+            <p class="client-card-note">${lastHistory}</p>
+            <div class="client-card-footer">
+              <span>${client.documents.length} fichiers</span>
+              <span>${client.photos.length} photos</span>
+              <span>${invoice.status}</span>
             </div>
           </button>
         `;
