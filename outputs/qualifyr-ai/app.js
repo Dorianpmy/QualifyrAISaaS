@@ -5566,7 +5566,7 @@ document.addEventListener("input", (event) => {
   }
 });
 
-document.addEventListener("submit", (event) => {
+document.addEventListener("submit", async (event) => {
   const form = event.target.closest("[data-modal-form]");
   if (!form) return;
   event.preventDefault();
@@ -5600,24 +5600,54 @@ document.addEventListener("submit", (event) => {
       plan: form.dataset.plan,
       ...data
     });
-    saveAccount({ role: "client", ...data, plan: form.dataset.plan, status: "Paiement prepare" });
-    toast("Paiement prepare. Le branchement Mollie ou PayPlug peut prendre le relais cote serveur.");
+    const account = saveAccount({ role: "client", ...data, plan: form.dataset.plan, status: "Paiement en cours" });
+    setSession(account);
     openModal(`
       <div class="modal-content">
-        <p class="eyebrow">Paiement prepare</p>
-        <h2 id="actionModalTitle">La formule ${lead.plan} est prete a etre activee.</h2>
-        <p>Le parcours est pret : checkout securise, validation du paiement, activation du copilote et email de confirmation.</p>
-        <div class="integration-roadmap">
-          <div class="roadmap-step"><strong>Checkout</strong><small>Creation du paiement serveur.</small></div>
-          <div class="roadmap-step"><strong>Webhook</strong><small>Validation de l'abonnement.</small></div>
-          <div class="roadmap-step"><strong>Activation</strong><small>Copilote active et email envoye.</small></div>
-        </div>
-        <div class="modal-actions">
-          <button class="primary-button" data-view="onboarding">${svg("spark")} Continuer l'onboarding</button>
-          <button class="secondary-button" data-close-modal>Fermer</button>
+        <p class="eyebrow">Paiement securise</p>
+        <h2 id="actionModalTitle">Creation du paiement en cours.</h2>
+        <p>Qualifyr cree votre lien de paiement securise. Vous allez etre redirige vers Mollie.</p>
+        <div class="checkout-summary">
+          <div class="list-row"><span>Formule</span><strong>${safeText(lead.plan)}</strong></div>
+          <div class="list-row"><span>Email</span><strong>${safeText(lead.email)}</strong></div>
+          <div class="list-row"><span>Entreprise</span><strong>${safeText(lead.company)}</strong></div>
         </div>
       </div>
     `);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lead)
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || "Paiement indisponible");
+      }
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+      throw new Error("Lien de paiement absent.");
+    } catch (error) {
+      saveAccount({ ...account, status: "Paiement a configurer" });
+      openModal(`
+        <div class="modal-content">
+          <p class="eyebrow">Paiement non disponible</p>
+          <h2 id="actionModalTitle">Il manque la configuration Mollie.</h2>
+          <p>${safeText(error.message)}. La demande est quand meme enregistree dans l'espace admin pour etre traitee manuellement.</p>
+          <div class="integration-roadmap">
+            <div class="roadmap-step"><strong>1. Ajouter MOLLIE_API_KEY</strong><small>Dans Vercel, variables d'environnement.</small></div>
+            <div class="roadmap-step"><strong>2. Redeployer</strong><small>Le bouton ouvrira Mollie automatiquement.</small></div>
+            <div class="roadmap-step"><strong>3. Activer</strong><small>Le webhook confirmera le paiement.</small></div>
+          </div>
+          <div class="modal-actions">
+            <button class="primary-button" data-view="admin">${svg("shield")} Voir la demande admin</button>
+            <button class="secondary-button" data-close-modal>Fermer</button>
+          </div>
+        </div>
+      `);
+    }
     return;
   }
 
@@ -5708,4 +5738,30 @@ document.addEventListener("submit", (event) => {
   }
 });
 
+function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("payment") !== "return") return;
+  const session = getSession();
+  if (session) {
+    const updated = saveAccount({ ...session, status: "Paiement en verification", plan: params.get("plan") || session.plan });
+    setSession(updated);
+  }
+  window.history.replaceState({}, document.title, window.location.pathname);
+  window.setTimeout(() => {
+    showView("auth");
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Paiement recu</p>
+        <h2 id="actionModalTitle">Merci, votre paiement est en verification.</h2>
+        <p>Mollie confirme le paiement a Qualifyr par webhook. Des que le statut est valide, le copilote peut etre active.</p>
+        <div class="modal-actions">
+          <button class="primary-button" data-view="auth">${svg("users")} Voir mon espace</button>
+          <button class="secondary-button" data-close-modal>Fermer</button>
+        </div>
+      </div>
+    `);
+  }, 120);
+}
+
 renderAll();
+handlePaymentReturn();

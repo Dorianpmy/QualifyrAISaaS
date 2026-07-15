@@ -67,7 +67,22 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - Session client/admin conservee localement.
 - Espace client avec formule, metier, demandes et installation.
 - Admin Qualifyr avec demandes entrantes, qualification, paiement et activation client.
+- Route serveur `POST /api/checkout` pour creer un paiement Mollie sans exposer la cle cote client.
+- Route serveur `POST /api/webhooks/payment` pour verifier le paiement Mollie et preparer l'activation.
+- Route serveur `POST /api/leads` pour envoyer les demandes vers Supabase quand la base est configuree.
 - Les donnees sont pretes a etre remplacees par Supabase : les points d'entree sont `saveLead`, `saveAccount`, `setSession` et `upsertLeadStatus`.
+
+## Paiement reel
+
+1. Creer un compte Mollie.
+2. Recuperer la cle API live dans Mollie.
+3. Ajouter `MOLLIE_API_KEY` dans Vercel > Project Settings > Environment Variables.
+4. Ajouter `APP_URL=https://qualifyr-ai.vercel.app`.
+5. Redeployer Vercel.
+6. Le bouton paiement appelle `/api/checkout`.
+7. Mollie renvoie le client vers une page de paiement securisee.
+8. Apres paiement, Mollie appelle `/api/webhooks/payment`.
+9. Le statut peut alors passer en client actif dans l'admin Qualifyr.
 
 ## Parcours commercial prioritaire
 
