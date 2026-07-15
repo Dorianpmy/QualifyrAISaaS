@@ -9313,6 +9313,230 @@ body.sidebar-collapsed.simple-ux .nav-item.active::before {
   height: 16px !important;
 }
 
+/* TRUE EOF smart copilot filters and competitor intelligence */
+body.simple-ux .copilot-smart-filter-card {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 20px !important;
+  border-radius: 24px !important;
+  background: #f6f6f6 !important;
+  border-color: #e7e7e7 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+body.simple-ux .filter-heading {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 14px !important;
+  color: #777777 !important;
+  font-size: 14px !important;
+}
+
+body.simple-ux .filter-heading strong {
+  color: #111111 !important;
+  padding-bottom: 7px !important;
+  border-bottom: 2px solid #111111 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+body.simple-ux .filter-heading small {
+  color: #7a7a7a !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+}
+
+body.simple-ux .copilot-filter-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+
+body.simple-ux .copilot-filter-chip {
+  display: inline-grid !important;
+  grid-template-columns: auto auto !important;
+  gap: 2px 9px !important;
+  align-items: center !important;
+  min-height: 48px !important;
+  padding: 8px 13px !important;
+  border: 1px solid #dddddd !important;
+  border-radius: 11px !important;
+  background: #ffffff !important;
+  color: #111111 !important;
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.055) !important;
+  cursor: pointer !important;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease !important;
+}
+
+body.simple-ux .copilot-filter-chip:hover {
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 26px rgba(17, 17, 17, 0.075) !important;
+}
+
+body.simple-ux .copilot-filter-chip svg {
+  grid-row: span 2 !important;
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.simple-ux .copilot-filter-chip span {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.05 !important;
+}
+
+body.simple-ux .copilot-filter-chip small {
+  color: #7b7b7b !important;
+  font-size: 11px !important;
+  line-height: 1.05 !important;
+}
+
+body.simple-ux .competitor-intelligence-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr) !important;
+  gap: 16px !important;
+}
+
+body.simple-ux .competitor-intel-card,
+body.simple-ux .copilot-match-card {
+  display: grid !important;
+  gap: 14px !important;
+  align-content: start !important;
+  padding: 24px !important;
+  border-radius: 24px !important;
+}
+
+body.simple-ux .competitor-intel-card {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(34, 197, 94, 0.08), transparent 30%),
+    #ffffff !important;
+}
+
+body.simple-ux .competitor-intel-card h2,
+body.simple-ux .copilot-match-card h2 {
+  margin: 0 !important;
+  font-size: clamp(24px, 2.4vw, 34px) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.simple-ux .competitor-intel-card p:not(.eyebrow) {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  line-height: 1.45 !important;
+}
+
+body.simple-ux .competitor-signal-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+body.simple-ux .competitor-signal-grid span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  padding: 10px !important;
+  border: 1px solid #e7e7e7 !important;
+  border-radius: 12px !important;
+  background: #f8f8f8 !important;
+  color: #111111 !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+body.simple-ux .competitor-signal-grid svg {
+  width: 15px !important;
+  height: 15px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+}
+
+body.simple-ux .copilot-match-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  gap: 12px !important;
+  align-items: center !important;
+  padding: 14px 0 !important;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.08) !important;
+}
+
+body.simple-ux .copilot-match-row span {
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+body.simple-ux .copilot-match-row strong {
+  color: #111111 !important;
+  font-size: 14px !important;
+}
+
+body.simple-ux .copilot-match-row small {
+  color: #6d6d6d !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+body.simple-ux .copilot-match-row b {
+  padding: 7px 9px !important;
+  border-radius: 999px !important;
+  background: #ecfdf3 !important;
+  color: #14853d !important;
+  font-size: 13px !important;
+}
+
+body.simple-ux .copilot-match-row em {
+  color: #111111 !important;
+  font-style: normal !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 980px) {
+  body.simple-ux .competitor-intelligence-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .competitor-signal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  body.simple-ux .copilot-smart-filter-card {
+    padding: 14px !important;
+  }
+
+  body.simple-ux .copilot-filter-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+  }
+
+  body.simple-ux .copilot-filter-chip {
+    flex: 0 0 auto !important;
+  }
+
+  body.simple-ux .competitor-signal-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .copilot-match-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* TRUE EOF premium pricing cards inspired by clean SaaS billing pages */
 body.simple-ux .pricing-marketing-hero {
   display: grid !important;

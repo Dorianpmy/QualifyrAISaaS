@@ -2975,6 +2975,29 @@ function renderCopilotLibrary(targetId) {
   const relevantTradeCopilots = getRelevantTradeCopilots();
   const relevantBusinessPacks = getRelevantBusinessPacks();
   const hasDedicatedCopilot = relevantTradeCopilots.some((copilot) => copilot.profession === normalizeProfessionName(state.profession));
+  const copilotFilterGroups = [
+    ["Metier", "Plombier, garage, restaurant"],
+    ["Objectif", "Plus d'appels, plus de devis"],
+    ["Canal", "Site, WhatsApp, telephone"],
+    ["Budget", "79, 149 ou 299 EUR"],
+    ["Temps gagne", "4h, 8h, 12h / semaine"],
+    ["Outils", "Google, Meta, email"],
+    ["Niveau IA", "Simple ou autonome"],
+    ["Installation", "Site ou email"],
+    ["Avis clients", "Google, Trustpilot"],
+    ["Concurrents", "Ce qu'ils utilisent"],
+    ["Urgence", "Appels manques"],
+    ["Equipe", "Solo ou PME"]
+  ];
+  const copilotMatchRows = relevantTradeCopilots.slice(0, 3).map((copilot, index) => ({
+    name: copilot.name,
+    fit: index === 0 && copilot.profession !== "Autre" ? "96%" : index === 0 ? "82%" : "74%",
+    reason: index === 0 && copilot.profession !== "Autre"
+      ? `Adapte au metier ${state.profession}, avec ${copilot.includes.toLowerCase()}.`
+      : "Utile si vos demandes sont encore trop differentes pour un pack standard.",
+    gain: copilot.savedTime,
+    price: copilot.price
+  }));
   el(targetId).innerHTML = `
     <section class="trade-copilot-hero card">
       <div>
@@ -3014,6 +3037,47 @@ function renderCopilotLibrary(targetId) {
           `).join("")}
         </div>
       </div>
+
+      <div class="card copilot-smart-filter-card">
+        <div class="filter-heading">
+          <span>Filtrer par :</span>
+          <strong>Copilotes</strong>
+          <small>Analyse concurrents</small>
+        </div>
+        <div class="copilot-filter-bar">
+          ${copilotFilterGroups.map(([label, hint]) => `
+            <button class="copilot-filter-chip" data-filter="${label}">
+              ${svg(label === "Concurrents" ? "star" : label === "Canal" ? "message" : label === "Budget" ? "card" : label === "Outils" ? "grid" : "spark")}
+              <span>${label}</span>
+              <small>${hint}</small>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="competitor-intelligence-grid">
+        <article class="card competitor-intel-card">
+          <p class="eyebrow">Vision marketing</p>
+          <h2>Qualifyr peut aussi analyser vos concurrents visibles.</h2>
+          <p>Le prospect renseigne 3 concurrents. Qualifyr observe leurs canaux publics : site, avis Google, Facebook, Instagram, publicites visibles et vitesse de reponse apparente.</p>
+          <div class="competitor-signal-grid">
+            ${["Avis Google", "Site web", "Publicites Meta", "WhatsApp", "Google Business", "Formulaires"].map((signal) => `<span>${svg("spark")} ${signal}</span>`).join("")}
+          </div>
+          <button class="secondary-button competitor-action">Analyser mes concurrents</button>
+        </article>
+        <article class="card copilot-match-card">
+          <p class="eyebrow">Meilleure solution pour ${state.profession}</p>
+          <h2>Qualifyr croise vos besoins et recommande le bon copilote.</h2>
+          ${copilotMatchRows.map((row) => `
+            <div class="copilot-match-row">
+              <span><strong>${row.name}</strong><small>${row.reason}</small></span>
+              <b>${row.fit}</b>
+              <em>${row.gain}</em>
+            </div>
+          `).join("")}
+        </article>
+      </div>
+
       <div class="trade-copilot-grid">
         ${relevantTradeCopilots.map((copilot) => `
           <article class="card trade-copilot-card">
@@ -4615,6 +4679,17 @@ document.addEventListener("click", (event) => {
   if (tradeEmail) {
     const copilot = tradeCopilots.find((item) => item.profession === tradeEmail.dataset.trade);
     toast(`${copilot?.name || "Le copilote"} sera configure pour recevoir les demandes par email.`);
+    return;
+  }
+
+  const copilotFilterChip = event.target.closest(".copilot-filter-chip");
+  if (copilotFilterChip) {
+    toast(`Filtre ${copilotFilterChip.dataset.filter} applique : Qualifyr croise metier, canaux, budget et objectifs.`);
+    return;
+  }
+
+  if (event.target.closest(".competitor-action")) {
+    toast("Analyse preparee : ajoutez 3 concurrents pour comparer site, avis, reseaux et publicites visibles.");
     return;
   }
 
