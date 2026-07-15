@@ -415,7 +415,7 @@ function openTalkToQualifyrModal(seed = "") {
         <div class="modal-field"><label>Votre demande</label><input name="request" value="${seed || "Je veux installer un copilote plombier"}"></div>
         <div class="modal-field"><label>Metier</label><select name="profession">${professions.map((profession) => `<option ${profession === state.profession ? "selected" : ""}>${profession}</option>`).join("")}</select></div>
         <div class="modal-field"><label>Nom</label><input name="name" value="Dorian"></div>
-        <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyr-demo.fr"></div>
+        <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
         <div class="modal-field full"><label>Contexte utile</label><textarea name="context">Je veux comprendre quel copilote installer, combien cela coute et comment le mettre sur mon site.</textarea></div>
       </div>
       <div class="modal-actions">
@@ -433,7 +433,7 @@ function openCopilotLeadModal(mode = "site", profession = state.profession) {
     <form class="modal-content" data-modal-form="copilot-lead" data-install-mode="${mode}" data-copilot="${copilot.name}">
       <p class="eyebrow">Installation du copilote</p>
       <h2 id="actionModalTitle">${copilot.name} peut etre pret en moins de 2 minutes.</h2>
-      <p>Le prospect remplit ces informations. En production, elles seront envoyees a Supabase puis l'abonnement sera cree via Mollie ou PayPlug.</p>
+      <p>Le prospect remplit ces informations. Qualifyr prepare ensuite l'installation, l'abonnement et les prochaines etapes sans reglage technique.</p>
       <div class="modal-choice-grid">
         <div class="modal-choice"><strong>${copilot.savedTime}</strong><small>Temps gagne estime</small></div>
         <div class="modal-choice"><strong>${copilot.price}</strong><small>Prix du copilote</small></div>
@@ -444,7 +444,7 @@ function openCopilotLeadModal(mode = "site", profession = state.profession) {
         <div class="modal-field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
         <div class="modal-field"><label>Nom</label><input name="name" value="Jean Martin"></div>
         <div class="modal-field"><label>Telephone</label><input name="phone" value="06 18 42 90 15"></div>
-        <div class="modal-field"><label>Email</label><input name="email" value="contact@atelier-martin.fr"></div>
+        <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
         <div class="modal-field"><label>Site internet</label><input name="website" value="https://atelier-martin.fr"></div>
         <div class="modal-field full"><label>Ce que le copilote doit faire</label><textarea name="goal">${copilot.description}</textarea></div>
       </div>
@@ -468,7 +468,7 @@ function openCheckoutModal(planName = "Pro") {
     <form class="modal-content" data-modal-form="checkout" data-plan="${plan.name}">
       <p class="eyebrow">Paiement prepare</p>
       <h2 id="actionModalTitle">Activer la formule ${plan.name}.</h2>
-      <p>Pour la production, ce bouton appellera une route serveur qui creera un checkout Mollie ou PayPlug. Aucune cle de paiement ne doit etre cote navigateur.</p>
+      <p>Le paiement mensuel est prepare pour une activation propre : compte client, abonnement, facture et installation du copilote.</p>
       <div class="checkout-summary">
         <div class="list-row"><span>Formule</span><strong>${plan.name}</strong></div>
         <div class="list-row"><span>Prix</span><strong>${plan.price}</strong></div>
@@ -476,13 +476,13 @@ function openCheckoutModal(planName = "Pro") {
         <div class="list-row"><span>Prochaine etape</span><strong>Compte + paiement + installation</strong></div>
       </div>
       <div class="modal-grid">
-        <div class="modal-field"><label>Email de facturation</label><input name="email" value="contact@atelier-martin.fr"></div>
+        <div class="modal-field"><label>Email de facturation</label><input name="email" value="contact@qualifyragence.com"></div>
         <div class="modal-field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
         <div class="modal-field"><label>Mode de paiement</label><select name="processor"><option>Mollie</option><option>PayPlug</option><option>Virement manuel</option></select></div>
         <div class="modal-field"><label>Engagement</label><select name="billingCycle"><option>Mensuel sans engagement</option><option>Annuel -20%</option></select></div>
       </div>
       <div class="modal-actions">
-        <button class="primary-button" type="submit">${svg("card")} Simuler le paiement</button>
+        <button class="primary-button" type="submit">${svg("card")} Preparer le paiement securise</button>
         <button class="secondary-button" type="button" data-open-talk="J'ai une question avant de payer">Parler a Qualifyr</button>
       </div>
     </form>
@@ -497,9 +497,9 @@ function openCompetitorModal() {
       <p>Qualifyr analyse uniquement des informations publiques : site, fiche Google, avis, reseaux sociaux et publicites visibles. Pas de donnees privees, pas d'acces protege.</p>
       <div class="modal-grid">
         <div class="modal-field"><label>Votre site</label><input name="website" value="https://atelier-martin.fr"></div>
-        <div class="modal-field"><label>Concurrent 1</label><input name="competitor1" value="https://plombier-lyon-demo.fr"></div>
-        <div class="modal-field"><label>Concurrent 2</label><input name="competitor2" value="https://urgence-fuite-demo.fr"></div>
-        <div class="modal-field"><label>Concurrent 3</label><input name="competitor3" value="https://artisan-local-demo.fr"></div>
+        <div class="modal-field"><label>Concurrent 1</label><input name="competitor1" value="https://plombier-lyon.fr"></div>
+        <div class="modal-field"><label>Concurrent 2</label><input name="competitor2" value="https://urgence-fuite-lyon.fr"></div>
+        <div class="modal-field"><label>Concurrent 3</label><input name="competitor3" value="https://artisan-local.fr"></div>
       </div>
       <div class="modal-choice-grid">
         <div class="modal-choice"><strong>Avis Google</strong><small>Note, frequence, reponses.</small></div>
@@ -512,7 +512,7 @@ function openCompetitorModal() {
 }
 
 function openWidgetModal(lead) {
-  const slug = (lead.company || "atelier-demo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = (lead.company || "atelier-martin").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   openModal(`
     <div class="modal-content">
       <p class="eyebrow">Copilote prepare</p>
@@ -3078,7 +3078,7 @@ const installationSteps = [
   ["1", "Presentation", "Qualifyr AI explique ce que le copilote va faire pour vous."],
   ["2", "Connexion des outils", "Les connexions recommandees sont proposees une par une."],
   ["3", "Configuration", "Les horaires, messages et regles sont pre-remplis selon votre metier."],
-  ["4", "Premier test", "Une simulation montre exactement le resultat attendu."],
+  ["4", "Premier test", "Un exemple concret montre exactement le resultat attendu."],
   ["5", "Validation", "Le copilote est active et pret a travailler."]
 ];
 
@@ -3291,7 +3291,7 @@ function renderCopilotLibrary(targetId) {
           <div class="field"><label>Metier</label><select><option>Plombier</option><option>Electricien</option><option>Garage</option><option>Restaurant</option><option>Dentiste</option><option>Autre</option></select></div>
           <div class="field"><label>Nom de l'entreprise</label><input value="Atelier Martin"></div>
           <div class="field"><label>Telephone</label><input value="06 18 42 90 15"></div>
-          <div class="field"><label>Email</label><input value="contact@atelier-martin.fr"></div>
+          <div class="field"><label>Email</label><input value="contact@qualifyragence.com"></div>
           <div class="field"><label>Ou installer le copilote ?</label><select><option>Sur mon site internet</option><option>Je veux le recevoir par email</option><option>Les deux</option></select></div>
           <div class="field"><label>Objectif principal</label><select><option>Ne plus perdre de demandes</option><option>Faire plus de devis</option><option>Gagner du temps au telephone</option><option>Relancer mes clients</option></select></div>
         </div>
@@ -3403,7 +3403,7 @@ function renderCopilotLibrary(targetId) {
             </div>
             <div class="hero-actions">
               <button class="primary-button pack-install" data-pack="${pack.name}">Installer le pack</button>
-              <button class="secondary-button pack-demo" data-pack="${pack.name}">Voir la demo</button>
+              <button class="secondary-button pack-demo" data-pack="${pack.name}">Voir l'apercu</button>
             </div>
           </article>
         `).join("")}
@@ -3412,15 +3412,15 @@ function renderCopilotLibrary(targetId) {
 
     <section class="section grid grid-2">
       <article class="card demo-experience-card">
-        <p class="eyebrow">Mode demonstration</p>
-        <h2>Essayez un copilote avant de l'installer.</h2>
-        <div class="digital-video">Simulation complete : appel entrant, qualification, devis prepare, rendez-vous cree.</div>
+        <p class="eyebrow">Apercu concret</p>
+        <h2>Voyez le resultat avant de l'installer.</h2>
+        <div class="digital-video">Parcours complet : appel entrant, qualification, devis prepare, rendez-vous cree.</div>
         <div class="assistant-mini-grid">
-          <span><strong>3 scenarios</strong><small>Donnees fictives realistes</small></span>
+          <span><strong>3 scenarios</strong><small>Parcours metier prets</small></span>
           <span><strong>2 min</strong><small>Pour comprendre l'interet</small></span>
           <span><strong>100%</strong><small>Sans configuration technique</small></span>
         </div>
-        <button class="primary-button demo-action">${svg("spark")} Lancer une demonstration</button>
+        <button class="primary-button demo-action">${svg("spark")} Voir l'apercu</button>
       </article>
       <article class="card install-assistant-card">
         <p class="eyebrow">Assistant d'installation</p>
@@ -3455,18 +3455,18 @@ function renderCopilotLibrary(targetId) {
       <p>Ces copilotes analysent votre entreprise en profondeur et donnent des conseils de pilotage simples.</p>
     </article>
     <div class="copilot-library-grid">
-      ${digitalEmployees.map((employee) => `
+        ${digitalEmployees.map((employee) => `
         <article class="card digital-employee-card">
           <div class="digital-shot">
-            <span>${employee.icon}</span>
+            <span class="digital-shot-icon">${svg("spark")}</span>
             <strong>${employee.capture}</strong>
             <small>${employee.name}</small>
           </div>
           <div class="module-head">
             <span class="module-icon ai-emoji">${svg("spark")}</span>
-            <span class="status ${employee.health.includes("🔴") ? "danger" : employee.health.includes("🟠") ? "warning" : "success"}">${employee.health}</span>
+            <span class="status ${employee.health.includes("🔴") ? "danger" : employee.health.includes("🟠") ? "warning" : "success"}">${employee.health.replace("🟢 ", "").replace("🟠 ", "").replace("🔴 ", "")}</span>
           </div>
-          <p class="eyebrow">${employee.category}</p>
+          <p class="eyebrow">${employee.category.replace("📞 ", "").replace("📄 ", "").replace("📅 ", "").replace("⭐ ", "").replace("📸 ", "").replace("💰 ", "").replace("👥 ", "").replace("📈 ", "").replace("🏢 ", "")}</p>
           <h3>${employee.name}</h3>
           <p>${employee.description}</p>
           <div class="assistant-stats">
@@ -3505,9 +3505,9 @@ function renderCopilotLibrary(targetId) {
             ${employee.history.map((item) => `<div class="list-row"><span>${item}</span><strong>Fait</strong></div>`).join("")}
           </details>
           <div class="hero-actions">
-            <button class="${employee.status === "Installe" ? "secondary-button" : "primary-button"} copilot-hire" data-employee="${employee.name}">${employee.status === "Installe" ? "Configurer" : employee.status === "Premium" ? "Debloquer" : "Installer"}</button>
-            <button class="secondary-button copilot-demo" data-employee="${employee.name}">Demonstration</button>
-            <button class="secondary-button copilot-configure" data-employee="${employee.name}">Configurer</button>
+            <button class="${employee.status === "Installe" ? "secondary-button" : "primary-button"} copilot-hire" data-employee="${employee.name}">${employee.status === "Installe" ? "Ouvrir" : employee.status === "Premium" ? "Debloquer" : "Installer"}</button>
+            <button class="secondary-button copilot-demo" data-employee="${employee.name}">Apercu</button>
+            ${employee.status === "Installe" ? "" : `<button class="secondary-button copilot-configure" data-employee="${employee.name}">Configurer</button>`}
             <button class="danger-button copilot-remove" data-employee="${employee.name}">Desinstaller</button>
           </div>
         </article>
@@ -3516,8 +3516,8 @@ function renderCopilotLibrary(targetId) {
     <section class="section grid grid-2">
       <article class="card copilot-detail-card">
         <p class="eyebrow">Page de details</p>
-        <h2>${featured.icon} ${featured.name}</h2>
-        <div class="digital-video">Video de demonstration - ${featured.capture}</div>
+        <h2>${featured.name}</h2>
+        <div class="digital-video">Apercu video - ${featured.capture}</div>
         <div class="grid grid-2">
           <div class="digital-image">Capture appels</div>
           <div class="digital-image">Historique client</div>
@@ -3739,12 +3739,12 @@ function renderCopilotSetup() {
     <section class="section setup-test-section">
       <article class="card setup-test-card">
         <div>
-          <p class="eyebrow">Simulation avec un faux client</p>
+          <p class="eyebrow">Apercu avec un client</p>
           <h2>Avant d'activer, l'utilisateur voit le resultat.</h2>
-          <p>Cette demo montre exactement ce que le copilote fera dans une vraie journee.</p>
+          <p>Cet apercu montre exactement ce que le copilote fera dans une vraie journee.</p>
         </div>
         <div class="fake-conversation">
-          <div><small>Client fictif</small><strong>${profile.test[0]}</strong></div>
+          <div><small>Demande client</small><strong>${profile.test[0]}</strong></div>
           <div><small>Qualifyr AI</small><strong>${profile.test[1]}</strong></div>
           <div><small>Resultat</small><strong>${profile.test[2]}</strong></div>
         </div>
@@ -4929,7 +4929,7 @@ document.addEventListener("click", (event) => {
 
   const packDemo = event.target.closest(".pack-demo");
   if (packDemo) {
-    toast(`Demo ${packDemo.dataset.pack} lancee avec donnees fictives et scenario complet.`);
+    toast(`Apercu ${packDemo.dataset.pack} ouvert avec un parcours client complet.`);
     return;
   }
 
@@ -4941,7 +4941,7 @@ document.addEventListener("click", (event) => {
   const copilotDemo = event.target.closest(".copilot-demo");
   if (copilotDemo) {
     openCopilotSetup(copilotDemo.dataset.employee, "demo");
-    toast(`Demonstration de ${copilotDemo.dataset.employee} ouverte avec un cas client fictif.`);
+    toast(`Apercu de ${copilotDemo.dataset.employee} ouvert avec un cas client concret.`);
     return;
   }
 
@@ -4975,12 +4975,12 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest(".demo-action")) {
-    toast("Mode demonstration ouvert : scenario complet avec donnees fictives.");
+    toast("Apercu ouvert : parcours complet avec appel, devis et rendez-vous.");
     return;
   }
 
   if (event.target.closest(".update-discover")) {
-    toast("Nouveaute ouverte avec son impact et sa demonstration.");
+    toast("Nouveaute ouverte avec son impact et son apercu.");
     return;
   }
 
@@ -5219,12 +5219,12 @@ document.addEventListener("submit", (event) => {
       plan: form.dataset.plan,
       ...data
     });
-    toast("Paiement simule. En production, Mollie ou PayPlug prendra le relais cote serveur.");
+    toast("Paiement prepare. Le branchement Mollie ou PayPlug peut prendre le relais cote serveur.");
     openModal(`
       <div class="modal-content">
-        <p class="eyebrow">Paiement valide en demo</p>
+        <p class="eyebrow">Paiement prepare</p>
         <h2 id="actionModalTitle">La formule ${lead.plan} est prete a etre activee.</h2>
-        <p>Prochaine etape technique : creer une route serveur de checkout, recevoir le webhook paiement, puis activer automatiquement le copilote dans l'espace client.</p>
+        <p>Le parcours est pret : checkout securise, validation du paiement, activation du copilote et email de confirmation.</p>
         <div class="integration-roadmap">
           <div class="roadmap-step"><strong>Checkout</strong><small>Creation du paiement serveur.</small></div>
           <div class="roadmap-step"><strong>Webhook</strong><small>Validation de l'abonnement.</small></div>
