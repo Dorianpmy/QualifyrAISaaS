@@ -10236,3 +10236,97 @@ body.simple-ux .section-header p {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+.account-button {
+  min-height: 42px;
+  padding-inline: 18px;
+}
+
+.auth-layout {
+  align-items: stretch;
+}
+
+.auth-card {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-card .field {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-card .field input,
+.auth-card .field select {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 0 16px;
+  font: inherit;
+}
+
+.auth-card .field input:focus,
+.auth-card .field select:focus {
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+  outline: none;
+}
+
+.muted-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-checklist {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-checklist span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.admin-checklist svg {
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+}
+
+.admin-leads-table {
+  display: grid;
+  gap: 0;
+}
+
+.admin-lead-row {
+  grid-template-columns: minmax(260px, 1.4fr) minmax(190px, 0.9fr) minmax(150px, 0.6fr) minmax(330px, 1fr);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1180px) {
+  .admin-lead-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .admin-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .account-button {
+    display: none;
+  }
+}

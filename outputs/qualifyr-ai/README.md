@@ -59,6 +59,16 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - App Store interne pour installer, configurer ou desinstaller les copilotes.
 - Formulaire IA sur mesure connecte a un futur CRM interne ou pipeline commercial Qualifyr.
 
+## Etat actuel du passage SaaS
+
+- Deploiement Vercel public actif.
+- Formulaires prospects interactifs.
+- Creation de comptes clients cote interface.
+- Session client/admin conservee localement.
+- Espace client avec formule, metier, demandes et installation.
+- Admin Qualifyr avec demandes entrantes, qualification, paiement et activation client.
+- Les donnees sont pretes a etre remplacees par Supabase : les points d'entree sont `saveLead`, `saveAccount`, `setSession` et `upsertLeadStatus`.
+
 ## Parcours commercial prioritaire
 
 1. Le plombier arrive sur la page publique.

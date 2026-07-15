@@ -316,6 +316,7 @@ const state = {
   selectedCopilotName: "WhatsApp IA",
   selectedCopilotMode: "install",
   checkoutPlan: "Pro",
+  session: null,
   lastLead: null,
   quote: {
     client: "Marc Lefevre",
@@ -362,6 +363,7 @@ function saveLead(lead) {
   const fullLead = {
     id: `lead-${Date.now()}`,
     createdAt: new Date().toISOString(),
+    status: lead.status || "Nouvelle demande",
     profession: state.profession,
     source: state.view,
     ...lead
@@ -370,6 +372,68 @@ function saveLead(lead) {
   localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
   state.lastLead = fullLead;
   return fullLead;
+}
+
+function getAccounts() {
+  try {
+    return JSON.parse(localStorage.getItem("qualifyrAccounts") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveAccount(account) {
+  const accounts = getAccounts();
+  const normalizedEmail = String(account.email || "").trim().toLowerCase();
+  const existing = accounts.find((item) => item.email === normalizedEmail);
+  const nextAccount = {
+    id: existing?.id || `account-${Date.now()}`,
+    role: account.role || existing?.role || "client",
+    status: account.status || existing?.status || "Actif",
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    lastSeenAt: new Date().toISOString(),
+    company: account.company || existing?.company || "Atelier Martin",
+    name: account.name || existing?.name || "Dorian",
+    email: normalizedEmail || existing?.email || "contact@qualifyragence.com",
+    profession: account.profession || existing?.profession || state.profession,
+    plan: account.plan || existing?.plan || state.checkoutPlan || "Pro"
+  };
+  const next = [nextAccount, ...accounts.filter((item) => item.email !== nextAccount.email)].slice(0, 80);
+  localStorage.setItem("qualifyrAccounts", JSON.stringify(next));
+  return nextAccount;
+}
+
+function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem("qualifyrSession") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function setSession(account) {
+  localStorage.setItem("qualifyrSession", JSON.stringify(account));
+  state.session = account;
+  renderAccountButton();
+}
+
+function clearSession() {
+  localStorage.removeItem("qualifyrSession");
+  state.session = null;
+  renderAccountButton();
+}
+
+function upsertLeadStatus(id, status) {
+  const leads = getStoredLeads().map((lead) => (lead.id === id ? { ...lead, status, updatedAt: new Date().toISOString() } : lead));
+  localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
+}
+
+function renderAccountButton() {
+  const button = el("accountButton");
+  if (!button) return;
+  const session = getSession();
+  button.textContent = session ? (session.role === "admin" ? "Admin" : "Espace client") : "Connexion";
+  button.dataset.view = session?.role === "admin" ? "admin" : "auth";
 }
 
 function safeText(value = "") {
@@ -673,7 +737,7 @@ function renderNav() {
 function renderBottomNav() {
   const node = el("bottomNav");
   if (!node) return;
-  const moreViews = ["more", "landing", "pricing", "commercial", "documents", "notifications", "integrations", "custom-ai", "copilot-setup", "settings", "billing", "help", "admin", "onboarding"];
+  const moreViews = ["more", "landing", "pricing", "commercial", "documents", "notifications", "integrations", "custom-ai", "copilot-setup", "settings", "billing", "help", "admin", "auth", "onboarding"];
   node.innerHTML = bottomNavItems
     .map(([id, label, icon]) => `
       <button class="bottom-nav-item ${state.view === id || (id === "more" && moreViews.includes(state.view)) ? "active" : ""}" data-view="${id}">
@@ -756,7 +820,9 @@ function showView(view) {
     pricing: "Tarifs",
     commercial: "Mon abonnement",
     onboarding: "Premiers pas",
-    "copilot-setup": "Installation du copilote"
+    "copilot-setup": "Installation du copilote",
+    auth: "Espace client",
+    admin: "Admin Qualifyr"
   };
   const friendlySubtitles = {
     dashboard: "Ce qui demande votre attention aujourd'hui",
@@ -776,11 +842,15 @@ function showView(view) {
     pricing: "Choisissez la formule qui correspond a votre entreprise",
     commercial: "Suivez votre abonnement et vos licences",
     onboarding: "Configurez Qualifyr en quelques minutes",
-    "copilot-setup": "Installez votre copilote, une etape a la fois"
+    "copilot-setup": "Installez votre copilote, une etape a la fois",
+    auth: "Connexion, compte et installation",
+    admin: "Demandes, clients et copilotes a traiter"
   };
   state.view = view;
   document.querySelectorAll(".view").forEach((node) => node.classList.remove("active"));
-  el(`view-${view}`).classList.add("active");
+  const targetView = el(`view-${view}`);
+  if (!targetView) return;
+  targetView.classList.add("active");
   const nav = navItems.find(([id]) => id === view);
   const bottomNav = bottomNavItems.find(([id]) => id === view);
   el("viewTitle").textContent = friendlyTitles[view] || (nav ? nav[1] : bottomNav ? bottomNav[1] : "Qualifyr AI");
@@ -1365,23 +1435,147 @@ function renderAiCenter() {
 }
 
 function renderAdmin() {
+  const session = getSession();
+  if (session?.role !== "admin") {
+    el("view-admin").innerHTML = `
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Admin Qualifyr</p>
+          <h2>Connectez-vous pour gerer les demandes clients.</h2>
+          <p>L'espace admin centralise les prospects, comptes, paiements et installations de copilotes.</p>
+        </div>
+        <button class="primary-button" data-login-admin>${svg("shield")} Entrer en admin</button>
+      </div>
+      <article class="card auth-card">
+        <h3>Ce que l'admin permet de faire</h3>
+        <div class="admin-checklist">
+          ${["Voir chaque demande envoyee par le site", "Qualifier un prospect", "Suivre la formule choisie", "Preparer l'installation du copilote", "Passer une demande en client actif"].map((item) => `<span>${svg("spark")} ${item}</span>`).join("")}
+        </div>
+      </article>
+    `;
+    return;
+  }
+  const leads = getStoredLeads();
+  const accounts = getAccounts();
+  const installs = leads.filter((lead) => lead.type === "Installation copilote");
   el("view-admin").innerHTML = `
     <div class="section-header">
       <div>
-        <p class="eyebrow">Tableau admin</p>
-        <h2>Roles, utilisateurs, logs et gouvernance.</h2>
+        <p class="eyebrow">Admin Qualifyr</p>
+        <h2>Demandes, clients et installations a traiter.</h2>
+        <p>Tout ce qui arrive depuis le site est range ici pour ne perdre aucun prospect.</p>
       </div>
-      <button class="secondary-button">${svg("shield")} Inviter un utilisateur</button>
+      <div class="section-actions">
+        <button class="secondary-button" data-view="auth">${svg("users")} Voir mon compte</button>
+        <button class="primary-button" data-admin-seed>${svg("spark")} Ajouter une demande test</button>
+      </div>
     </div>
     <div class="grid grid-3">
-      <article class="card"><h3>Administrateur</h3><p>Acces facturation, modules, equipe, workflows et donnees.</p><span class="status success">2 utilisateurs</span></article>
-      <article class="card"><h3>Manager</h3><p>Acces CRM, devis, agenda, relances et rapports.</p><span class="status warning">3 utilisateurs</span></article>
-      <article class="card"><h3>Collaborateur</h3><p>Acces limite aux taches, rendez-vous et fiches clients assignees.</p><span class="status success">8 utilisateurs</span></article>
+      ${metric("Demandes recues", leads.length || 8, "Site, paiement et copilotes")}
+      ${metric("Comptes clients", accounts.filter((account) => account.role === "client").length || 3, "Prets a connecter")}
+      ${metric("Installations", installs.length || 5, "Copilotes a activer")}
     </div>
-    <div class="section card">
-      <p class="eyebrow">Journal d'automatisation</p>
-      ${["Appel resume et fiche prospect creee", "Devis relance par WhatsApp", "Avis Google demande apres intervention", "Rendez-vous Outlook synchronise"].map((item, index) => `<div class="list-row"><span>${item}</span><strong>${index + 1} min</strong></div>`).join("")}
+    <section class="section data-table admin-leads-table">
+      <div class="simple-section-title">
+        <span>Demandes entrantes</span>
+        <h2>Les prospects a rappeler maintenant.</h2>
+      </div>
+      ${(leads.length ? leads : [
+        { id: "seed-1", company: "Atelier Martin", name: "Jean Martin", email: "contact@qualifyragence.com", profession: "Plombier", type: "Installation copilote", plan: "Pro", status: "Nouvelle demande", createdAt: new Date().toISOString(), goal: "Installer un copilote pour qualifier les urgences fuite." },
+        { id: "seed-2", company: "Garage Bel Air", name: "Nassim Belkacem", email: "garage@demo.fr", profession: "Garage automobile", type: "Paiement", plan: "Equipe", status: "Paiement prepare", createdAt: new Date().toISOString(), goal: "Automatiser les appels atelier et les rappels controle technique." },
+        { id: "seed-3", company: "Roux Nettoyage Pro", name: "Benedicte Roux", email: "contact@roux-nettoyage.fr", profession: "Societe de nettoyage", type: "Analyse concurrents", plan: "Pro", status: "A qualifier", createdAt: new Date().toISOString(), goal: "Comparer les concurrents et installer les bons copilotes." }
+      ]).map((lead) => `
+        <article class="table-row admin-lead-row">
+          <span><strong>${safeText(lead.company || lead.name || "Nouvelle entreprise")}</strong><small>${safeText(lead.profession || "Metier a confirmer")} · ${safeText(lead.email || "email a demander")}</small></span>
+          <span>${safeText(lead.type || "Demande")}<small>${safeText(lead.plan || "Formule a choisir")}</small></span>
+          <span>${safeText(lead.status || "Nouvelle demande")}</span>
+          <span class="admin-actions">
+            <button class="secondary-button lead-action" data-lead="${safeText(lead.id)}" data-status="A rappeler">A rappeler</button>
+            <button class="secondary-button lead-action" data-lead="${safeText(lead.id)}" data-status="Paiement envoye">Paiement</button>
+            <button class="primary-button lead-action" data-lead="${safeText(lead.id)}" data-status="Client actif">Activer</button>
+          </span>
+        </article>
+      `).join("")}
+    </section>
+    <div class="grid grid-2 section">
+      <article class="card">
+        <p class="eyebrow">Comptes</p>
+        <h3>Clients qui peuvent se connecter</h3>
+        ${(accounts.length ? accounts : [
+          { company: "Atelier Martin", email: "contact@qualifyragence.com", role: "client", plan: "Pro", status: "Actif" },
+          { company: "Qualifyr", email: "contact@qualifyragence.com", role: "admin", plan: "Interne", status: "Actif" }
+        ]).map((account) => `<div class="list-row"><span>${safeText(account.company)}<small>${safeText(account.email)}</small></span><strong>${safeText(account.role)} · ${safeText(account.plan)}</strong></div>`).join("")}
+      </article>
+      <article class="card">
+        <p class="eyebrow">A faire</p>
+        <h3>Prochaine meilleure action</h3>
+        ${[
+          "Rappeler les nouvelles demandes sous 15 minutes.",
+          "Envoyer le lien de paiement Mollie ou PayPlug.",
+          "Installer le widget copilote sur le site client.",
+          "Passer le compte en client actif apres paiement."
+        ].map((item) => `<div class="list-row"><span>${item}</span><strong>Priorite</strong></div>`).join("")}
+      </article>
     </div>
+  `;
+}
+
+function renderAuth() {
+  const session = getSession();
+  const leads = getStoredLeads().filter((lead) => !session || lead.email === session.email || session.role === "admin");
+  el("view-auth").innerHTML = `
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Espace client</p>
+        <h2>${session ? `Bonjour ${safeText(session.name)}.` : "Connectez-vous a Qualifyr AI."}</h2>
+        <p>${session ? "Votre compte, votre formule et vos demandes sont regroupes ici." : "Un artisan peut creer son compte, retrouver son copilote et suivre son installation."}</p>
+      </div>
+      ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : `<button class="secondary-button" data-login-admin>${svg("shield")} Acces admin</button>`}
+    </div>
+    ${session ? `
+      <div class="grid grid-3">
+        ${metric("Formule", safeText(session.plan || "Pro"), "Mensuel")}
+        ${metric("Metier", safeText(session.profession || state.profession), "Copilotes adaptes")}
+        ${metric("Demandes", leads.length || 1, "Suivi client")}
+      </div>
+      <div class="grid grid-2 section">
+        <article class="card auth-card">
+          <p class="eyebrow">Compte</p>
+          <h3>${safeText(session.company)}</h3>
+          <div class="list-row"><span>Email</span><strong>${safeText(session.email)}</strong></div>
+          <div class="list-row"><span>Role</span><strong>${safeText(session.role)}</strong></div>
+          <div class="list-row"><span>Etat</span><strong>${safeText(session.status)}</strong></div>
+          <div class="modal-actions">
+            <button class="primary-button" data-view="marketplace">${svg("grid")} Ajouter une IA</button>
+            <button class="secondary-button" data-open-checkout="${safeText(session.plan || "Pro")}">Gerer le paiement</button>
+          </div>
+        </article>
+        <article class="card auth-card">
+          <p class="eyebrow">Installation</p>
+          <h3>Votre copilote est pret a etre branche.</h3>
+          ${(leads.length ? leads.slice(0, 4) : [{ type: "Installation copilote", status: "En attente", goal: "Choisissez un copilote pour lancer l'installation." }]).map((lead) => `<div class="list-row"><span>${safeText(lead.type || "Demande")}<small>${safeText(lead.goal || lead.request || "Suivi en cours")}</small></span><strong>${safeText(lead.status || "En cours")}</strong></div>`).join("")}
+        </article>
+      </div>
+    ` : `
+      <div class="grid grid-2 auth-layout">
+        <form class="card auth-card" data-modal-form="auth-login">
+          <p class="eyebrow">Connexion</p>
+          <h3>J'ai deja un compte</h3>
+          <div class="field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
+          <button class="primary-button" type="submit">${svg("shield")} Entrer dans mon espace</button>
+          <p class="muted-note">Pour la version publique, ce formulaire sera branche a Supabase Auth ou Clerk.</p>
+        </form>
+        <form class="card auth-card" data-modal-form="auth-signup">
+          <p class="eyebrow">Nouveau client</p>
+          <h3>Creer mon espace</h3>
+          <div class="field"><label>Nom</label><input name="name" value="Jean Martin"></div>
+          <div class="field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
+          <div class="field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
+          <div class="field"><label>Metier</label><select name="profession">${professions.map((profession) => `<option ${profession === state.profession ? "selected" : ""}>${profession}</option>`).join("")}</select></div>
+          <button class="primary-button" type="submit">${svg("spark")} Creer mon compte</button>
+        </form>
+      </div>
+    `}
   `;
 }
 
@@ -4607,6 +4801,8 @@ function renderMore() {
     ["ai-center", "Mon assistant IA", "Activer, regler ou arreter une IA", "spark"],
     ["marketplace", "Ajouter une IA", "Installer de nouvelles aides intelligentes", "grid"],
     ["custom-ai", "IA sur mesure", "Recevoir une etude personnalisee", "message"],
+    ["auth", "Espace client", "Connexion, compte et installation", "users"],
+    ["admin", "Admin Qualifyr", "Demandes, paiements et installations", "shield"],
     ["settings", "Mon entreprise", "Entreprise, TVA, horaires et equipe", "shield"],
     ["billing", "Mes factures", "Factures, paiements, relances et exports", "card"],
     ["help", "Aide", "Guides simples et support", "help"]
@@ -4808,10 +5004,12 @@ function renderAll() {
   renderDocuments();
   renderSettings();
   renderMore();
+  renderAuth();
   renderAdmin();
   renderBilling();
   renderHelp();
   showView(state.view);
+  renderAccountButton();
 }
 
 document.addEventListener("click", (event) => {
@@ -4829,6 +5027,65 @@ document.addEventListener("click", (event) => {
   const openCheckout = event.target.closest("[data-open-checkout]");
   if (openCheckout) {
     openCheckoutModal(openCheckout.dataset.openCheckout || "Pro");
+    return;
+  }
+
+  if (event.target.closest("[data-login-admin]")) {
+    const admin = saveAccount({
+      role: "admin",
+      name: "Dorian",
+      company: "Qualifyr Agence",
+      email: "contact@qualifyragence.com",
+      profession: "Autre",
+      plan: "Interne"
+    });
+    setSession(admin);
+    renderAll();
+    showView("admin");
+    return;
+  }
+
+  if (event.target.closest("[data-logout]")) {
+    clearSession();
+    renderAll();
+    showView("auth");
+    return;
+  }
+
+  if (event.target.closest("[data-admin-seed]")) {
+    saveLead({
+      type: "Installation copilote",
+      company: "Dupont Plomberie",
+      name: "Marc Dupont",
+      email: "contact@dupont-plomberie.fr",
+      phone: "06 24 18 90 77",
+      profession: "Plombier",
+      plan: "Pro",
+      status: "Nouvelle demande",
+      goal: "Recevoir les appels urgents, demander des photos et preparer les devis."
+    });
+    renderAdmin();
+    return;
+  }
+
+  const leadAction = event.target.closest(".lead-action");
+  if (leadAction) {
+    upsertLeadStatus(leadAction.dataset.lead, leadAction.dataset.status);
+    if (leadAction.dataset.status === "Client actif") {
+      const lead = getStoredLeads().find((item) => item.id === leadAction.dataset.lead);
+      if (lead) {
+        saveAccount({
+          role: "client",
+          name: lead.name,
+          company: lead.company,
+          email: lead.email,
+          profession: lead.profession,
+          plan: lead.plan || "Pro",
+          status: "Actif"
+        });
+      }
+    }
+    renderAdmin();
     return;
   }
 
@@ -5318,6 +5575,7 @@ document.addEventListener("submit", (event) => {
 
   if (type === "talk") {
     const lead = saveLead({ type: "Demande Qualifyr", ...data });
+    saveAccount({ role: "client", ...data, company: data.company || "Prospect Qualifyr", plan: state.checkoutPlan || "Pro" });
     toast("Demande envoyee. Qualifyr a prepare la prochaine action.");
     openWidgetModal(lead);
     return;
@@ -5330,6 +5588,7 @@ document.addEventListener("submit", (event) => {
       copilot: form.dataset.copilot,
       ...data
     });
+    saveAccount({ role: "client", ...data, plan: state.checkoutPlan || recommendedPlanForProfession(data.profession), status: "Installation en cours" });
     toast("Copilote prepare. Le paiement et le widget sont prets.");
     openWidgetModal(lead);
     return;
@@ -5341,6 +5600,7 @@ document.addEventListener("submit", (event) => {
       plan: form.dataset.plan,
       ...data
     });
+    saveAccount({ role: "client", ...data, plan: form.dataset.plan, status: "Paiement prepare" });
     toast("Paiement prepare. Le branchement Mollie ou PayPlug peut prendre le relais cote serveur.");
     openModal(`
       <div class="modal-content">
@@ -5358,6 +5618,40 @@ document.addEventListener("submit", (event) => {
         </div>
       </div>
     `);
+    return;
+  }
+
+  if (type === "auth-login") {
+    const email = String(data.email || "").trim().toLowerCase();
+    const account = getAccounts().find((item) => item.email === email) || saveAccount({
+      role: email === "contact@qualifyragence.com" ? "admin" : "client",
+      email,
+      name: email === "contact@qualifyragence.com" ? "Dorian" : "Client Qualifyr",
+      company: email === "contact@qualifyragence.com" ? "Qualifyr Agence" : "Entreprise cliente",
+      profession: state.profession,
+      plan: "Pro"
+    });
+    setSession(account);
+    renderAll();
+    showView(account.role === "admin" ? "admin" : "auth");
+    return;
+  }
+
+  if (type === "auth-signup") {
+    const account = saveAccount({ role: "client", ...data, plan: "Pro", status: "Compte cree" });
+    setSession(account);
+    saveLead({
+      type: "Creation compte",
+      company: account.company,
+      name: account.name,
+      email: account.email,
+      profession: account.profession,
+      plan: account.plan,
+      status: "Compte cree",
+      goal: "Finaliser l'installation du premier copilote."
+    });
+    renderAll();
+    showView("auth");
     return;
   }
 
