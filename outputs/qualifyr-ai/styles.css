@@ -10120,3 +10120,109 @@ body.simple-ux .modal-field textarea:focus {
   border-color: rgba(34, 197, 94, 0.36) !important;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
 }
+
+/* Final typography authority: calmer SaaS titles */
+body.simple-ux {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+body.simple-ux h1,
+body.simple-ux h2,
+body.simple-ux h3,
+body.simple-ux .topbar h1,
+body.simple-ux .section-header h2,
+body.simple-ux .card h2,
+body.simple-ux .card h3 {
+  color: #111111 !important;
+  font-weight: 680 !important;
+  letter-spacing: -0.035em !important;
+}
+
+body.simple-ux .topbar h1 {
+  font-size: clamp(32px, 2.8vw, 46px) !important;
+  line-height: 1.04 !important;
+}
+
+body.simple-ux .copilot-command-main h2,
+body.simple-ux .simple-main-card h2,
+body.simple-ux .assistant-hero h2,
+body.simple-ux .trade-copilot-hero h2,
+body.simple-ux .sales-hero h2,
+body.simple-ux .pricing-marketing-hero h2,
+body.simple-ux .custom-ai-hero h2,
+body.simple-ux .setup-hero h2 {
+  max-width: 980px !important;
+  font-size: clamp(38px, 4vw, 58px) !important;
+  font-weight: 690 !important;
+  line-height: 1.03 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.simple-ux .section-header h2,
+body.simple-ux .simple-section-title h2,
+body.simple-ux .assistant-dialog h2,
+body.simple-ux .competitor-intel-card h2,
+body.simple-ux .copilot-match-card h2,
+body.simple-ux .trade-lead-form h2,
+body.simple-ux .trade-marketing-card h2,
+body.simple-ux .trade-pricing-section h2,
+body.simple-ux .modal-content h2 {
+  font-size: clamp(26px, 2.4vw, 38px) !important;
+  font-weight: 670 !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.035em !important;
+}
+
+body.simple-ux .card h3,
+body.simple-ux .trade-copilot-card h3,
+body.simple-ux .business-pack-card h3,
+body.simple-ux .digital-employee-card h3,
+body.simple-ux .premium-price-card h3,
+body.simple-ux .trade-plan-card h3,
+body.simple-ux .assistant-info-card h3,
+body.simple-ux .copilot-brain-card h3 {
+  font-size: clamp(18px, 1.45vw, 24px) !important;
+  font-weight: 650 !important;
+  line-height: 1.14 !important;
+  letter-spacing: -0.025em !important;
+}
+
+body.simple-ux .price-line strong,
+body.simple-ux .trade-price,
+body.simple-ux .metric-value,
+body.simple-ux .wow-proof-card strong {
+  font-weight: 700 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.simple-ux p,
+body.simple-ux .card p,
+body.simple-ux .modal-content p,
+body.simple-ux .section-header p {
+  font-weight: 440 !important;
+}
+
+@media (max-width: 760px) {
+  body.simple-ux .topbar h1 {
+    font-size: 30px !important;
+  }
+
+  body.simple-ux .copilot-command-main h2,
+  body.simple-ux .simple-main-card h2,
+  body.simple-ux .assistant-hero h2,
+  body.simple-ux .trade-copilot-hero h2,
+  body.simple-ux .sales-hero h2,
+  body.simple-ux .pricing-marketing-hero h2,
+  body.simple-ux .custom-ai-hero h2,
+  body.simple-ux .setup-hero h2 {
+    font-size: 34px !important;
+    line-height: 1.04 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  body.simple-ux .section-header h2,
+  body.simple-ux .modal-content h2 {
+    font-size: 25px !important;
+  }
+}
