@@ -1,4 +1,14 @@
-const { createSupabaseLead, json, methodNotAllowed, readBody } = require("../_lib");
+const {
+  createSupabaseAccount,
+  createSupabaseInstallation,
+  createSupabaseLead,
+  createSupabasePayment,
+  createSupabaseSubscription,
+  json,
+  methodNotAllowed,
+  readBody,
+  sendEmail
+} = require("../_lib");
 
 async function readForm(req) {
   const chunks = [];
@@ -44,25 +54,78 @@ module.exports = async function handler(req, res) {
     }
 
     const metadata = payment.metadata || {};
+    const paid = payment.status === "paid";
+    const amount = Number(payment.amount?.value || 0);
     await createSupabaseLead({
       id: metadata.leadId || `payment_${payment.id}`,
       type: "Paiement Mollie",
-      status: payment.status === "paid" ? "Client actif" : `Paiement ${payment.status}`,
+      status: paid ? "Client actif" : `Paiement ${payment.status}`,
       plan: metadata.plan || "Pro",
       company: metadata.company || "Entreprise",
       email: metadata.email || "",
       profession: metadata.profession || "Plombier",
       payment_id: payment.id,
-      amount: Number(payment.amount?.value || 0),
+      amount,
       payload: payment,
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString()
     }).catch(() => null);
+    await createSupabasePayment({
+      id: payment.id,
+      lead_id: metadata.leadId,
+      status: payment.status,
+      amount,
+      plan: metadata.plan || "Pro",
+      email: metadata.email,
+      company: metadata.company,
+      payload: payment
+    }).catch(() => null);
+
+    if (paid) {
+      await createSupabaseAccount({
+        role: "client",
+        status: "Actif",
+        company: metadata.company,
+        name: metadata.company,
+        email: metadata.email,
+        profession: metadata.profession,
+        plan: metadata.plan || "Pro",
+        payload: payment
+      }).catch(() => null);
+      await createSupabaseSubscription({
+        id: `sub_${payment.id}`,
+        account_email: metadata.email,
+        status: "active",
+        plan: metadata.plan || "Pro",
+        amount,
+        payload: payment
+      }).catch(() => null);
+      await createSupabaseInstallation({
+        id: `install_${payment.id}`,
+        account_email: metadata.email,
+        company: metadata.company,
+        profession: metadata.profession,
+        copilot: `Copilote ${metadata.profession || "metier"}`,
+        status: "A installer",
+        plan: metadata.plan || "Pro",
+        payload: payment
+      }).catch(() => null);
+      await sendEmail({
+        to: metadata.email,
+        subject: "Votre paiement Qualifyr AI est confirme",
+        html: `<h1>Paiement confirme</h1><p>Merci ${metadata.company || ""}. Votre copilote Qualifyr AI est en preparation.</p><p>Formule : ${metadata.plan || "Pro"}</p>`
+      }).catch(() => null);
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL || "contact@qualifyragence.com",
+        subject: `Nouveau client Qualifyr AI - ${metadata.company || metadata.email}`,
+        html: `<h1>Nouveau paiement confirme</h1><p>${metadata.company || ""} - ${metadata.email || ""}</p><p>Metier : ${metadata.profession || ""}</p><p>Formule : ${metadata.plan || "Pro"}</p><p>Paiement : ${payment.id}</p>`
+      }).catch(() => null);
+    }
 
     return json(res, 200, {
       ok: true,
       paymentId: payment.id,
       status: payment.status,
-      paid: payment.status === "paid"
+      paid
     });
   } catch (error) {
     return json(res, 500, {

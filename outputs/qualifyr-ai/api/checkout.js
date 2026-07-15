@@ -2,7 +2,9 @@ const {
   amountForPlan,
   appUrl,
   badRequest,
+  createSupabaseAccount,
   createSupabaseLead,
+  createSupabasePayment,
   json,
   methodNotAllowed,
   publicLead,
@@ -75,6 +77,26 @@ module.exports = async function handler(req, res) {
       payment_id: payment.id,
       amount: Number(plan.value),
       payload: body
+    }).catch((error) => ({ skipped: true, reason: error.message }));
+    await createSupabaseAccount({
+      role: "client",
+      status: "Paiement en cours",
+      company: lead.company,
+      name: lead.name,
+      email: lead.email,
+      profession: lead.profession,
+      plan: plan.label,
+      payload: body
+    }).catch((error) => ({ skipped: true, reason: error.message }));
+    await createSupabasePayment({
+      id: payment.id,
+      lead_id: lead.id,
+      status: payment.status,
+      amount: Number(plan.value),
+      plan: plan.label,
+      email: lead.email,
+      company: lead.company,
+      payload: payment
     }).catch((error) => ({ skipped: true, reason: error.message }));
 
     return json(res, 200, {

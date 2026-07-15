@@ -371,7 +371,17 @@ function saveLead(lead) {
   const leads = [fullLead, ...getStoredLeads()].slice(0, 50);
   localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
   state.lastLead = fullLead;
+  syncLeadToServer(fullLead);
   return fullLead;
+}
+
+function syncLeadToServer(lead) {
+  if (!window.fetch) return;
+  fetch("/api/leads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(lead)
+  }).catch(() => null);
 }
 
 function getAccounts() {
@@ -2921,95 +2931,81 @@ function renderDashboard() {
 }
 
 function renderCrm() {
-  const visibleClients = clients.filter((client) => !state.crmSearch || `${client.name} ${client.phone} ${client.email} ${client.company}`.toLowerCase().includes(state.crmSearch.toLowerCase()));
-  const prospectStatuses = ["Nouveau", "A rappeler", "Devis envoye", "En attente", "Accepte", "Refuse", "Client"];
+  const search = (state.crmSearch || "").toLowerCase();
+  const accounts = getAccounts().filter((account) => account.role === "client");
+  const leads = getStoredLeads();
+  const realContacts = [
+    ...accounts.map((account) => ({
+      id: account.id,
+      kind: "Client",
+      company: account.company,
+      name: account.name,
+      email: account.email,
+      phone: account.phone || "Telephone a completer",
+      profession: account.profession,
+      status: account.status || "Actif",
+      plan: account.plan || "Pro",
+      note: "Compte cree dans Qualifyr AI."
+    })),
+    ...leads
+      .filter((lead) => !accounts.some((account) => account.email === lead.email))
+      .map((lead) => ({
+        id: lead.id,
+        kind: "Demande",
+        company: lead.company || "Entreprise a confirmer",
+        name: lead.name || "Contact a confirmer",
+        email: lead.email || "Email a demander",
+        phone: lead.phone || "Telephone a demander",
+        profession: lead.profession || state.profession,
+        status: lead.status || "Nouvelle demande",
+        plan: lead.plan || "Pro",
+        note: lead.goal || lead.request || "Demande recue depuis le site."
+      }))
+  ].filter((contact) => !search || `${contact.company} ${contact.name} ${contact.email} ${contact.phone}`.toLowerCase().includes(search));
   el("view-crm").innerHTML = `
     <div class="section-header">
       <div>
         <p class="eyebrow">Mes clients</p>
-        <h2>Je veux voir mes clients.</h2>
-        <p>Recherchez une personne, retrouvez son telephone, son adresse, ses devis et ce qu'il faut faire ensuite.</p>
+        <h2>Les vrais contacts arrives dans Qualifyr AI.</h2>
+        <p>Cette page reste volontairement simple : une demande, un client, une prochaine action.</p>
       </div>
-      <button class="primary-button" id="addLead">${svg("users")} Ajouter un client</button>
+      <button class="primary-button" data-open-talk="Je veux ajouter un client">${svg("users")} Ajouter un client</button>
     </div>
-    <div class="grid grid-4">
-      ${metric("Clients", clients.length, "Fiches actives")}
-      ${metric("Prospects", prospects.length, "A suivre")}
-      ${metric("Montant facture", money(clients.reduce((sum, client) => sum + client.totalBilled, 0)), "Historique clients")}
-      ${metric("Doublons possibles", "3", "Fusion en attente")}
+    <div class="grid grid-3">
+      ${metric("Clients actifs", accounts.length, "Comptes crees")}
+      ${metric("Demandes", leads.length, "Recues du site")}
+      ${metric("A traiter", realContacts.filter((contact) => contact.status !== "Client actif" && contact.status !== "Actif").length, "Action conseillee")}
     </div>
     <div class="toolbar">
       <input id="crmSearch" class="search-input" value="${state.crmSearch || ""}" placeholder="Rechercher un nom, un telephone ou une entreprise" aria-label="Rechercher un client">
-      <select id="crmFilter"><option>Tous les clients</option><option>Nouveaux prospects</option><option>Devis a suivre</option><option>Clients actifs</option></select>
-      <select id="crmSort"><option>Trier par derniere intervention</option><option>Trier par ville</option><option>Trier par montant facture</option><option>Trier par date de creation</option></select>
-      <button class="secondary-button" data-view="client-profile">Ouvrir une fiche client</button>
-      <button class="secondary-button crm-bulk-action" data-action="archive">Archiver</button>
-      <button class="secondary-button crm-bulk-action" data-action="merge">Fusionner les doublons</button>
-      <button class="danger-button crm-bulk-action" data-action="delete">Supprimer</button>
+      <select id="crmFilter"><option>Tous</option><option>Demandes</option><option>Clients actifs</option></select>
+      <button class="secondary-button" data-view="admin">Voir l'admin</button>
     </div>
-    <div class="section client-simple-grid">
-      ${visibleClients.map((client, index) => {
-        const appointment = appointments[index % appointments.length];
-        const clientQuotes = quotes.filter((quote) => quote.client === client.name);
-        const fallbackQuote = quotes[index % quotes.length];
-        const invoice = invoices[index % invoices.length];
-        const lastHistory = client.history[0] || client.notes;
-        return `
-          <button class="card client-simple-card client-row" data-client="${client.id}">
-            <span class="client-identity"><img src="${client.avatar}" alt=""><span><strong>${client.name}</strong><small>${client.company}</small></span></span>
-            <div class="client-simple-lines">
-              <span><strong>Telephone</strong>${client.phone}</span>
-              <span><strong>Email</strong>${client.email}</span>
-              <span><strong>Adresse</strong>${client.city} · ${client.postalCode}</span>
-            </div>
-            <div class="client-card-summary">
-              <span><strong>${appointment ? appointment[0] : "--:--"}</strong><small>Prochain RDV</small></span>
-              <span><strong>${client.quoteCount}</strong><small>Devis</small></span>
-              <span><strong>${money(client.totalBilled)}</strong><small>Facture</small></span>
-            </div>
-            <p class="client-card-note">${lastHistory}</p>
-            <div class="client-card-footer">
-              <span>${client.documents.length} fichiers</span>
-              <span>${client.photos.length} photos</span>
-              <span>${invoice.status}</span>
-            </div>
-          </button>
-        `;
-      }).join("")}
-    </div>
-    <section class="section">
-      <div class="section-header compact-header">
-        <div>
-          <p class="eyebrow">Mes prospects</p>
-          <h2>Suivre les demandes avant qu'elles deviennent clientes.</h2>
-        </div>
-        <div class="section-actions">
-          <button class="secondary-button">Vue liste</button>
-          <button class="primary-button">Vue Kanban</button>
-        </div>
-      </div>
-      <div class="toolbar">
-        <input class="search-input" value="Rechercher un prospect" aria-label="Rechercher un prospect">
-        <select><option>Tous les statuts</option>${prospectStatuses.map((status) => `<option>${status}</option>`).join("")}</select>
-        <select><option>Toutes les sources</option><option>Site</option><option>WhatsApp</option><option>Appel</option><option>Instagram</option></select>
-      </div>
-      <div class="prospect-kanban">
-        ${prospectStatuses.map((status) => `
-          <section class="pipeline-column">
-            <strong>${status}</strong>
-            ${prospects.filter((prospect) => prospect.status === status).map((prospect) => `
-              <article class="pipeline-card">
-                <span class="status success">${prospect.source}</span>
-                <h3>${prospect.name}</h3>
-                <p>${prospect.need}</p>
-                <div class="list-row"><span>${prospect.phone}</span><strong>${money(prospect.amount)}</strong></div>
-                <small>${prospect.nextAction}</small>
-              </article>
-            `).join("")}
-          </section>
+    ${realContacts.length ? `
+      <div class="section data-table quiet-crm-list">
+        ${realContacts.map((contact) => `
+          <article class="table-row admin-lead-row">
+            <span><strong>${safeText(contact.company)}</strong><small>${safeText(contact.name)} · ${safeText(contact.profession)}</small></span>
+            <span>${safeText(contact.email)}<small>${safeText(contact.phone)}</small></span>
+            <span class="status ${contact.kind === "Client" ? "success" : "warning"}">${safeText(contact.status)}</span>
+            <span class="admin-actions">
+              <button class="secondary-button" data-open-talk="Rappeler ${safeText(contact.company)}">Rappeler</button>
+              <button class="primary-button" data-view="admin">Traiter</button>
+            </span>
+          </article>
         `).join("")}
       </div>
-    </section>
+    ` : `
+      <article class="card empty-state-card section">
+        <p class="eyebrow">Aucun client pour le moment</p>
+        <h3>Votre liste se remplira automatiquement.</h3>
+        <p>Quand un prospect remplit un formulaire, paie une formule ou demande un copilote, il apparaitra ici. Pour l'instant, Qualifyr garde cette page propre.</p>
+        <div class="modal-actions">
+          <button class="primary-button" data-view="marketplace">${svg("grid")} Ajouter une IA</button>
+          <button class="secondary-button" data-view="admin">Ouvrir l'admin</button>
+        </div>
+      </article>
+    `}
   `;
 }
 

@@ -84,6 +84,32 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 8. Apres paiement, Mollie appelle `/api/webhooks/payment`.
 9. Le statut peut alors passer en client actif dans l'admin Qualifyr.
 
+## Supabase et emails
+
+Le schema SQL est disponible dans `supabase/schema.sql`.
+
+Pour rendre les donnees persistantes :
+
+1. Creer un projet Supabase.
+2. Ouvrir SQL Editor.
+3. Coller et executer le contenu de `supabase/schema.sql`.
+4. Ajouter dans Vercel :
+
+```txt
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=xxxx
+ADMIN_EMAIL=contact@qualifyragence.com
+RESEND_API_KEY=re_xxxx
+EMAIL_FROM=Qualifyr AI <contact@qualifyragence.com>
+```
+
+Quand ces variables existent :
+
+- `/api/leads` enregistre les demandes dans `leads`.
+- `/api/checkout` enregistre la demande, le compte et le paiement en cours.
+- `/api/webhooks/payment` verifie Mollie, cree le client, le paiement, l'abonnement et l'installation du copilote.
+- Resend envoie l'email client et l'email admin apres paiement confirme.
+
 ## Parcours commercial prioritaire
 
 1. Le plombier arrive sur la page publique.
