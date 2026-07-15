@@ -121,7 +121,7 @@ const connectors = [
   "Facebook",
   "Instagram",
   "Messenger",
-  "Stripe",
+  "Mollie",
   "Google Sheets",
   "Slack",
   "Zapier",
@@ -161,13 +161,13 @@ const integrationCatalog = [
     history: ["Connecteur pret", "Migration documents planifiee", "OAuth requis"]
   },
   {
-    id: "stripe",
-    name: "Stripe",
-    logo: "ST",
+    id: "mollie",
+    name: "Mollie",
+    logo: "MO",
     description: "Suit les paiements, acomptes, abonnements et relances d'impayes dans Facturation IA.",
     state: "Connecte",
     connected: true,
-    configuration: ["Compte Stripe", "Paiement CB", "Webhooks paiement", "Relance impayes"],
+    configuration: ["Compte Mollie", "Paiement CB", "Webhooks paiement", "Relance impayes"],
     history: ["3 acomptes rapproches", "F-2026-031 payee", "Webhook paiement valide"]
   },
   {
@@ -1004,7 +1004,7 @@ function renderAiCenter() {
         <div class="field"><label>Seuil priorite</label><input type="range" min="1" max="10" value="8"></div>
         <label class="toggle active"><span class="switch"></span> Creer tache CRM</label>
         <label class="toggle active"><span class="switch"></span> Proposer un rendez-vous</label>
-        <label class="toggle"><span class="switch"></span> Demander paiement Stripe</label>
+        <label class="toggle"><span class="switch"></span> Demander paiement Mollie</label>
       </aside>
     </div>
   `;
@@ -1198,7 +1198,7 @@ const platformRegistry = {
       usage: "Module beta",
       saved: "0h",
       description: "Classe factures, rapproche paiements et prepare les exports comptables.",
-      stats: ["Export CSV pret", "Regles TVA pretes", "Stripe compatible"],
+      stats: ["Export CSV pret", "Regles TVA pretes", "Mollie compatible"],
       settings: ["Plan comptable", "TVA", "Exports", "Rapprochement bancaire"],
       history: ["Beta reservee aux plans Scale"]
     },
@@ -1364,12 +1364,12 @@ const platformRegistry = {
       id: "billing-ai",
       name: "Facturation IA",
       status: "Inactif",
-      description: "Convertit les devis en factures, suit les paiements Stripe/CB et relance les impayes.",
+      description: "Convertit les devis en factures, suit les paiements Mollie/CB et relance les impayes.",
       capture: "Factures suivies",
       savedTime: "10h/mois",
       automations: 10,
       stats: ["10 factures suivies", "3 acomptes recus", "2 impayes detectes"],
-      configuration: ["Stripe", "TVA", "Relance impayes", "Exports comptables"],
+      configuration: ["Mollie", "TVA", "Relance impayes", "Exports comptables"],
       history: ["F-2026-031 rapprochee", "Acompte recu", "Export comptable pret"]
     }
   ],
@@ -1628,8 +1628,8 @@ const platformRegistry = {
       copilots: [
         {
           title: "Copilote Facturation",
-          description: "Transforme les devis en factures, suit Stripe/CB et relance les impayes avec statistiques.",
-          features: ["Devis vers facture", "Stripe", "Paiement CB", "Relance impayes", "Stats paiement"],
+          description: "Transforme les devis en factures, suit Mollie/CB et relance les impayes avec statistiques.",
+          features: ["Devis vers facture", "Mollie", "Paiement CB", "Relance impayes", "Stats paiement"],
           savedTime: "4h/semaine",
           popularity: "79%",
           rating: "4,6/5",
@@ -1769,7 +1769,7 @@ const commercialSuite = {
     ["Cabinet Lacroix Dentaire", "Pro", "149 EUR/mois", "Paiement en attente", "Carte a verifier"]
   ],
   billingEvents: [
-    ["Paiement Stripe", "Roux Nettoyage Pro", "299 EUR", "Reussi"],
+    ["Paiement Mollie", "Roux Nettoyage Pro", "299 EUR", "Reussi"],
     ["Essai gratuit", "Belkacem Paysage", "14 jours", "Actif"],
     ["Facture abonnement", "Atelier Perrin", "149 EUR", "Envoyee"],
     ["Carte expiree", "Cabinet Lacroix Dentaire", "149 EUR", "Action requise"]
@@ -1791,7 +1791,7 @@ const commercialSuite = {
   ],
   emails: [
     ["Bienvenue essai gratuit", "Envoye apres inscription", "98% delivrabilite"],
-    ["Activation Stripe", "Envoye apres abonnement", "96% delivrabilite"],
+    ["Activation Mollie", "Envoye apres abonnement", "96% delivrabilite"],
     ["Devis signe", "Confirmation client", "99% delivrabilite"],
     ["Relance impaye", "J+3 et J+7", "92% delivrabilite"],
     ["Fin d'essai", "J-3 avant conversion", "94% delivrabilite"]
@@ -1805,7 +1805,7 @@ const commercialSuite = {
   ],
   faq: [
     ["Peut-on essayer sans carte bancaire ?", "Oui, l'essai gratuit peut etre active sans paiement pour les plans Starter et Pro."],
-    ["Stripe est-il obligatoire ?", "Non, Stripe est prevu pour la production, mais les devis et factures restent utilisables sans paiement en ligne."],
+    ["Mollie est-il obligatoire ?", "Non, Mollie est prevu pour la production, mais les devis et factures restent utilisables sans paiement en ligne."],
     ["Les appels IA sont-ils inclus ?", "Ils sont inclus dans Pro et Scale avec des limites d'usage configurables."],
     ["Peut-on ajouter un metier ?", "Oui, les copilotes marketplace sont declaratifs et extensibles."],
     ["Ou sont stockees les cles API ?", "Cote serveur uniquement, jamais dans le client."]
@@ -2192,7 +2192,7 @@ function getCopilotInsights() {
       },
       {
         title: `Traiter ${unpaidInvoices[0]?.number || "la facture impayee"}`,
-        reason: "Une facture necessite une relance courte avec lien de paiement Stripe.",
+        reason: "Une facture necessite une relance courte avec lien de paiement Mollie.",
         impact: "Encaissement accelere",
         view: "billing"
       },
@@ -2733,7 +2733,7 @@ const digitalEmployees = [
     stats: ["35 factures suivies", "12 en retard", "11 payees"],
     history: ["Facture F-2026-031 suivie", "Relance impaye preparee", "Paiement marque"],
     features: ["Prepare les factures", "Suit les paiements", "Relance les impayes"],
-    compatibility: ["Stripe", "PDF", "Comptabilite"],
+    compatibility: ["Mollie", "PDF", "Comptabilite"],
     faq: ["Peut-il relancer automatiquement ?", "Oui, selon vos regles.", "Peut-il exporter ?", "Oui."]
   },
   {
@@ -2799,7 +2799,7 @@ const businessPacks = [
   automations,
   scoreGain: 4 + (index % 5),
   models: "Devis, factures et tableaux de bord adaptes",
-  connections: ["Google Calendar", "Gmail", "WhatsApp", "Stripe", "Google Business"][index % 5]
+  connections: ["Google Calendar", "Gmail", "WhatsApp", "Mollie", "Google Business"][index % 5]
 }));
 
 const installationSteps = [
@@ -3111,7 +3111,7 @@ function renderCopilotLibrary(targetId) {
           </details>
           <details>
             <summary>Compatible avec</summary>
-            <div class="tag-list">${["Google", "WhatsApp", "Stripe", "Facebook", "Instagram", "Gmail", "Google Calendar", "Les autres copilotes", ...employee.compatibility].map((item) => `<span class="tag">${item}</span>`).join("")}</div>
+            <div class="tag-list">${["Google", "WhatsApp", "Mollie", "Facebook", "Instagram", "Gmail", "Google Calendar", "Les autres copilotes", ...employee.compatibility].map((item) => `<span class="tag">${item}</span>`).join("")}</div>
           </details>
           <details>
             <summary>Statistiques et historique</summary>
@@ -3250,7 +3250,7 @@ function copilotSetupProfile(employee) {
     {
       match: ["Facturation"],
       missing: [
-        ["Stripe ou suivi manuel", "Pour voir les paiements et relancer les impayes.", "A connecter", "3 h / semaine"],
+        ["Mollie ou suivi manuel", "Pour voir les paiements et relancer les impayes.", "A connecter", "3 h / semaine"],
         ["Vos delais de paiement", "Pour savoir quand relancer sans etre trop insistant.", "Pre-rempli", "Tresorerie suivie"],
         ["Modele de relance", "Pour envoyer un message clair et professionnel.", "Pret", "Impayes reduits"]
       ],
@@ -3383,7 +3383,7 @@ function renderCopilotSetup() {
       <article class="card">
         <p class="eyebrow">Compatible avec vos outils</p>
         <h2>Les connexions sont proposees automatiquement.</h2>
-        <div class="tag-list">${employee.compatibility.concat(["Google", "WhatsApp", "Gmail", "Google Calendar", "Stripe"]).slice(0, 9).map((item) => `<span class="tag">${item}</span>`).join("")}</div>
+        <div class="tag-list">${employee.compatibility.concat(["Google", "WhatsApp", "Gmail", "Google Calendar", "Mollie"]).slice(0, 9).map((item) => `<span class="tag">${item}</span>`).join("")}</div>
         <button class="primary-button setup-help">${svg("help")} Me guider pas a pas</button>
       </article>
     </section>
@@ -3801,7 +3801,7 @@ function renderIntegrations() {
     ["📱 Reseaux sociaux", "FB", "Facebook", "Suit les messages, pages et publications.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "2h / semaine", "Vos demandes Facebook seront mieux suivies."],
     ["💬 Communication", "GC", "Google Chat", "Previent votre equipe quand une action importante arrive.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "30 min / semaine", "Votre equipe sera prevenue au bon moment."],
     ["💬 Communication", "SL", "Slack", "Envoie les alertes importantes a votre equipe.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "30 min / semaine", "Les urgences seront partagees rapidement."],
-    ["💳 Paiements", "ST", "Stripe", "Suit les paiements et les factures en retard.", "Deconnecte", "Jamais", "Apres connexion", "🔴 Connexion interrompue", "2h / semaine", "Vous saurez plus vite qui a paye."],
+    ["💳 Paiements", "MO", "Mollie", "Suit les paiements et les factures en retard.", "Deconnecte", "Jamais", "Apres connexion", "🔴 Connexion interrompue", "2h / semaine", "Vous saurez plus vite qui a paye."],
     ["💳 Paiements", "PP", "PayPal", "Suit les paiements PayPal.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "45 min / semaine", "Vos paiements seront suivis automatiquement."],
     ["💳 Paiements", "SU", "SumUp", "Suit les encaissements terrain.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "45 min / semaine", "Vos paiements sur place seront mieux ranges."],
     ["📊 Comptabilite", "QB", "QuickBooks", "Aide a suivre factures et comptabilite.", "Deconnecte", "Jamais", "Apres connexion", "🟠 Synchronisation en attente", "2h / semaine", "Votre suivi comptable sera plus simple."],
@@ -3840,7 +3840,7 @@ function renderIntegrations() {
     ["Gmail connecte", true, "3h / semaine", "Vos emails clients sont mieux classes.", "Google Gmail"],
     ["WhatsApp Business", false, "5h / semaine", "Vos messages clients peuvent etre traites automatiquement.", "WhatsApp Business"],
     ["Google Business Profile", false, "2h / semaine", "Vous pouvez demander plus facilement des avis.", "Google Business Profile"],
-    ["Stripe", false, "2h / semaine", "Vos paiements et factures en retard seront mieux suivis.", "Stripe"],
+    ["Mollie", false, "2h / semaine", "Vos paiements et factures en retard seront mieux suivis.", "Mollie"],
     ["Google Drive", false, "1h / semaine", "Vos documents seront ranges par client.", "Google Drive"],
     ["Facebook", false, "2h / semaine", "Vos demandes Facebook seront centralisees.", "Facebook"],
     ["Instagram", false, "2h / semaine", "Vos messages Instagram deviendront des prospects.", "Instagram"]
@@ -3896,7 +3896,7 @@ function renderIntegrations() {
         <h2>Vos plus grandes opportunites aujourd'hui.</h2>
         <div class="list-row"><span><strong>Vous recevez beaucoup de demandes.</strong><br><small class="mini-muted">WhatsApp vous ferait gagner environ 5 heures par semaine.</small></span><button class="primary-button connection-action" data-tool="WhatsApp Business">Connecter</button></div>
         <div class="list-row"><span><strong>Vous gerez vos rendez-vous manuellement.</strong><br><small class="mini-muted">Google Calendar peut automatiser cette tache.</small></span><button class="primary-button connection-action" data-tool="Google Calendar">Connecter</button></div>
-        <div class="list-row"><span><strong>Vos factures en retard demandent du suivi.</strong><br><small class="mini-muted">Stripe peut vous aider a suivre les paiements.</small></span><button class="primary-button connection-action" data-tool="Stripe">Connecter</button></div>
+        <div class="list-row"><span><strong>Vos factures en retard demandent du suivi.</strong><br><small class="mini-muted">Mollie peut vous aider a suivre les paiements.</small></span><button class="primary-button connection-action" data-tool="Mollie">Connecter</button></div>
       </article>
     </section>
 
@@ -3930,7 +3930,7 @@ function renderIntegrations() {
         </div>
       </div>
       <div class="toolbar">
-        <input class="search-input" value="Google, WhatsApp, Stripe, Meta..." aria-label="Rechercher une connexion">
+        <input class="search-input" value="Google, WhatsApp, Mollie, Meta..." aria-label="Rechercher une connexion">
         <select>${["📅 Agenda", "💬 Communication", "💳 Paiements", "📧 Emails", "📱 Reseaux sociaux", "📊 Comptabilite", "📂 Stockage", "⚙️ Automatisation"].map((category) => `<option>${category}</option>`).join("")}</select>
       </div>
       <div class="integrations-grid section">
@@ -3993,7 +3993,7 @@ function renderIntegrations() {
       <article class="card">
         <p class="eyebrow">Connexions recommandees</p>
         <h2>Selon votre activite.</h2>
-        ${["Pour un plombier : Google Calendar, WhatsApp, Google Business, Stripe.", "Pour un garage : Google Calendar, WhatsApp, Facebook, Google Business.", "Pour votre entreprise aujourd'hui : WhatsApp, Stripe et Google Drive."].map((item) => `<div class="list-row"><span>${item}</span><strong>Conseil</strong></div>`).join("")}
+        ${["Pour un plombier : Google Calendar, WhatsApp, Google Business, Mollie.", "Pour un garage : Google Calendar, WhatsApp, Facebook, Google Business.", "Pour votre entreprise aujourd'hui : WhatsApp, Mollie et Google Drive."].map((item) => `<div class="list-row"><span>${item}</span><strong>Conseil</strong></div>`).join("")}
       </article>
       <article class="card">
         <p class="eyebrow">Sante des connexions</p>
@@ -4125,7 +4125,7 @@ function renderMore() {
     ["commercial", "Mon abonnement", "Offre actuelle, options, ROI, licences et paiements", "shield"],
     ["documents", "Mes documents", "Photos, factures, contrats, plans et PDF", "file"],
     ["notifications", "Mes alertes", "Clients, paiements, relances et rendez-vous", "message"],
-    ["integrations", "Mes connexions", "Google, Meta, Stripe et vos outils du quotidien", "grid"],
+    ["integrations", "Mes connexions", "Google, Meta, Mollie et vos outils du quotidien", "grid"],
     ["ai-center", "Mon assistant IA", "Activer, regler ou arreter une IA", "spark"],
     ["marketplace", "Ajouter une IA", "Installer de nouvelles aides intelligentes", "grid"],
     ["custom-ai", "IA sur mesure", "Recevoir une etude personnalisee", "message"],
@@ -4627,7 +4627,7 @@ document.addEventListener("click", (event) => {
 
   const trialButton = event.target.closest(".trial-action");
   if (trialButton) {
-    toast(`Essai gratuit ${trialButton.dataset.plan} prepare. Le checkout Stripe sera cree cote serveur.`);
+    toast(`Essai gratuit ${trialButton.dataset.plan} prepare. Le checkout Mollie sera cree cote serveur.`);
     return;
   }
 

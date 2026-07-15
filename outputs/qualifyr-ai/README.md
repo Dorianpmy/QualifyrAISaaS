@@ -11,7 +11,7 @@ Prototype SaaS premium pour un copilote IA modulaire dedie aux PME et artisans.
 
 - `professions` et `professionPlaybooks` pilotent les metiers, questions, urgences et automatisations.
 - `modules` centralise les modules activables sans refonte de l'interface.
-- `connectors` prepare les integrations Google Calendar, Gmail, WhatsApp, Meta, Stripe, Google Sheets, Slack, Zapier, Webhook et API.
+- `connectors` prepare les integrations Google Calendar, Gmail, WhatsApp, Meta, Mollie, Google Sheets, Slack, Zapier, Webhook et API.
 - `platformRegistry.assistants` declare les assistants IA activables individuellement avec etat, statistiques, couts, parametres et historique.
 - `platformRegistry.copilots` declare les copilotes marketplace installables en un clic, avec modules embarques et promesses metier.
 - `platformRegistry.copilotCategories` declare le coeur produit : Acquisition, Commercial, Planning, Clients, Marketing, Finance et Pilotage.
@@ -43,8 +43,8 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - Authentification, organisations, roles et permissions.
 - Appels IA via routes backend uniquement, jamais cote client.
 - Secrets OAuth et cles API stockes cote serveur.
-- Stripe Billing et portail client.
-- Webhooks entrants WhatsApp, Meta, Stripe, Google et Microsoft.
+- Mollie Subscriptions, liens de paiement et portail client.
+- Webhooks entrants WhatsApp, Meta, Mollie, Google et Microsoft.
 - Stockage securise des photos, pieces jointes et documents de devis.
 - Logs d'automatisation, audit admin et exports RGPD.
 - Marketplace avec installation de copilotes, droits par abonnement et migration de configuration.
