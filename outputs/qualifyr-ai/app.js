@@ -513,6 +513,69 @@ function planByName(name) {
   return copilotPlans.find((plan) => plan.name === name) || copilotPlans[1];
 }
 
+function businessPackByName(name) {
+  return businessPacks.find((pack) => pack.name === name) || getRelevantBusinessPacks()[0] || businessPacks[0];
+}
+
+function planForPack(pack) {
+  return pack?.name?.includes("PME") || pack?.name?.includes("Garage") ? "Equipe" : "Pro";
+}
+
+function openPackInstallModal(packName) {
+  const pack = businessPackByName(packName);
+  const plan = planForPack(pack);
+  state.checkoutPlan = plan;
+  openModal(`
+    <form class="modal-content" data-modal-form="pack-install" data-pack="${safeText(pack.name)}" data-plan="${plan}">
+      <p class="eyebrow">Installation du pack metier</p>
+      <h2 id="actionModalTitle">${safeText(pack.name)} peut etre active apres paiement.</h2>
+      <p>Qualifyr prepare les copilotes, les automatisations, les connexions recommandees et les modeles utiles. Le paiement lance ensuite l'installation.</p>
+      <div class="modal-choice-grid">
+        <div class="modal-choice"><strong>${safeText(pack.savedTime)}</strong><small>Temps gagne estime</small></div>
+        <div class="modal-choice"><strong>${safeText(pack.roi)}</strong><small>ROI estime</small></div>
+        <div class="modal-choice"><strong>${plan}</strong><small>Formule conseillee</small></div>
+      </div>
+      <div class="checkout-summary">
+        <div class="list-row"><span>Copilotes inclus</span><strong>${safeText(pack.copilots)}</strong></div>
+        <div class="list-row"><span>Missions automatiques</span><strong>${safeText(pack.automations)}</strong></div>
+        <div class="list-row"><span>Connexion prioritaire</span><strong>${safeText(pack.connections)}</strong></div>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
+        <div class="modal-field"><label>Nom</label><input name="name" value="Dorian"></div>
+        <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
+        <div class="modal-field"><label>Telephone</label><input name="phone" value="06 18 42 90 15"></div>
+        <div class="modal-field"><label>Metier</label><input name="profession" value="${safeText(pack.name.replace("Pack ", ""))}"></div>
+        <div class="modal-field"><label>Formule</label><select name="plan"><option ${plan === "Pro" ? "selected" : ""}>Pro</option><option ${plan === "Equipe" ? "selected" : ""}>Equipe</option><option>Essentiel</option></select></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("card")} Continuer vers le paiement</button>
+        <button class="secondary-button" type="button" data-pack-demo="${safeText(pack.name)}">Voir l'apercu</button>
+      </div>
+    </form>
+  `);
+}
+
+function openPackDemoModal(packName) {
+  const pack = businessPackByName(packName);
+  openModal(`
+    <div class="modal-content">
+      <p class="eyebrow">Apercu du pack</p>
+      <h2 id="actionModalTitle">${safeText(pack.name)} en situation réelle.</h2>
+      <p>Exemple : un prospect envoie une demande. Qualifyr qualifie, demande les informations utiles, prepare le devis et range l'action dans votre espace.</p>
+      <div class="integration-roadmap">
+        <div class="roadmap-step"><strong>1. Demande recue</strong><small>Site, appel ou WhatsApp.</small></div>
+        <div class="roadmap-step"><strong>2. Qualification</strong><small>${safeText(pack.copilots)}</small></div>
+        <div class="roadmap-step"><strong>3. Action prete</strong><small>Client, devis ou rendez-vous.</small></div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" data-pack-install="${safeText(pack.name)}">${svg("spark")} Installer ce pack</button>
+        <button class="secondary-button" data-close-modal>Fermer</button>
+      </div>
+    </div>
+  `);
+}
+
 function openTalkToQualifyrModal(seed = "") {
   openModal(`
     <form class="modal-content" data-modal-form="talk">
@@ -5291,18 +5354,30 @@ document.addEventListener("click", (event) => {
 
   const packInstall = event.target.closest(".pack-install");
   if (packInstall) {
-    toast(`${packInstall.dataset.pack} installe : copilotes, missions, connexions, modeles et tableaux de bord sont prets.`);
+    openPackInstallModal(packInstall.dataset.pack);
+    return;
+  }
+
+  const packInstallFromModal = event.target.closest("[data-pack-install]");
+  if (packInstallFromModal) {
+    openPackInstallModal(packInstallFromModal.dataset.packInstall);
     return;
   }
 
   const packDemo = event.target.closest(".pack-demo");
   if (packDemo) {
-    toast(`Apercu ${packDemo.dataset.pack} ouvert avec un parcours client complet.`);
+    openPackDemoModal(packDemo.dataset.pack);
+    return;
+  }
+
+  const packDemoFromModal = event.target.closest("[data-pack-demo]");
+  if (packDemoFromModal) {
+    openPackDemoModal(packDemoFromModal.dataset.packDemo);
     return;
   }
 
   if (event.target.closest(".pack-auto-install")) {
-    toast("Installation automatique lancee : Qualifyr AI configure, connecte, active, teste et valide.");
+    openPackInstallModal(getRelevantBusinessPacks()[0]?.name || "Pack Artisan");
     return;
   }
 
@@ -5639,6 +5714,70 @@ document.addEventListener("submit", async (event) => {
           </div>
           <div class="modal-actions">
             <button class="primary-button" data-view="admin">${svg("shield")} Voir la demande admin</button>
+            <button class="secondary-button" data-close-modal>Fermer</button>
+          </div>
+        </div>
+      `);
+    }
+    return;
+  }
+
+  if (type === "pack-install") {
+    const pack = businessPackByName(form.dataset.pack);
+    const selectedPlan = data.plan || form.dataset.plan || planForPack(pack);
+    const lead = saveLead({
+      type: "Installation pack metier",
+      status: "Paiement a finaliser",
+      pack: pack.name,
+      goal: `Installer ${pack.name} avec ${pack.copilots}`,
+      plan: selectedPlan,
+      ...data
+    });
+    const account = saveAccount({
+      role: "client",
+      status: "Paiement en cours",
+      company: data.company,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      profession: data.profession,
+      plan: selectedPlan
+    });
+    setSession(account);
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Paiement securise</p>
+        <h2 id="actionModalTitle">Creation du paiement pour ${safeText(pack.name)}.</h2>
+        <p>Qualifyr prepare le lien Mollie. Vous allez etre redirige vers le paiement securise.</p>
+        <div class="checkout-summary">
+          <div class="list-row"><span>Pack</span><strong>${safeText(pack.name)}</strong></div>
+          <div class="list-row"><span>Formule</span><strong>${safeText(selectedPlan)}</strong></div>
+          <div class="list-row"><span>Entreprise</span><strong>${safeText(data.company)}</strong></div>
+        </div>
+      </div>
+    `);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lead)
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "Paiement indisponible");
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+      throw new Error("Lien de paiement absent.");
+    } catch (error) {
+      saveAccount({ ...account, status: "Paiement a configurer" });
+      openModal(`
+        <div class="modal-content">
+          <p class="eyebrow">Paiement non disponible</p>
+          <h2 id="actionModalTitle">La demande pack est enregistree.</h2>
+          <p>${safeText(error.message)}. Vous pouvez traiter cette demande depuis l'admin Qualifyr.</p>
+          <div class="modal-actions">
+            <button class="primary-button" data-view="admin">${svg("shield")} Ouvrir l'admin</button>
             <button class="secondary-button" data-close-modal>Fermer</button>
           </div>
         </div>

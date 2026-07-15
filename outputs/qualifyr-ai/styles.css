@@ -10330,3 +10330,58 @@ body.simple-ux .section-header p {
     display: none;
   }
 }
+
+/* Compact button authority: calmer, closer to a mature SaaS interface. */
+body.simple-ux .primary-button,
+body.simple-ux .secondary-button,
+body.simple-ux .danger-button,
+body.simple-ux .dark-ghost,
+body.simple-ux .top-actions .primary-button,
+body.simple-ux .universal-command .primary-button,
+body.simple-ux .assistant-ask,
+body.simple-ux .pack-auto-install,
+body.simple-ux .trade-form-submit,
+body.simple-ux .trade-scroll-form,
+body.simple-ux .trade-plan-select,
+body.simple-ux .copilot-hire,
+body.simple-ux .trial-action {
+  min-height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 560 !important;
+  gap: 8px !important;
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.08) !important;
+}
+
+body.simple-ux .primary-button svg,
+body.simple-ux .secondary-button svg,
+body.simple-ux .danger-button svg,
+body.simple-ux .dark-ghost svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+body.simple-ux .hero-actions {
+  gap: 8px !important;
+}
+
+body.simple-ux .business-pack-card .hero-actions button,
+body.simple-ux .trade-copilot-card .hero-actions button,
+body.simple-ux .premium-price-card .primary-button,
+body.simple-ux .premium-price-card .secondary-button {
+  min-height: 40px !important;
+  border-radius: 11px !important;
+}
+
+body.simple-ux .top-actions .primary-button {
+  min-height: 38px !important;
+}
+
+body.simple-ux .universal-command {
+  padding: 10px 12px !important;
+}
+
+body.simple-ux .universal-command .primary-button {
+  min-width: 104px !important;
+}
