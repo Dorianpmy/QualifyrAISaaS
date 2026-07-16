@@ -707,10 +707,10 @@ function openCopilotLeadModal(mode = "site", profession = state.profession) {
         <div class="modal-field"><label>Site internet</label><input name="website" value="https://atelier-martin.fr"></div>
         <div class="modal-field full"><label>Ce que le copilote doit faire</label><textarea name="goal">${copilot.description}</textarea></div>
       </div>
-      <div class="integration-roadmap">
-        <div class="roadmap-step"><strong>1. Formulaire</strong><small>Le besoin est enregistre.</small></div>
-        <div class="roadmap-step"><strong>2. Paiement</strong><small>Abonnement mensuel securise.</small></div>
-        <div class="roadmap-step"><strong>3. Installation</strong><small>Widget site ou reception email.</small></div>
+      <div class="integration-roadmap setup-roadmap">
+        <div class="roadmap-step"><span class="roadmap-number">1</span><span><strong>Formulaire</strong><small>Le besoin est enregistre.</small></span></div>
+        <div class="roadmap-step"><span class="roadmap-number">2</span><span><strong>Paiement</strong><small>L'abonnement mensuel est prepare.</small></span></div>
+        <div class="roadmap-step"><span class="roadmap-number">3</span><span><strong>Installation</strong><small>Qualifyr ajoute le copilote sur le site ou par email.</small></span></div>
       </div>
       <div class="modal-actions">
         <button class="primary-button" type="submit">${svg("spark")} Continuer</button>
@@ -1470,12 +1470,13 @@ function renderCommercial() {
         <p class="eyebrow">Mon offre actuelle</p>
         <h2>${current.name}</h2>
         <div class="price">${current.price}</div>
+        <p class="plan-helper">C'est la formule active sur ce compte. Elle montre ce qui est deja inclus avant de changer d'offre.</p>
         ${[
-          ["Renouvellement", current.renewal],
-          ["Utilisateurs", current.users],
-          ["Copilotes inclus", current.copilots],
-          ["Connexions incluses", current.connections],
-          ["Stockage utilise", current.storage]
+          ["Prochaine facture", current.renewal],
+          ["Places equipe", current.users],
+          ["Aides IA actives", current.copilots],
+          ["Outils connectes", current.connections],
+          ["Documents", current.storage]
         ].map(([label, value]) => `<div class="list-row"><span>${label}</span><strong>${value}</strong></div>`).join("")}
       </article>
       <article class="card">
@@ -1512,6 +1513,17 @@ function renderCommercial() {
           </article>
         `).join("")}
       </div>
+      <article class="card usage-explainer-card">
+        <div>
+          <p class="eyebrow">Limites d'utilisation</p>
+          <h3>Une action automatique, c'est quoi ?</h3>
+          <p>Une action correspond a une tache faite par Qualifyr : classer une demande, envoyer une relance, preparer un devis, ajouter un rendez-vous ou prevenir l'equipe.</p>
+        </div>
+        <div class="usage-explainer-grid">
+          <span><strong>500 / mois</strong><small>Pour demarrer avec quelques demandes par semaine.</small></span>
+          <span><strong>2 500 / mois</strong><small>Pour recevoir des demandes presque tous les jours ou utiliser plusieurs canaux.</small></span>
+        </div>
+      </article>
     </section>
 
     <section class="section grid grid-2" id="subscription-included">
@@ -2644,8 +2656,8 @@ const commercialSuite = {
       price: "79 EUR",
       target: "Independants et petites equipes",
       trial: "14 jours gratuits",
-      description: "CRM, devis IA, relances email, centre documents et 2 copilotes inclus.",
-      features: ["2 utilisateurs", "500 automatisations/mois", "CRM complet", "Devis IA", "Support email"],
+      description: "Pour demarrer : clients, devis, relances simples et 2 aides IA incluses.",
+      features: ["2 places equipe", "500 actions automatiques/mois", "Clients et devis", "Relances simples", "Support email"],
       highlighted: false
     },
     {
@@ -2653,8 +2665,8 @@ const commercialSuite = {
       price: "149 EUR",
       target: "Artisans avec volume d'appels",
       trial: "14 jours gratuits",
-      description: "Telephone IA, WhatsApp IA, agenda intelligent, avis Google et marketplace metier.",
-      features: ["5 utilisateurs", "2 500 automatisations/mois", "Telephone IA", "WhatsApp IA", "Google Calendar", "Avis Google"],
+      description: "Pour un metier complet : appels, WhatsApp, planning, devis et avis Google.",
+      features: ["5 places equipe", "2 500 actions automatiques/mois", "Telephone IA", "WhatsApp IA", "Planning et avis"],
       highlighted: true
     },
     {
@@ -2737,10 +2749,10 @@ const subscriptionCenter = {
     name: "Copilote metier",
     price: "149 EUR / mois",
     renewal: "01/08/2026",
-    users: "2 utilisateurs actifs / 5 inclus",
-    copilots: "4 copilotes inclus / 8",
-    connections: "5 connexions incluses / 10",
-    storage: "42 Go utilises / 100 Go",
+    users: "2 personnes actives sur 5 places",
+    copilots: "4 aides IA actives",
+    connections: "5 outils connectes",
+    storage: "42 Go de documents sur 100 Go",
     potential: 68
   },
   includedFeatures: ["Assistant IA", "Devis", "Factures", "Planning", "Google Calendar", "Gmail", "WhatsApp", "Documents", "Mes clients", "Relances simples"],
