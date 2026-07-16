@@ -550,7 +550,7 @@ function openModal(content) {
 function recommendedPlanForProfession(profession = state.profession) {
   const normalized = normalizeProfessionName(profession);
   const premium = ["Dentiste", "Immobilier", "Garage", "Chauffagiste"];
-  return premium.includes(normalized) ? "Pro" : "Pro";
+  return premium.includes(normalized) ? "Copilote metier" : "Copilote metier";
 }
 
 function selectedTradeCopilot(profession = state.profession) {
@@ -559,7 +559,15 @@ function selectedTradeCopilot(profession = state.profession) {
 }
 
 function planByName(name) {
-  return copilotPlans.find((plan) => plan.name === name) || copilotPlans[1];
+  const aliases = {
+    Starter: "Premiers clients",
+    Essentiel: "Premiers clients",
+    Pro: "Copilote metier",
+    Equipe: "Equipe locale",
+    Scale: "Equipe locale"
+  };
+  const normalizedName = aliases[name] || name;
+  return copilotPlans.find((plan) => plan.name === normalizedName) || copilotPlans[1];
 }
 
 function businessPackByName(name) {
@@ -567,7 +575,7 @@ function businessPackByName(name) {
 }
 
 function planForPack(pack) {
-  return pack?.name?.includes("PME") || pack?.name?.includes("Garage") ? "Equipe" : "Pro";
+  return pack?.name?.includes("PME") || pack?.name?.includes("Garage") ? "Equipe locale" : "Copilote metier";
 }
 
 function openPackInstallModal(packName) {
@@ -595,7 +603,7 @@ function openPackInstallModal(packName) {
         <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
         <div class="modal-field"><label>Telephone</label><input name="phone" value="06 18 42 90 15"></div>
         <div class="modal-field"><label>Metier</label><input name="profession" value="${safeText(pack.name.replace("Pack ", ""))}"></div>
-        <div class="modal-field"><label>Formule</label><select name="plan"><option ${plan === "Pro" ? "selected" : ""}>Pro</option><option ${plan === "Equipe" ? "selected" : ""}>Equipe</option><option>Starter</option></select></div>
+        <div class="modal-field"><label>Formule</label><select name="plan"><option ${plan === "Copilote metier" ? "selected" : ""}>Copilote metier</option><option ${plan === "Equipe locale" ? "selected" : ""}>Equipe locale</option><option>Premiers clients</option></select></div>
       </div>
       <div class="modal-actions">
         <button class="primary-button" type="submit">${svg("card")} Continuer vers le paiement</button>
@@ -640,7 +648,7 @@ function openTalkToQualifyrModal(seed = "") {
       </div>
       <div class="modal-actions">
         <button class="primary-button" type="submit">${svg("spark")} Envoyer ma demande</button>
-        <button class="secondary-button" type="button" data-open-checkout="Pro">Voir la formule conseillee</button>
+        <button class="secondary-button" type="button" data-open-checkout="Copilote metier">Voir la formule conseillee</button>
       </div>
     </form>
   `);
@@ -965,9 +973,9 @@ function renderResponsiveMenu() {
         .join("")}
     </div>
     <div class="mobile-nav-upgrade">
-      <button class="mobile-nav-primary" data-open-checkout="Pro">
+      <button class="mobile-nav-primary" data-open-checkout="Copilote metier">
         ${svg("spark")}
-        Passer au plan Pro
+        Passer a Copilote metier
       </button>
     </div>
     <div class="mobile-nav-account">
@@ -1256,7 +1264,7 @@ function renderPricing() {
     [
       ["Copilotes inclus", "Illimites"],
       ["Demandes clients", "10 000 / mois"],
-      ["Equipe", "15 utilisateurs"],
+      ["Equipe locale", "15 utilisateurs"],
       ["Support", "Prioritaire"],
       ["Pilotage", "Avance"]
     ],
@@ -1512,7 +1520,7 @@ function renderCommercial() {
               <span>Utile pour</span>
               <strong>${why}</strong>
             </div>
-            <button class="primary-button option-unlock" data-option="${name}" data-open-checkout="Pro">Debloquer</button>
+            <button class="primary-button option-unlock" data-option="${name}" data-open-checkout="Copilote metier">Debloquer</button>
           </article>
         `).join("")}
       </div>
@@ -1771,9 +1779,9 @@ function renderAdmin() {
         <h2>Les prospects a rappeler maintenant.</h2>
       </div>
       ${(leads.length ? leads : [
-        { id: "seed-1", company: "Atelier Martin", name: "Jean Martin", email: "contact@qualifyragence.com", profession: "Plombier", type: "Installation copilote", plan: "Pro", status: "Nouvelle demande", createdAt: new Date().toISOString(), goal: "Installer un copilote pour qualifier les urgences fuite." },
-        { id: "seed-2", company: "Garage Bel Air", name: "Nassim Belkacem", email: "garage@demo.fr", profession: "Garage automobile", type: "Paiement", plan: "Equipe", status: "Paiement prepare", createdAt: new Date().toISOString(), goal: "Automatiser les appels atelier et les rappels controle technique." },
-        { id: "seed-3", company: "Roux Nettoyage Pro", name: "Benedicte Roux", email: "contact@roux-nettoyage.fr", profession: "Societe de nettoyage", type: "Analyse concurrents", plan: "Pro", status: "A qualifier", createdAt: new Date().toISOString(), goal: "Comparer les concurrents et installer les bons copilotes." }
+        { id: "seed-1", company: "Atelier Martin", name: "Jean Martin", email: "contact@qualifyragence.com", profession: "Plombier", type: "Installation copilote", plan: "Copilote metier", status: "Nouvelle demande", createdAt: new Date().toISOString(), goal: "Installer un copilote pour qualifier les urgences fuite." },
+        { id: "seed-2", company: "Garage Bel Air", name: "Nassim Belkacem", email: "garage@demo.fr", profession: "Garage automobile", type: "Paiement", plan: "Equipe locale", status: "Paiement prepare", createdAt: new Date().toISOString(), goal: "Automatiser les appels atelier et les rappels controle technique." },
+        { id: "seed-3", company: "Roux Nettoyage Pro", name: "Benedicte Roux", email: "contact@roux-nettoyage.fr", profession: "Societe de nettoyage", type: "Analyse concurrents", plan: "Copilote metier", status: "A qualifier", createdAt: new Date().toISOString(), goal: "Comparer les concurrents et installer les bons copilotes." }
       ]).map((lead) => `
         <article class="table-row admin-lead-row">
           <span><strong>${safeText(lead.company || lead.name || "Nouvelle entreprise")}</strong><small>${safeText(lead.profession || "Metier a confirmer")} · ${safeText(lead.email || "email a demander")}</small></span>
@@ -1792,7 +1800,7 @@ function renderAdmin() {
         <p class="eyebrow">Comptes</p>
         <h3>Clients qui peuvent se connecter</h3>
         ${(accounts.length ? accounts : [
-          { company: "Atelier Martin", email: "contact@qualifyragence.com", role: "client", plan: "Pro", status: "Actif" },
+          { company: "Atelier Martin", email: "contact@qualifyragence.com", role: "client", plan: "Copilote metier", status: "Actif" },
           { company: "Qualifyr", email: "contact@qualifyragence.com", role: "admin", plan: "Interne", status: "Actif" }
         ]).map((account) => `<div class="list-row"><span>${safeText(account.company)}<small>${safeText(account.email)}</small></span><strong>${safeText(account.role)} · ${safeText(account.plan)}</strong></div>`).join("")}
       </article>
@@ -2048,7 +2056,7 @@ const platformRegistry = {
       description: "Classe factures, rapproche paiements et prepare les exports comptables.",
       stats: ["Export CSV pret", "Regles TVA pretes", "Mollie compatible"],
       settings: ["Plan comptable", "TVA", "Exports", "Rapprochement bancaire"],
-      history: ["Beta reservee aux plans Equipe"]
+      history: ["Beta reservee aux offres Equipe locale"]
     },
     {
       id: "hr-ai",
@@ -2574,7 +2582,7 @@ const marketplaceCatalog = [
 const commercialSuite = {
   plans: [
     {
-      name: "Starter",
+      name: "Premiers clients",
       price: "79 EUR",
       target: "Independants et petites equipes",
       trial: "14 jours gratuits",
@@ -2583,7 +2591,7 @@ const commercialSuite = {
       highlighted: false
     },
     {
-      name: "Pro",
+      name: "Copilote metier",
       price: "149 EUR",
       target: "Artisans avec volume d'appels",
       trial: "14 jours gratuits",
@@ -2592,7 +2600,7 @@ const commercialSuite = {
       highlighted: true
     },
     {
-      name: "Equipe",
+      name: "Equipe locale",
       price: "229 EUR",
       target: "PME avec plusieurs personnes",
       trial: "Audit offert",
@@ -2611,10 +2619,10 @@ const commercialSuite = {
     }
   ],
   subscriptions: [
-    ["Atelier Perrin", "Pro", "149 EUR/mois", "Actif", "Renouvellement 01/08/2026"],
-    ["Roux Nettoyage Pro", "Equipe", "229 EUR/mois", "Actif", "Renouvellement 03/08/2026"],
-    ["Belkacem Paysage", "Starter", "79 EUR/mois", "Essai gratuit", "Fin essai 24/07/2026"],
-    ["Cabinet Lacroix Dentaire", "Pro", "149 EUR/mois", "Paiement en attente", "Carte a verifier"]
+    ["Atelier Perrin", "Copilote metier", "149 EUR/mois", "Actif", "Renouvellement 01/08/2026"],
+    ["Roux Nettoyage Pro", "Equipe locale", "229 EUR/mois", "Actif", "Renouvellement 03/08/2026"],
+    ["Belkacem Paysage", "Premiers clients", "79 EUR/mois", "Essai gratuit", "Fin essai 24/07/2026"],
+    ["Cabinet Lacroix Dentaire", "Copilote metier", "149 EUR/mois", "Paiement en attente", "Carte a verifier"]
   ],
   billingEvents: [
     ["Paiement Mollie", "Roux Nettoyage Pro", "229 EUR", "Reussi"],
@@ -2652,23 +2660,23 @@ const commercialSuite = {
     ["Inviter son equipe", "3 min", "Licences et roles"]
   ],
   faq: [
-    ["Peut-on essayer sans carte bancaire ?", "Oui, l'essai gratuit peut etre active sans paiement pour les plans Starter et Pro."],
+    ["Peut-on essayer sans carte bancaire ?", "Oui, l'essai gratuit peut etre active sans paiement pour les offres Premiers clients et Copilote metier."],
     ["Mollie est-il obligatoire ?", "Non, Mollie est prevu pour la production, mais les devis et factures restent utilisables sans paiement en ligne."],
-    ["Les appels IA sont-ils inclus ?", "Ils sont inclus dans Pro et Equipe avec des limites d'usage configurables."],
+    ["Les appels IA sont-ils inclus ?", "Ils sont inclus dans Copilote metier et Equipe locale avec des limites d'usage configurables."],
     ["Peut-on ajouter un metier ?", "Oui, les copilotes marketplace sont declaratifs et extensibles."],
     ["Ou sont stockees les cles API ?", "Cote serveur uniquement, jamais dans le client."]
   ],
   support: [
     ["Chat support", "Temps moyen 4 min", "Ouvert"],
     ["Email support", "support@qualifyr-ai.fr", "Priorite Pro"],
-    ["Onboarding accompagne", "Session 45 min", "Inclus Equipe"],
+    ["Onboarding accompagne", "Session 45 min", "Inclus Equipe locale"],
     ["Base de connaissance", "42 articles", "Disponible"]
   ]
 };
 
 const subscriptionCenter = {
   currentPlan: {
-    name: "Pro Copilote",
+    name: "Copilote metier",
     price: "149 EUR / mois",
     renewal: "01/08/2026",
     users: "2 utilisateurs actifs / 5 inclus",
@@ -2683,8 +2691,8 @@ const subscriptionCenter = {
     ["WhatsApp IA avance", "Demande les photos, classe les messages et prepare les reponses.", "5 h / semaine", "Le plus installe", "Transformer les messages en devis plus vite."],
     ["Assistant Commercial IA", "Repere les opportunites et propose les meilleures relances.", "3 h / semaine", "Nouveau", "Signer plus de devis sans y penser."],
     ["Assistant Marketing IA", "Prepare publications, campagnes locales et offres saisonnieres.", "2 h / semaine", "Populaire", "Recevoir plus de demandes qualifiees."],
-    ["Previsions IA", "Anticipe le chiffre d'affaires, la charge et les creux d'activite.", "1 h / semaine", "Pro", "Mieux organiser les prochaines semaines."],
-    ["Analyse Business IA", "Explique les chiffres importants avec des actions simples.", "2 h / semaine", "Equipe", "Savoir quoi ameliorer en premier."],
+    ["Previsions IA", "Anticipe le chiffre d'affaires, la charge et les creux d'activite.", "1 h / semaine", "Copilote metier", "Mieux organiser les prochaines semaines."],
+    ["Analyse Business IA", "Explique les chiffres importants avec des actions simples.", "2 h / semaine", "Equipe locale", "Savoir quoi ameliorer en premier."],
     ["Signature electronique", "Fait signer les devis en ligne et range les preuves.", "1 h / semaine", "Indispensable", "Faire accepter les devis plus rapidement."]
   ],
   optionShop: [
@@ -2706,7 +2714,7 @@ const subscriptionCenter = {
     monthlyEstimate: "4 920 EUR / mois"
   },
   history: [
-    ["Changement d'offre", "Passage vers Pro Copilote", "01/07/2026"],
+    ["Changement d'offre", "Passage vers Copilote metier", "01/07/2026"],
     ["Ajout d'un copilote", "WhatsApp IA avance active", "03/07/2026"],
     ["Paiement", "Facture abonnement reglee", "05/07/2026"],
     ["Facture", "QAI-SUB-2026-071 disponible", "05/07/2026"],
@@ -2722,7 +2730,7 @@ const subscriptionCenter = {
     ["FAQ", "Reponses simples aux questions frequentes.", "12 articles"],
     ["Tutoriels", "Guides pas a pas pour demarrer rapidement.", "8 videos"],
     ["Videos", "Demos courtes par metier et par objectif.", "14 contenus"],
-    ["Support", "Aide humaine pour les reglages importants.", "Priorite Equipe"],
+    ["Support", "Aide humaine pour les reglages importants.", "Priorite Equipe locale"],
     ["Documentation", "Parametres, facturation, equipes et securite.", "42 pages"]
   ],
   news: [
@@ -3700,9 +3708,9 @@ const tradeCopilots = [
 }));
 
 const copilotPlans = [
-  ["Starter", "79 EUR / mois", "Pour tester un copilote sur un site vitrine.", ["Widget IA sur le site", "Formulaire intelligent", "Reception par email", "Historique des demandes"], "Recevoir par email"],
-  ["Pro", "149 EUR / mois", "Le meilleur choix pour un artisan qui veut gagner du temps chaque semaine.", ["Copilote metier complet", "Ajout sur le site", "Espace Qualifyr AI", "Devis et relances", "Support prioritaire"], "Choisir Pro", true],
-  ["Equipe", "229 EUR / mois", "Pour PME avec plusieurs utilisateurs, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
+  ["Premiers clients", "79 EUR / mois", "Pour recevoir les demandes d'un site vitrine et ne plus les perdre.", ["Widget IA sur le site", "Formulaire intelligent", "Reception par email", "Historique des demandes"], "Recevoir par email"],
+  ["Copilote metier", "149 EUR / mois", "Le meilleur choix pour un artisan qui veut gagner du temps chaque semaine.", ["Copilote metier complet", "Ajout sur le site", "Espace Qualifyr AI", "Devis et relances", "Support prioritaire"], "Choisir cette offre", true],
+  ["Equipe locale", "229 EUR / mois", "Pour une PME avec plusieurs personnes, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
 ].map(([name, price, description, features, cta, recommended]) => ({ name, price, description, features, cta, recommended }));
 
 const tradeUseCases = {
@@ -3827,7 +3835,7 @@ function renderCopilotLibrary(targetId) {
     Budget: {
       label: "Combien ca coute",
       title: "Choisissez une formule simple.",
-      text: "Starter pour tester, Pro pour automatiser les demandes, Equipe pour plusieurs utilisateurs.",
+      text: "Premiers clients pour tester, Copilote metier pour automatiser les demandes, Equipe locale pour plusieurs utilisateurs.",
       cards: relevantTradeCopilots.slice().sort((a, b) => String(a.price).localeCompare(String(b.price))).slice(0, 3)
     },
     Installation: {
@@ -5307,7 +5315,7 @@ document.addEventListener("click", (event) => {
       email: "contact@dupont-plomberie.fr",
       phone: "06 24 18 90 77",
       profession: "Plombier",
-      plan: "Pro",
+      plan: "Copilote metier",
       status: "Nouvelle demande",
       goal: "Recevoir les appels urgents, demander des photos et preparer les devis."
     });
@@ -6046,7 +6054,7 @@ document.addEventListener("submit", async (event) => {
       name: "Client Qualifyr",
       company: "Entreprise cliente",
       profession: state.profession,
-      plan: "Pro"
+      plan: "Copilote metier"
     });
     setSession(account);
     renderAll();
@@ -6084,7 +6092,7 @@ document.addEventListener("submit", async (event) => {
   }
 
   if (type === "auth-signup") {
-    const account = saveAccount({ role: "client", ...data, plan: "Pro", status: "Compte cree" });
+    const account = saveAccount({ role: "client", ...data, plan: "Copilote metier", status: "Compte cree" });
     setSession(account);
     saveLead({
       type: "Creation compte",
@@ -6146,7 +6154,7 @@ document.addEventListener("submit", async (event) => {
           <div class="list-row"><span>Gain estime</span><strong>${selectedTradeCopilot().savedTime}</strong></div>
         </div>
         <div class="modal-actions">
-          <button class="primary-button" data-open-checkout="Pro">Activer la solution conseillee</button>
+          <button class="primary-button" data-open-checkout="Copilote metier">Activer la solution conseillee</button>
           <button class="secondary-button" data-close-modal>Fermer</button>
         </div>
       </div>

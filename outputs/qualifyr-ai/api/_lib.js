@@ -1,8 +1,12 @@
 const PLAN_PRICES = {
-  Essentiel: { value: "79.00", label: "Essentiel" },
-  Pro: { value: "149.00", label: "Pro" },
-  Equipe: { value: "299.00", label: "Equipe" },
-  Scale: { value: "299.00", label: "Equipe" }
+  "Premiers clients": { value: "79.00", label: "Premiers clients" },
+  Essentiel: { value: "79.00", label: "Premiers clients" },
+  Starter: { value: "79.00", label: "Premiers clients" },
+  "Copilote metier": { value: "149.00", label: "Copilote metier" },
+  Pro: { value: "149.00", label: "Copilote metier" },
+  "Equipe locale": { value: "229.00", label: "Equipe locale" },
+  Equipe: { value: "229.00", label: "Equipe locale" },
+  Scale: { value: "229.00", label: "Equipe locale" }
 };
 
 function json(res, statusCode, payload) {
@@ -40,8 +44,8 @@ function appUrl(req) {
   return `${proto}://${host}`;
 }
 
-function amountForPlan(planName = "Pro") {
-  return PLAN_PRICES[planName] || PLAN_PRICES.Pro;
+function amountForPlan(planName = "Copilote metier") {
+  return PLAN_PRICES[planName] || PLAN_PRICES["Copilote metier"];
 }
 
 function publicLead(lead = {}) {
@@ -49,7 +53,7 @@ function publicLead(lead = {}) {
     id: lead.id || `lead_${Date.now()}`,
     type: lead.type || "Paiement",
     status: lead.status || "Paiement a finaliser",
-    plan: lead.plan || "Pro",
+    plan: lead.plan || "Copilote metier",
     company: lead.company || "Entreprise",
     name: lead.name || "Client Qualifyr",
     email: String(lead.email || "").trim().toLowerCase(),

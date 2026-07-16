@@ -13511,3 +13511,74 @@ body.simple-ux .trade-form-grid .field textarea {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Brand green pass: softer Qualifyr accent, no neon effect. */
+body.simple-ux {
+  --primary: #138a4b !important;
+  --primary-hover: #0f6f3d !important;
+  --primary-soft: #eef8f2 !important;
+  --primary-line: rgba(19, 138, 75, 0.20) !important;
+  --primary-border: rgba(19, 138, 75, 0.20) !important;
+  --primary-glow: rgba(19, 138, 75, 0.08) !important;
+  --success: #138a4b !important;
+  --success-soft: #eef8f2 !important;
+}
+
+body.simple-ux .pricing-toggle em,
+body.simple-ux .premium-toggle em {
+  background: #111 !important;
+  color: #bde7cb !important;
+  border: 1px solid rgba(189, 231, 203, 0.24) !important;
+  box-shadow: none !important;
+}
+
+body.simple-ux .premium-price-card.featured,
+body.simple-ux .premium-price-card.recommended,
+body.simple-ux .plan-choice-card.recommended,
+body.simple-ux .card.featured {
+  border-color: rgba(19, 138, 75, 0.26) !important;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(19, 138, 75, 0.075), transparent 30%),
+    #fff !important;
+  box-shadow: 0 24px 70px rgba(17, 17, 17, 0.08) !important;
+}
+
+body.simple-ux .status.success,
+body.simple-ux .copilot-match-row b,
+body.simple-ux .choice-pill.active,
+body.simple-ux .trade-card-bottom span,
+body.simple-ux .plan-choice-features span {
+  color: #137542 !important;
+  background: #eef8f2 !important;
+  border-color: rgba(19, 138, 75, 0.18) !important;
+}
+
+body.simple-ux .status.success::before,
+body.simple-ux .assistant-score-line span,
+body.simple-ux .progress-fill,
+body.simple-ux .score-fill {
+  background: #138a4b !important;
+}
+
+body.simple-ux button:not(.danger-button):hover,
+body.simple-ux .primary-button:hover,
+body.simple-ux .secondary-button:hover,
+body.simple-ux .ghost-button:hover,
+body.simple-ux .icon-button:hover,
+body.simple-ux .mobile-nav-row:hover,
+body.simple-ux .mobile-nav-primary:hover {
+  background: rgba(19, 138, 75, 0.10) !important;
+  border-color: rgba(19, 138, 75, 0.22) !important;
+  color: #137542 !important;
+  box-shadow: 0 14px 30px rgba(19, 138, 75, 0.10) !important;
+}
+
+body.simple-ux button:not(.danger-button):hover svg,
+body.simple-ux .primary-button:hover svg,
+body.simple-ux .secondary-button:hover svg,
+body.simple-ux .ghost-button:hover svg,
+body.simple-ux .icon-button:hover svg,
+body.simple-ux .mobile-nav-row:hover svg,
+body.simple-ux .mobile-nav-primary:hover svg {
+  stroke: #137542 !important;
+}
