@@ -290,6 +290,7 @@ const navItems = [
   ["calendar", "Mon planning", "calendar", "📅", "Rendez-vous et trajets"],
   ["automations", "Mes automatisations", "workflow", "⚡", "Taches qui se font seules"],
   ["marketplace", "Ajouter une IA", "grid", "🧩", "Copilotes par metier"],
+  ["commercial", "Abonnement", "card", "", "Offre, paiement et options"],
   ["notifications", "Mon activite", "dashboard", "📈", "Resultats et alertes"],
   ["settings", "Mon entreprise", "shield", "🏢", "Infos, equipe, abonnement"]
 ];
@@ -298,7 +299,7 @@ const navGroups = [
   ["Chaque jour", ["dashboard", "ai-center"]],
   ["Travailler", ["crm", "quotes", "calendar"]],
   ["Gagner du temps", ["automations", "marketplace"]],
-  ["Suivre", ["notifications", "settings"]]
+  ["Suivre", ["commercial", "notifications", "settings"]]
 ];
 
 const bottomNavItems = [
@@ -3647,11 +3648,11 @@ function renderCopilotLibrary(targetId) {
         <p>Le client choisit son metier, renseigne ses besoins, puis Qualifyr prepare un copilote a installer sur son site ou a recevoir par email.</p>
         <div class="hero-actions">
           <button class="primary-button trade-scroll-form">${svg("spark")} Trouver mon copilote</button>
-          <button class="secondary-button trade-scroll-pricing">Voir les tarifs</button>
+          <button class="secondary-button" data-view="commercial">Voir l'abonnement</button>
         </div>
       </div>
       <div class="trade-widget-preview">
-        <span>${svg("spark")}</span>
+        <span class="trade-widget-icon">${svg("spark")}</span>
         <strong>Assistant client Qualifyr</strong>
         <small>Collecte le besoin, les coordonnees et les informations utiles.</small>
         <button class="primary-button">Demarrer</button>
@@ -3763,38 +3764,6 @@ function renderCopilotLibrary(targetId) {
         <div class="list-row"><span>Offre recommandee</span><strong>149 EUR / mois</strong></div>
         <div class="list-row"><span>Positionnement</span><strong>Moins cher qu'un appel manque</strong></div>
       </article>
-    </section>
-
-    <section class="section trade-pricing-section" id="tradeCopilotPricing">
-      <div class="section-header compact-header">
-        <div>
-          <p class="eyebrow">Abonnement mensuel</p>
-          <h2>3 tarifs simples pour vendre sans expliquer.</h2>
-          <p>Le meilleur compromis commercial est Pro a 149 EUR / mois : assez accessible pour un artisan, assez premium pour financer l'accompagnement.</p>
-        </div>
-      </div>
-      <div class="trade-pricing-grid">
-        ${copilotPlans.map((plan) => `
-          <article class="card trade-plan-card premium-price-card ${plan.recommended ? "recommended featured" : ""}">
-            ${plan.recommended ? `<span class="status success">Le plus vendu</span>` : `<span class="plan-trial">Sans engagement</span>`}
-            <h3>${plan.name}</h3>
-            <div class="price-line">
-              <strong>${plan.price.replace(" EUR / mois", "").replace("Sur devis", "Sur devis")}</strong>
-              <span>${plan.price.includes("EUR") ? "EUR / mois" : "accompagnement"}</span>
-            </div>
-            <p class="plan-story">${plan.description}</p>
-            <div class="premium-feature-list">
-              ${plan.features.map((feature) => `
-                <div class="premium-feature-row">
-                  <span>${svg("spark")} ${feature}</span>
-                  <strong>Inclus</strong>
-                </div>
-              `).join("")}
-            </div>
-            <button class="${plan.recommended ? "primary-button" : "secondary-button"} trade-plan-select" data-plan="${plan.name}">${plan.cta}</button>
-          </article>
-        `).join("")}
-      </div>
     </section>
 
     <section class="section grid grid-2 copilot-process-section">
@@ -4661,17 +4630,17 @@ function renderMarketplace() {
 }
 
 function renderCustomAi() {
-  const software = ["Google Calendar", "Gmail", "Pennylane", "Sage", "Sellsy", "HubSpot", "Notion", "Excel", "WhatsApp Business"];
+  const dailyTools = ["Agenda", "Email", "WhatsApp", "Facturation", "Tableur", "Aucun outil pour l'instant"];
   el("view-custom-ai").innerHTML = `
     <div class="custom-ai-hero">
       <p class="eyebrow">Copilote IA sur mesure</p>
       <h2>Votre entreprise est unique.<br>Votre IA doit l'etre aussi.</h2>
-      <p>Nous developpons des copilotes IA entierement personnalises selon vos processus metiers, vos logiciels et vos objectifs.</p>
+      <p>Qualifyr vous aide a creer un assistant adapte a votre facon de travailler, sans configuration compliquee.</p>
     </div>
     <div class="split-layout section">
       <section class="card form-grid">
         <p class="eyebrow">Etude personnalisee</p>
-        <h3>Decrivez votre besoin</h3>
+        <h3>Expliquez simplement ce que vous voulez gagner.</h3>
         ${[
           ["Nom", "Dorian"],
           ["Entreprise", "Atelier Qualifyr Demo"],
@@ -4680,19 +4649,24 @@ function renderCustomAi() {
           ["Objectifs", "Gagner du temps sur les appels, devis et relances"],
           ["Budget", "300 - 800 EUR / mois"],
           ["Telephone", "06 12 34 56 78"],
-          ["Email", "contact@qualifyr-ai.fr"]
+          ["Email", "contact@qualifyragence.com"]
         ].map(([label, value]) => `<div class="field"><label>${label}</label><input value="${value}"></div>`).join("")}
-        <div class="field"><label>Description du besoin</label><textarea>Nous recevons beaucoup de demandes par telephone et WhatsApp. Nous voulons qualifier automatiquement les urgences, creer les clients, preparer les devis et relancer sans perdre le suivi.</textarea></div>
-        <div class="field"><label>Logiciels utilises</label><select>${software.map((item) => `<option>${item}</option>`).join("")}</select></div>
+        <div class="field"><label>Ce que vous voulez automatiser</label><textarea>Nous recevons beaucoup de demandes par telephone et WhatsApp. Nous voulons qualifier les urgences, noter les coordonnees, preparer les devis et relancer les clients.</textarea></div>
+        <div class="field simple-choice-field">
+          <label>Outils que vous utilisez deja</label>
+          <div class="choice-pill-grid">
+            ${dailyTools.map((item, index) => `<button type="button" class="choice-pill ${index < 3 ? "active" : ""}">${item}</button>`).join("")}
+          </div>
+        </div>
         <div class="upload-zone">
-          <strong>Ajouter des documents</strong>
-          <span>Documents, captures d'ecran, PDF ou videos de vos processus actuels.</span>
+          <strong>Ajouter un exemple</strong>
+          <span>Un ancien devis, une demande client ou une capture suffit.</span>
         </div>
         <button class="primary-button" id="customStudy">${svg("message")} Recevoir une etude personnalisee</button>
       </section>
       <aside class="card">
-        <p class="eyebrow">Ce que l'etude livre</p>
-        ${["Liste de vos taches repetitives", "IA recommandees", "Actions prioritaires", "Estimation du temps gagne", "Budget de mise en place", "Plan de connexion a vos outils"].map((item) => `<div class="list-row"><span>${item}</span><strong>Inclus</strong></div>`).join("")}
+        <p class="eyebrow">Ce que vous recevez</p>
+        ${["Les taches que Qualifyr peut prendre en charge", "Le copilote conseille pour votre metier", "Les actions a activer en premier", "Une estimation simple du temps gagne", "Le prix conseille", "Les prochaines etapes sans jargon"].map((item) => `<div class="list-row"><span>${item}</span><strong>Inclus</strong></div>`).join("")}
       </aside>
     </div>
   `;
@@ -5242,6 +5216,13 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  const choicePill = event.target.closest(".choice-pill");
+  if (choicePill) {
+    choicePill.classList.toggle("active");
+    toast(`${choicePill.textContent.trim()} ${choicePill.classList.contains("active") ? "ajoute" : "retire"} de l'etude.`);
+    return;
+  }
+
   if (event.target.closest(".competitor-action")) {
     openCompetitorModal();
     return;
@@ -5265,8 +5246,8 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest(".trade-scroll-pricing")) {
-    el("tradeCopilotPricing")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    toast("Tarifs : Essentiel 79 EUR, Pro 149 EUR recommande, Equipe 299 EUR par mois.");
+    showView("commercial");
+    toast("Abonnement ouvert.");
     return;
   }
 
