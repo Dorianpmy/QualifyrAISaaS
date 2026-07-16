@@ -12085,3 +12085,132 @@ body.simple-ux .trade-copilot-card .hero-actions button {
     min-height: auto !important;
   }
 }
+
+/* Honest alerts page: real events only, clear empty state. */
+body.simple-ux .empty-alert-state {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  gap: 24px !important;
+  align-items: start !important;
+  padding: clamp(28px, 4vw, 46px) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(34, 197, 94, 0.08), transparent 34%),
+    #ffffff !important;
+}
+
+body.simple-ux .empty-alert-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 18px !important;
+  color: #16a34a !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+}
+
+body.simple-ux .empty-alert-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.simple-ux .empty-alert-state h2 {
+  max-width: 760px !important;
+  margin: 8px 0 12px !important;
+  font-size: clamp(28px, 3vw, 42px) !important;
+  line-height: 1.06 !important;
+}
+
+body.simple-ux .empty-alert-state p:not(.eyebrow) {
+  max-width: 760px !important;
+  color: #6e6e6e !important;
+  line-height: 1.55 !important;
+}
+
+body.simple-ux .alert-explain-grid {
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+body.simple-ux .alert-explain-grid article {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 18px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  background: #fbfaf7 !important;
+}
+
+body.simple-ux .alert-explain-grid strong {
+  font-size: 15px !important;
+  font-weight: 680 !important;
+}
+
+body.simple-ux .alert-explain-grid span {
+  color: #6e6e6e !important;
+  font-size: 14px !important;
+  line-height: 1.42 !important;
+}
+
+body.simple-ux .empty-alert-state .hero-actions {
+  grid-column: 1 / -1 !important;
+}
+
+body.simple-ux .honest-alert-list {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 8px !important;
+}
+
+body.simple-ux .honest-alert-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 20px !important;
+  align-items: center !important;
+  padding: 18px 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: #111 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+body.simple-ux .honest-alert-row:last-child {
+  border-bottom: 0 !important;
+}
+
+body.simple-ux .honest-alert-row span {
+  display: grid !important;
+  gap: 5px !important;
+}
+
+body.simple-ux .honest-alert-row strong {
+  font-size: 16px !important;
+}
+
+body.simple-ux .honest-alert-row small {
+  color: #6e6e6e !important;
+  font-size: 14px !important;
+}
+
+body.simple-ux .honest-alert-row em {
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  color: #138a3d !important;
+  font-style: normal !important;
+  font-weight: 650 !important;
+}
+
+@media (max-width: 900px) {
+  body.simple-ux .empty-alert-state {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .alert-explain-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

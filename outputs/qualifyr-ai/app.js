@@ -2931,22 +2931,11 @@ const documents = [
   ["Plan", "Plan-bureaux-480m2.pdf", "Benedicte Roux", "Plan lie a l'intervention mensuelle"]
 ];
 
-const notifications = Array.from({ length: 40 }, (_, index) => {
-  const client = clients[index % clients.length];
-  const types = ["Nouveau prospect", "Nouveau devis", "Relance", "Paiement", "Rendez-vous", "Document", "Avis Google", "Conversation"];
-  const type = types[index % types.length];
-  const messages = {
-    "Nouveau prospect": `${client.name} vient d'etre qualifie depuis ${client.source}`,
-    "Nouveau devis": `${quotes[index % quotes.length].number} prepare pour ${client.name}`,
-    Relance: `${client.name} doit etre relance par ${index % 2 ? "WhatsApp" : "email"}`,
-    Paiement: `${invoices[index % invoices.length].number} mis a jour : ${invoices[index % invoices.length].status}`,
-    "Rendez-vous": `${appointments[index % appointments.length][2]} ajoute a ${appointments[index % appointments.length][4]}`,
-    Document: `${documents[index % documents.length][1]} classe automatiquement`,
-    "Avis Google": `Demande d'avis programmee pour ${client.name}`,
-    Conversation: `${conversations[index % conversations.length].channel} resume dans l'historique client`
-  };
-  return [type, messages[type], index < 6 ? `Il y a ${4 + index * 7} min` : `Aujourd'hui ${String(9 + (index % 9)).padStart(2, "0")}:${index % 2 ? "15" : "45"}`];
-});
+const notifications = getStoredLeads().slice(0, 8).map((lead, index) => [
+  lead.type || "Nouvelle demande",
+  `${lead.company || lead.name || "Un prospect"} a envoye une demande depuis le site.`,
+  index === 0 ? "A traiter" : "Recu"
+]);
 
 const recentActivity = [
   ...notifications.slice(0, 12).map(([type, text, time]) => ({ type, text, time })),
@@ -4894,20 +4883,62 @@ function renderCustomAi() {
 }
 
 function renderNotifications() {
+  const realAlerts = getStoredLeads().slice(0, 8).map((lead, index) => [
+    lead.type || "Nouvelle demande",
+    `${lead.company || lead.name || "Un prospect"} a envoye une demande depuis le site.`,
+    index === 0 ? "A traiter" : "Recu"
+  ]);
   el("view-notifications").innerHTML = `
     <div class="section-header">
       <div>
         <p class="eyebrow">Mes alertes</p>
-        <h2>${notifications.length} choses importantes a ne pas oublier.</h2>
+        <h2>Ce qui demande votre attention.</h2>
+        <p>Cette page affiche uniquement les vraies actions a traiter. Pas de faux historique, pas de fausses notifications.</p>
       </div>
       <div class="section-actions">
-        <button class="secondary-button">Tout marquer comme lu</button>
-        <button class="primary-button">Regler mes alertes</button>
+        <button class="secondary-button" data-view="marketplace">Ajouter une IA</button>
+        <button class="primary-button" data-view="settings">Regler mes alertes</button>
       </div>
     </div>
-    <div class="card">
-      ${notifications.map(([type, text, time]) => `<div class="list-row"><span><strong>${type}</strong><br><small class="mini-muted">${text}</small></span><strong>${time}</strong></div>`).join("")}
-    </div>
+    ${realAlerts.length ? `
+      <div class="card honest-alert-list">
+        ${realAlerts.map(([type, text, status]) => `
+          <button class="honest-alert-row" data-view="admin">
+            <span>
+              <strong>${type}</strong>
+              <small>${text}</small>
+            </span>
+            <em>${status}</em>
+          </button>
+        `).join("")}
+      </div>
+    ` : `
+      <section class="empty-alert-state card">
+        <span class="empty-alert-icon">${svg("message")}</span>
+        <div>
+          <p class="eyebrow">Aucune alerte reelle pour le moment</p>
+          <h2>Quand un client vous contacte, l'action apparait ici.</h2>
+          <p>Exemple : un nouveau prospect, un devis a relancer, un paiement recu, un rendez-vous a confirmer ou une demande d'avis Google.</p>
+        </div>
+        <div class="alert-explain-grid">
+          ${[
+            ["Nouveau client", "Vous savez qui rappeler en premier."],
+            ["Devis a relancer", "Qualifyr vous indique l'argent a recuperer."],
+            ["Planning", "Vous voyez les rendez-vous a confirmer."],
+            ["Avis Google", "Vous savez quand demander un avis."]
+          ].map(([title, text]) => `
+            <article>
+              <strong>${title}</strong>
+              <span>${text}</span>
+            </article>
+          `).join("")}
+        </div>
+        <div class="hero-actions">
+          <button class="primary-button" data-view="marketplace">Installer mon premier copilote</button>
+          <button class="secondary-button" data-open-talk="Je veux comprendre les alertes">Demander a Qualifyr</button>
+        </div>
+      </section>
+    `}
   `;
 }
 
