@@ -14549,3 +14549,45 @@ body.simple-ux .universal-command.universal-copilot-cta:hover {
     display: flex !important;
   }
 }
+
+/* Sidebar bottom safety: keep the assistant card fully reachable on short screens and iPhone Safari. */
+body.simple-ux .sidebar {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding-bottom: max(24px, calc(24px + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+body.simple-ux .sidebar::-webkit-scrollbar {
+  display: none !important;
+}
+
+body.simple-ux .sidebar-card {
+  flex: 0 0 auto !important;
+  margin-bottom: max(18px, calc(18px + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+body.simple-ux .sidebar-card .dark-ghost {
+  width: 100% !important;
+  min-height: 42px !important;
+}
+
+@media (max-width: 760px) {
+  body.simple-ux .mobile-nav-popover,
+  body.mobile-menu-open .mobile-nav-popover {
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: calc(34px + env(safe-area-inset-bottom, 0px)) !important;
+    scroll-padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body.simple-ux .mobile-nav-account {
+    margin-bottom: calc(22px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
