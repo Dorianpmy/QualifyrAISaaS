@@ -410,6 +410,7 @@ function saveAccount(account) {
     email: normalizedEmail || existing?.email || "contact@qualifyragence.com",
     profession: account.profession || existing?.profession || state.profession,
     plan: account.plan || existing?.plan || state.checkoutPlan || "Pro",
+    authProvider: account.authProvider || existing?.authProvider || "email",
     adminToken: account.adminToken || existing?.adminToken || null,
     adminExpiresAt: account.adminExpiresAt || existing?.adminExpiresAt || null
   };
@@ -456,8 +457,28 @@ function renderAccountButton() {
   const button = el("accountButton");
   if (!button) return;
   const session = getSession();
-  button.textContent = session ? (session.role === "admin" ? "Admin" : "Espace client") : "Connexion";
-  button.dataset.view = session?.role === "admin" ? "admin" : "auth";
+  button.textContent = session ? "Mon compte" : "Se connecter";
+  button.dataset.view = "auth";
+  button.setAttribute("aria-label", session ? "Ouvrir mon compte" : "Se connecter");
+}
+
+function handleSocialAuth(provider) {
+  const isApple = provider === "apple";
+  const providerLabel = isApple ? "Apple" : "Google";
+  const account = saveAccount({
+    role: "client",
+    name: isApple ? "Utilisateur Apple" : "Utilisateur Google",
+    company: "Entreprise Qualifyr",
+    email: isApple ? "client.apple@qualifyr.local" : "client.google@qualifyr.local",
+    profession: state.profession,
+    plan: "Copilote metier",
+    status: `Connecte avec ${providerLabel}`,
+    authProvider: provider
+  });
+  setSession(account);
+  renderAll();
+  showView("auth");
+  toast(`Connexion ${providerLabel} preparee. Activez Supabase Auth pour le vrai OAuth.`);
 }
 
 function isAdminSession(session = getSession()) {
@@ -931,7 +952,6 @@ function renderBottomNav() {
 function renderResponsiveMenu() {
   const node = el("mobileNavPopover");
   if (!node) return;
-  const adminVisible = isAdminSession();
   const session = getSession();
   const accountName = session?.name || "Utilisateur";
   const accountEmail = session?.email || "votre.email@entreprise.fr";
@@ -993,7 +1013,6 @@ function renderResponsiveMenu() {
       <button data-view="commercial">${svg("card")} Mes paiements</button>
       <button data-view="integrations">${svg("workflow")} Connexions</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
-      ${adminVisible ? `<button data-view="admin">${svg("shield")} Admin Qualifyr</button>` : ""}
       <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>
     </div>
   `;
@@ -1867,6 +1886,7 @@ function renderAuth() {
           <div class="modal-actions">
             <button class="primary-button" data-view="marketplace">${svg("grid")} Ajouter une IA</button>
             <button class="secondary-button" data-open-checkout="${safeText(session.plan || "Pro")}">Gerer le paiement</button>
+            ${adminVisible ? `<button class="secondary-button" data-view="admin">${svg("shield")} Ouvrir l'espace admin</button>` : ""}
           </div>
         </article>
         <article class="card auth-card">
@@ -1876,6 +1896,24 @@ function renderAuth() {
         </article>
       </div>
     ` : `
+      <article class="card auth-card auth-social-card">
+        <div>
+          <p class="eyebrow">Connexion rapide</p>
+          <h3>Se connecter sans mot de passe.</h3>
+          <p>Le client peut entrer avec Google ou Apple. En production, ces boutons seront relies a Supabase Auth pour une connexion securisee.</p>
+        </div>
+        <div class="social-auth-grid">
+          <button class="secondary-button social-auth-button" type="button" data-social-auth="google">
+            <span class="social-auth-mark">G</span>
+            Continuer avec Google
+          </button>
+          <button class="secondary-button social-auth-button" type="button" data-social-auth="apple">
+            <span class="social-auth-mark">A</span>
+            Continuer avec Apple
+          </button>
+        </div>
+        <p class="muted-note">Aucune cle Google ou Apple ne doit etre exposee dans le navigateur.</p>
+      </article>
       <div class="grid grid-2 auth-layout">
         <form class="card auth-card" data-modal-form="auth-login">
           <p class="eyebrow">Connexion</p>
@@ -5235,7 +5273,6 @@ function renderSettings() {
 }
 
 function renderMore() {
-  const adminVisible = isAdminSession();
   const moreItems = [
     ["quotes", "Mes devis", "Creer, modifier, signer et exporter en PDF", "file"],
     ["landing", "Page de presentation", "Presenter Qualifyr AI a de futurs clients", "spark"],
@@ -5247,8 +5284,7 @@ function renderMore() {
     ["ai-center", "Mon assistant IA", "Activer, regler ou arreter une IA", "spark"],
     ["marketplace", "Ajouter une IA", "Installer de nouvelles aides intelligentes", "grid"],
     ["custom-ai", "IA sur mesure", "Recevoir une etude personnalisee", "message"],
-    ["auth", "Espace client", "Connexion, compte et installation", "users"],
-    ...(adminVisible ? [["admin", "Admin Qualifyr", "Demandes, paiements et installations", "shield"]] : []),
+    ["auth", "Se connecter", "Compte, connexion et installation", "users"],
     ["settings", "Mon entreprise", "Entreprise, TVA, horaires et equipe", "shield"],
     ["billing", "Mes factures", "Factures, paiements, relances et exports", "card"],
     ["help", "Aide", "Guides simples et support", "help"]
@@ -5498,6 +5534,12 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest("[data-login-admin]")) {
     openAdminLoginModal();
+    return;
+  }
+
+  const socialAuth = event.target.closest("[data-social-auth]");
+  if (socialAuth) {
+    handleSocialAuth(socialAuth.dataset.socialAuth || "google");
     return;
   }
 

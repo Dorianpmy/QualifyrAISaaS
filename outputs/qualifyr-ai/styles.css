@@ -10251,6 +10251,36 @@ body.simple-ux .section-header p {
   gap: 18px;
 }
 
+.auth-social-card {
+  margin-bottom: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.6fr);
+  align-items: center;
+}
+
+.social-auth-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.social-auth-button {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  gap: 10px;
+}
+
+.social-auth-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .auth-card .field {
   display: grid;
   gap: 8px;
@@ -10326,6 +10356,10 @@ body.simple-ux .section-header p {
 }
 
 @media (max-width: 760px) {
+  .auth-social-card {
+    grid-template-columns: 1fr;
+  }
+
   .account-button {
     display: none;
   }
