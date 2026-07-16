@@ -10385,3 +10385,451 @@ body.simple-ux .universal-command {
 body.simple-ux .universal-command .primary-button {
   min-width: 104px !important;
 }
+
+/* Responsive Trendtrack-inspired navigation: compact, calm and usable on every screen. */
+.mobile-nav-backdrop,
+.mobile-nav-popover {
+  display: none;
+}
+
+body.simple-ux .mobile-menu {
+  border-color: rgba(17, 17, 17, 0.08) !important;
+  background: #fff !important;
+}
+
+body.simple-ux .mobile-menu span {
+  background: var(--text) !important;
+}
+
+.mobile-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.mobile-nav-head strong {
+  display: block;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.mobile-nav-head span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+}
+
+.mobile-nav-head .icon-button {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.mobile-nav-section {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0 2px;
+}
+
+.mobile-nav-section > span {
+  padding: 0 8px 4px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mobile-nav-row,
+.mobile-nav-primary {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mobile-nav-row {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.mobile-nav-row:hover,
+.mobile-nav-row.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.mobile-nav-row.active {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.mobile-nav-row span:last-child {
+  min-width: 0;
+}
+
+.mobile-nav-row strong,
+.mobile-nav-row small {
+  display: block;
+}
+
+.mobile-nav-row strong {
+  font-size: 15px;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-nav-row small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.mobile-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.mobile-nav-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.mobile-nav-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: #fff;
+  color: #111;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mobile-nav-primary svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (min-width: 821px) and (max-width: 1180px) {
+  body.simple-ux .app-shell {
+    grid-template-columns: 88px minmax(0, 1fr) !important;
+  }
+
+  body.simple-ux .sidebar {
+    width: 88px !important;
+    padding: 18px 13px !important;
+    overflow: visible;
+  }
+
+  body.simple-ux .brand {
+    justify-content: center;
+    padding: 0 0 18px !important;
+  }
+
+  body.simple-ux .brand > div:not(.brand-mark),
+  body.simple-ux .nav-section-label,
+  body.simple-ux .nav-text,
+  body.simple-ux .sidebar-card {
+    display: none !important;
+  }
+
+  body.simple-ux .brand-mark {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  body.simple-ux .sidebar-collapse {
+    position: absolute;
+    right: -16px;
+    top: 24px;
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body.simple-ux .nav-list,
+  body.simple-ux .nav-section {
+    gap: 10px !important;
+  }
+
+  body.simple-ux .nav-item {
+    grid-template-columns: 1fr !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 !important;
+    justify-items: center;
+    border-radius: 16px !important;
+  }
+
+  body.simple-ux .nav-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  body.simple-ux .main {
+    padding: 28px 28px 104px !important;
+  }
+
+  body.simple-ux .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+  }
+
+  body.simple-ux .mobile-menu {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  body.mobile-menu-open .mobile-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 89;
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(4px);
+  }
+
+  body.mobile-menu-open .mobile-nav-popover {
+    display: block;
+    position: fixed;
+    left: max(16px, env(safe-area-inset-left));
+    top: max(76px, calc(env(safe-area-inset-top) + 62px));
+    z-index: 90;
+    width: min(380px, calc(100vw - 32px));
+    max-height: calc(100dvh - 100px);
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(34, 197, 94, 0.16), transparent 34%),
+      linear-gradient(180deg, #070707, #020202);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+  }
+}
+
+@media (max-width: 820px) {
+  body.simple-ux .app-shell {
+    display: block !important;
+  }
+
+  body.simple-ux .sidebar,
+  body.simple-ux .bottom-nav {
+    display: none !important;
+  }
+
+  body.simple-ux .main {
+    width: 100%;
+    padding: max(16px, env(safe-area-inset-top)) 16px calc(98px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.simple-ux .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 70;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    margin: -16px -16px 16px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background: rgba(248, 245, 238, 0.88);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+  }
+
+  body.simple-ux .mobile-menu {
+    display: inline-flex !important;
+  }
+
+  body.simple-ux .topbar .eyebrow {
+    display: none !important;
+  }
+
+  body.simple-ux .topbar h1 {
+    font-size: 24px !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.025em !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.simple-ux .top-actions {
+    gap: 8px !important;
+  }
+
+  body.simple-ux .top-actions .primary-button {
+    display: none !important;
+  }
+
+  body.simple-ux .icon-button {
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    border-radius: 13px !important;
+  }
+
+  body.mobile-menu-open .mobile-nav-popover {
+    top: calc(env(safe-area-inset-top) + 68px);
+    right: max(14px, env(safe-area-inset-right));
+    left: max(14px, env(safe-area-inset-left));
+    width: auto;
+    max-height: calc(100dvh - 86px);
+  }
+
+  body.simple-ux .view {
+    overflow: hidden;
+  }
+
+  body.simple-ux .grid-2,
+  body.simple-ux .grid-3,
+  body.simple-ux .grid-4,
+  body.simple-ux .dashboard-grid,
+  body.simple-ux .simple-home-grid,
+  body.simple-ux .simple-two-col,
+  body.simple-ux .business-pack-grid,
+  body.simple-ux .trade-copilot-grid,
+  body.simple-ux .copilot-grid,
+  body.simple-ux .settings-grid,
+  body.simple-ux .integrations-grid,
+  body.simple-ux .pricing-grid,
+  body.simple-ux .premium-price-grid,
+  body.simple-ux .commercial-grid,
+  body.simple-ux .auth-layout,
+  body.simple-ux .modal-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .card,
+  body.simple-ux .simple-main-card,
+  body.simple-ux .assistant-card,
+  body.simple-ux .business-pack-card,
+  body.simple-ux .trade-copilot-card,
+  body.simple-ux .premium-price-card {
+    border-radius: 20px !important;
+    padding: 20px !important;
+  }
+
+  body.simple-ux .business-pack-card,
+  body.simple-ux .trade-copilot-card {
+    min-height: auto !important;
+  }
+
+  body.simple-ux .business-pack-card .list-row,
+  body.simple-ux .trade-copilot-card .list-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    align-items: start !important;
+  }
+
+  body.simple-ux .business-pack-card .list-row strong,
+  body.simple-ux .trade-copilot-card .list-row strong {
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  body.simple-ux .hero-actions,
+  body.simple-ux .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .hero-actions button,
+  body.simple-ux .modal-actions button {
+    width: 100% !important;
+  }
+
+  body.simple-ux .universal-command {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    grid-template-columns: 34px minmax(0, 1fr) auto !important;
+    border-radius: 18px !important;
+  }
+
+  body.simple-ux .universal-command input {
+    min-width: 0;
+    font-size: 13px !important;
+  }
+
+  body.simple-ux .universal-command .primary-button {
+    min-width: 86px !important;
+    padding: 0 12px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  body.simple-ux .main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body.simple-ux .topbar {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .mobile-nav-row {
+    min-height: 50px;
+    grid-template-columns: 34px 1fr;
+  }
+
+  .mobile-nav-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  body.simple-ux .card,
+  body.simple-ux .simple-main-card,
+  body.simple-ux .assistant-card,
+  body.simple-ux .business-pack-card,
+  body.simple-ux .trade-copilot-card,
+  body.simple-ux .premium-price-card {
+    padding: 16px !important;
+  }
+}

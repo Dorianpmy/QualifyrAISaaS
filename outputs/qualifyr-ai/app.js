@@ -821,6 +821,63 @@ function renderBottomNav() {
     .join("");
 }
 
+function renderResponsiveMenu() {
+  const node = el("mobileNavPopover");
+  if (!node) return;
+  const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
+  const secondaryItems = [
+    ["commercial", "Abonnement", "card", "Factures et paiement"],
+    ["integrations", "Connexions", "workflow", "Google, WhatsApp, email"],
+    ["help", "Aide", "star", "Tutoriels et support"]
+  ];
+  const sectionMarkup = navGroups
+    .map(([group, ids]) => `
+      <div class="mobile-nav-section">
+        <span>${group}</span>
+        ${ids
+          .map((id) => {
+            const [itemId, label, icon, , hint] = byId[id];
+            return `
+              <button class="mobile-nav-row ${state.view === itemId ? "active" : ""}" data-view="${itemId}">
+                <span class="mobile-nav-icon">${svg(icon)}</span>
+                <span><strong>${label}</strong><small>${hint}</small></span>
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    `)
+    .join("");
+
+  node.innerHTML = `
+    <div class="mobile-nav-head">
+      <div>
+        <strong>Qualifyr AI</strong>
+        <span>Choisissez ce que vous voulez faire</span>
+      </div>
+      <button class="icon-button" data-mobile-menu-close aria-label="Fermer le menu">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    ${sectionMarkup}
+    <div class="mobile-nav-section mobile-nav-secondary">
+      <span>Compte</span>
+      ${secondaryItems
+        .map(([id, label, icon, hint]) => `
+          <button class="mobile-nav-row ${state.view === id ? "active" : ""}" data-view="${id}">
+            <span class="mobile-nav-icon">${svg(icon)}</span>
+            <span><strong>${label}</strong><small>${hint}</small></span>
+          </button>
+        `)
+        .join("")}
+    </div>
+    <button class="mobile-nav-primary" data-open-talk="Je veux savoir quoi faire maintenant">
+      ${svg("spark")}
+      Demander a Qualifyr
+    </button>
+  `;
+}
+
 function simplifyVisibleLanguage(root) {
   if (!root) return;
   const replacements = [
@@ -931,10 +988,15 @@ function showView(view) {
   if (subtitle) subtitle.textContent = friendlySubtitles[view] || "Qualifyr vous guide vers la bonne action";
   renderNav();
   renderBottomNav();
+  renderResponsiveMenu();
   simplifyVisibleLanguage(el(`view-${view}`));
   simplifyVisibleLanguage(el("navList"));
   simplifyVisibleLanguage(el("bottomNav"));
+  simplifyVisibleLanguage(el("mobileNavPopover"));
   document.querySelector(".sidebar").classList.remove("open");
+  document.body.classList.remove("mobile-menu-open");
+  const menuToggle = el("menuToggle");
+  if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
 }
 
 function metric(label, value, trend) {
@@ -5042,6 +5104,7 @@ function renderDashboard() {
 function renderAll() {
   renderNav();
   renderBottomNav();
+  renderResponsiveMenu();
   renderDashboard();
   renderLanding();
   renderPricing();
@@ -5072,6 +5135,13 @@ function renderAll() {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest("[data-mobile-menu-close]")) {
+    document.body.classList.remove("mobile-menu-open");
+    const menuToggle = el("menuToggle");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+    return;
+  }
+
   if (event.target.closest("[data-close-modal]")) {
     closeModal();
     return;
@@ -5175,6 +5245,7 @@ document.addEventListener("click", (event) => {
   if (viewButton) {
     showView(viewButton.dataset.view);
     if (viewButton.closest("#actionModal")) closeModal();
+    document.body.classList.remove("mobile-menu-open");
     return;
   }
 
@@ -5615,7 +5686,21 @@ document.addEventListener("click", (event) => {
 });
 
 el("menuToggle").addEventListener("click", () => {
+  const isCompact = window.matchMedia("(max-width: 1180px)").matches;
+  if (isCompact) {
+    const open = document.body.classList.toggle("mobile-menu-open");
+    el("menuToggle").setAttribute("aria-expanded", String(open));
+    return;
+  }
   document.querySelector(".sidebar").classList.toggle("open");
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    document.body.classList.remove("mobile-menu-open");
+    const menuToggle = el("menuToggle");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
 });
 
 const sidebarCollapse = el("sidebarCollapse");
