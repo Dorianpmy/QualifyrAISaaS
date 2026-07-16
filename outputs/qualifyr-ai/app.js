@@ -851,9 +851,10 @@ function renderResponsiveMenu() {
 
   node.innerHTML = `
     <div class="mobile-nav-head">
+      <img src="./favicon.svg" alt="" aria-hidden="true">
       <div>
         <strong>Qualifyr AI</strong>
-        <span>Choisissez ce que vous voulez faire</span>
+        <span>Copilote PME</span>
       </div>
       <button class="icon-button" data-mobile-menu-close aria-label="Fermer le menu">
         <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -871,10 +872,21 @@ function renderResponsiveMenu() {
         `)
         .join("")}
     </div>
-    <button class="mobile-nav-primary" data-open-talk="Je veux savoir quoi faire maintenant">
-      ${svg("spark")}
-      Demander a Qualifyr
-    </button>
+    <div class="mobile-nav-upgrade">
+      <button class="mobile-nav-primary" data-open-checkout="Pro">
+        ${svg("spark")}
+        Passer au plan Pro
+      </button>
+    </div>
+    <div class="mobile-nav-account">
+      <div class="mobile-account-line">
+        <span class="mobile-account-avatar">D</span>
+        <span><strong>Dorian</strong><small>contact@qualifyragence.com</small></span>
+      </div>
+      <button data-view="commercial">${svg("card")} Mes paiements</button>
+      <button data-view="settings">${svg("shield")} Mon entreprise</button>
+      <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>
+    </div>
   `;
 }
 
