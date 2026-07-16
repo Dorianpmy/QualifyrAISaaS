@@ -11542,3 +11542,242 @@ body.simple-ux .nav-item[data-view="commercial"] .nav-text small {
     padding: 22px !important;
   }
 }
+
+/* Calendar demo, condensed quotes and vertical copilots. */
+body.simple-ux .quote-focus-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 18px;
+}
+
+body.simple-ux .quote-focus-card {
+  padding: 20px !important;
+  text-align: left;
+  min-height: 118px;
+  cursor: pointer;
+}
+
+body.simple-ux .quote-focus-card strong {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 650;
+  margin-bottom: 10px;
+}
+
+body.simple-ux .quote-focus-card span {
+  display: block;
+  font-weight: 620;
+}
+
+body.simple-ux .quote-focus-card small {
+  color: #777;
+}
+
+body.simple-ux .quote-focus-card.active {
+  border-color: var(--primary-line) !important;
+  background: linear-gradient(135deg, #fff, var(--primary-soft)) !important;
+}
+
+body.simple-ux .quote-helper-card,
+body.simple-ux .calendar-connect-card,
+body.simple-ux .trade-use-case-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+body.simple-ux .quote-helper-card h3,
+body.simple-ux .calendar-connect-card h3 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 620;
+}
+
+body.simple-ux .quote-summary-card {
+  min-height: 0 !important;
+  padding: 26px !important;
+}
+
+body.simple-ux .quote-summary-card .price {
+  font-size: 42px !important;
+  line-height: 1 !important;
+  margin: 18px 0 16px !important;
+}
+
+body.simple-ux .quote-summary-card .hero-actions {
+  margin-top: 18px;
+}
+
+body.simple-ux .calendar-connect-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+body.simple-ux .calendar-demo-preview {
+  display: grid;
+  gap: 10px;
+}
+
+body.simple-ux .calendar-demo-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 16px;
+  background: #fff;
+}
+
+body.simple-ux .calendar-demo-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+body.simple-ux .calendar-demo-row small {
+  color: #777;
+}
+
+body.simple-ux .calendar-demo-row em {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: #16833f;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 620;
+}
+
+body.simple-ux .trade-use-case-card {
+  grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1fr);
+  margin-top: 22px;
+  padding: 32px !important;
+  border-color: var(--primary-line) !important;
+  background:
+    radial-gradient(circle at 85% 12%, var(--primary-glow), transparent 34%),
+    #fff !important;
+}
+
+body.simple-ux .trade-use-case-copy h2 {
+  margin: 0 0 12px;
+  font-size: clamp(32px, 4vw, 58px);
+  line-height: 1;
+  font-weight: 650;
+}
+
+body.simple-ux .trade-use-case-copy p {
+  color: #6e6e6e;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+body.simple-ux .trade-use-case-visual {
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 24px;
+  background: #f8f8f6;
+  padding: 18px;
+  min-height: 260px;
+}
+
+body.simple-ux .mini-map {
+  position: relative;
+  height: 210px;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 54% 54%, rgba(34, 197, 94, 0.18), transparent 20%),
+    #fff;
+  background-size: 34px 34px, 34px 34px, auto, auto;
+}
+
+body.simple-ux .mini-map span {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #22c55e;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.28);
+}
+
+body.simple-ux .mini-work-list {
+  display: grid;
+  gap: 10px;
+}
+
+body.simple-ux .mini-work-list span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  font-weight: 600;
+}
+
+body.simple-ux .mini-work-list strong {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: #16833f;
+}
+
+body.simple-ux .trade-use-case-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+body.simple-ux .trade-use-case-tags em {
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  color: #555;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 560;
+}
+
+@media (max-width: 980px) {
+  body.simple-ux .quote-focus-strip,
+  body.simple-ux .quote-helper-card,
+  body.simple-ux .calendar-connect-card,
+  body.simple-ux .trade-use-case-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .calendar-connect-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  body.simple-ux .quote-focus-strip {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .calendar-demo-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.simple-ux .trade-use-case-card {
+    padding: 22px !important;
+  }
+}

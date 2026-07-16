@@ -729,6 +729,39 @@ function openCompetitorModal() {
   `);
 }
 
+function openCalendarDemoModal() {
+  const demoEvents = appointments.slice(0, 4);
+  openModal(`
+    <form class="modal-content calendar-demo-modal" data-modal-form="calendar-demo">
+      <p class="eyebrow">Apercu connecte</p>
+      <h2>Voyez ce que Qualifyr ferait avec votre agenda.</h2>
+      <p>En production, cette connexion passe par Google Calendar ou Outlook avec votre autorisation. Ici, vous voyez le resultat attendu avant de brancher le vrai compte.</p>
+      <div class="modal-choice-grid">
+        <div class="modal-choice"><strong>${demoEvents.length}</strong><small>Rendez-vous analyses</small></div>
+        <div class="modal-choice"><strong>42 min</strong><small>Trajet evitable</small></div>
+        <div class="modal-choice"><strong>2</strong><small>Creneaux libres trouves</small></div>
+      </div>
+      <div class="calendar-demo-preview">
+        ${demoEvents.map(([time, client, title, travel]) => `
+          <div class="calendar-demo-row">
+            <strong>${time}</strong>
+            <span>${title}<small>${client} · ${travel}</small></span>
+            <em>${time < "10:00" ? "A garder" : "Optimisable"}</em>
+          </div>
+        `).join("")}
+      </div>
+      <div class="modal-warning-note">
+        <strong>Ce qui sera possible ensuite</strong>
+        <span>Importer vos vrais rendez-vous, detecter les doublons, proposer les meilleurs trajets et remplir les trous dans la journee.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("calendar")} Lancer la demo</button>
+        <button class="secondary-button" type="button" data-close-modal>Fermer</button>
+      </div>
+    </form>
+  `);
+}
+
 function openWidgetModal(lead) {
   const slug = (lead.company || "atelier-martin").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   openModal(`
@@ -3247,38 +3280,50 @@ function renderClientProfile() {
 }
 
 function renderQuotes() {
+  const quoteGroups = {
+    action: quotes.filter((quote) => ["Brouillon", "Envoye", "Relance"].includes(quote.status)),
+    accepted: quotes.filter((quote) => quote.status === "Accepte"),
+    refused: quotes.filter((quote) => quote.status === "Refuse")
+  };
+  const visibleQuotes = quoteGroups.action.slice(0, 6);
   el("view-quotes").innerHTML = `
     <div class="section-header">
       <div>
         <p class="eyebrow">Mes devis</p>
         <h2>Je veux faire un devis.</h2>
-        <p>${quotes.length} devis avec numero, date, TVA, prestations, main d'oeuvre, deplacement, remise, signature et statut.</p>
+        <p>Qualifyr affiche uniquement les devis qui demandent une action. Le reste reste range dans l'historique.</p>
       </div>
       <div class="section-actions">
-        <button class="secondary-button export-action" data-format="pdf">Exporter PDF</button>
-        <button class="secondary-button export-action" data-format="excel">Exporter Excel</button>
-        <button class="secondary-button export-action" data-format="csv">Exporter CSV</button>
         <button class="primary-button" id="updateQuote">${svg("file")} Creer un devis</button>
+        <button class="secondary-button export-action" data-format="pdf">Exporter</button>
       </div>
     </div>
-    <div class="grid grid-3">
-      ${quotes.map((quote) => `
-        <article class="card pricing-card">
+    <div class="quote-focus-strip">
+      <button class="card quote-focus-card active"><strong>${quoteGroups.action.length}</strong><span>A traiter</span><small>Brouillons, envois et relances</small></button>
+      <button class="card quote-focus-card"><strong>${quoteGroups.accepted.length}</strong><span>Acceptes</span><small>Devis signes</small></button>
+      <button class="card quote-focus-card"><strong>${quoteGroups.refused.length}</strong><span>Archives</span><small>Refuses ou anciens</small></button>
+    </div>
+    <div class="card quote-helper-card">
+      <div>
+        <p class="eyebrow">Qualifyr vous conseille</p>
+        <h3>Commencez par les devis a relancer.</h3>
+        <p>${quoteGroups.action.length} devis peuvent encore devenir des ventes. Cliquez sur une action, Qualifyr prepare le message.</p>
+      </div>
+      <button class="primary-button quote-action" data-action="followup">${svg("spark")} Relancer les devis</button>
+    </div>
+    <div class="grid grid-3 quote-card-grid">
+      ${visibleQuotes.map((quote) => `
+        <article class="card pricing-card quote-summary-card">
           <p class="eyebrow">${quote.number} · ${quote.date}</p>
           <h3>${quote.client}</h3>
           <div class="price">${money(quoteTotal(quote))}</div>
           <span class="status ${quote.status === "Accepte" ? "success" : quote.status === "Brouillon" ? "warning" : "success"}">${quote.status}</span>
-          ${quote.lines.map(([name, qty, price]) => `<div class="quote-line"><span>${qty} x ${name}</span><strong>${price} EUR</strong></div>`).join("")}
-          <div class="quote-line"><span>Main d'oeuvre</span><strong>${quote.labor} EUR</strong></div>
-          <div class="quote-line"><span>Deplacement</span><strong>${quote.travel} EUR</strong></div>
-          <div class="quote-line"><span>Remise</span><strong>-${quote.discount} EUR</strong></div>
-          <p class="mini-muted">TVA ${quote.vat}% · Signature : ${quote.signature}</p>
+          ${quote.lines.slice(0, 2).map(([name, qty, price]) => `<div class="quote-line"><span>${qty} x ${name}</span><strong>${price} EUR</strong></div>`).join("")}
+          <p class="mini-muted">TVA ${quote.vat}% · ${quote.signature === "Signe" ? "Signe" : "Signature a faire"}</p>
           <div class="hero-actions">
             <button class="secondary-button quote-action" data-action="edit">Modifier</button>
-            <button class="secondary-button quote-action" data-action="duplicate">Dupliquer</button>
             <button class="secondary-button quote-action" data-action="send">Envoyer</button>
-            <button class="secondary-button quote-action" data-action="pdf">Telecharger</button>
-            <button class="primary-button quote-action" data-action="invoice">Transformer en facture</button>
+            <button class="primary-button quote-action" data-action="invoice">Facturer</button>
           </div>
         </article>
       `).join("")}
@@ -3287,21 +3332,33 @@ function renderQuotes() {
 }
 
 function renderCalendar() {
+  const todayAppointments = appointments.slice(0, 8);
   el("view-calendar").innerHTML = `
     <div class="section-header">
       <div>
         <p class="eyebrow">Mon planning</p>
         <h2>Je veux voir mon planning.</h2>
-        <p>${appointments.length} rendez-vous avec le client, l'adresse utile et le temps de trajet.</p>
+        <p>Connectez votre agenda pour voir une demo avec vos vrais rendez-vous, vos trajets et les creneaux libres.</p>
       </div>
       <div class="section-actions">
-        <button class="secondary-button">${svg("calendar")} Connecter mon agenda</button>
+        <button class="secondary-button calendar-demo-action">${svg("calendar")} Voir une demo connectee</button>
         <button class="primary-button">${svg("calendar")} Ajouter un rendez-vous</button>
       </div>
     </div>
+    <section class="card calendar-connect-card">
+      <div>
+        <p class="eyebrow">Connexion agenda</p>
+        <h3>Branchez Google Calendar ou Outlook sans modifier vos rendez-vous.</h3>
+        <p>Qualifyr lit les horaires autorises, detecte les doublons et propose une meilleure organisation. Vous validez toujours avant changement.</p>
+      </div>
+      <div class="calendar-connect-actions">
+        <button class="primary-button calendar-demo-action">${svg("calendar")} Simuler avec mon agenda</button>
+        <button class="secondary-button" data-view="integrations">Voir les connexions</button>
+      </div>
+    </section>
     <div class="segmented planning-tabs"><button class="active">Aujourd'hui</button><button>Demain</button><button>Cette semaine</button></div>
     <div class="section calendar-list">
-      ${appointments.map(([time, client, title, travel, source], index) => `
+      ${todayAppointments.map(([time, client, title, travel, source], index) => `
         <article class="card appointment">
           <strong>${time}</strong>
           <div><h3>${title}</h3><p>${client} · ${clients.find((item) => item.name === client)?.address || "Adresse client"} · ${travel} · Devis ${quotes[index % quotes.length]?.number || "a associer"} · ${source}</p></div>
@@ -3594,6 +3651,63 @@ const copilotPlans = [
   ["Equipe", "299 EUR / mois", "Pour PME avec plusieurs utilisateurs, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
 ].map(([name, price, description, features, cta, recommended]) => ({ name, price, description, features, cta, recommended }));
 
+const tradeUseCases = {
+  Plombier: {
+    title: "Urgences et devis fuite",
+    description: "Le copilote classe les demandes par urgence, demande les photos, l'adresse et propose un creneau.",
+    panels: ["Urgence detectee", "Photo demandee", "Devis prepare", "Planning rempli"],
+    visual: "priority"
+  },
+  Electricien: {
+    title: "Securite et interventions",
+    description: "Il repere les pannes urgentes, collecte les photos du tableau et prepare la fiche intervention.",
+    panels: ["Panne urgente", "Photo tableau", "Materiel utile", "Client confirme"],
+    visual: "checklist"
+  },
+  Garage: {
+    title: "Atelier et rendez-vous",
+    description: "Il trie les demandes atelier, note le vehicule, le besoin et propose les bons creneaux.",
+    panels: ["Vehicule", "Motif", "Piece a prevoir", "Creneau atelier"],
+    visual: "timeline"
+  },
+  Restaurant: {
+    title: "Reservations et avis",
+    description: "Il aide a repondre aux messages, confirmer les reservations et demander les avis au bon moment.",
+    panels: ["Reservation", "Message client", "Avis a demander", "Evenement local"],
+    visual: "inbox"
+  },
+  Dentiste: {
+    title: "Rappels patients",
+    description: "Il prepare les rappels, confirmations de rendez-vous et messages simples aux patients.",
+    panels: ["Rappel patient", "RDV confirme", "Document recu", "Avis possible"],
+    visual: "timeline"
+  },
+  Immobilier: {
+    title: "Carte prospects immobilier",
+    description: "Un espace simple pour suivre les biens, proprietaires, visites, notes terrain et relances.",
+    panels: ["Lots a visiter", "Proprietaires", "Relances 14 jours", "Visites planifiees"],
+    visual: "map"
+  },
+  Nettoyage: {
+    title: "Contrats et preuves photos",
+    description: "Il organise les contrats recurrents, photos avant/apres, planning equipe et facturation.",
+    panels: ["Contrat recurrent", "Photo avant/apres", "Equipe", "Facture prete"],
+    visual: "checklist"
+  },
+  Paysagiste: {
+    title: "Saisonnalite et tournees",
+    description: "Il prepare les devis jardin, entretiens recurrents et tournees par secteur.",
+    panels: ["Entretien", "Photo jardin", "Tournee", "Relance saison"],
+    visual: "map"
+  },
+  Autre: {
+    title: "Copilote metier sur mesure",
+    description: "Qualifyr transforme votre processus en outil simple : demandes, suivi, relances et planning.",
+    panels: ["Demande", "Client", "Action", "Suivi"],
+    visual: "checklist"
+  }
+};
+
 function normalizeProfessionName(value) {
   const aliases = {
     "Garage automobile": "Garage",
@@ -3622,6 +3736,8 @@ function getRelevantBusinessPacks() {
 function renderCopilotLibrary(targetId) {
   const relevantTradeCopilots = getRelevantTradeCopilots();
   const relevantBusinessPacks = getRelevantBusinessPacks();
+  const normalizedProfession = normalizeProfessionName(state.profession);
+  const tradeCase = tradeUseCases[normalizedProfession] || tradeUseCases.Autre;
   const hasDedicatedCopilot = relevantTradeCopilots.some((copilot) => copilot.profession === normalizeProfessionName(state.profession));
   const copilotFilterGroups = [
     ["Metier", "Votre activite"],
@@ -3679,6 +3795,35 @@ function renderCopilotLibrary(targetId) {
           `).join("")}
         </div>
       </div>
+
+      <article class="card trade-use-case-card ${tradeCase.visual}">
+        <div class="trade-use-case-copy">
+          <p class="eyebrow">Exemple ${state.profession}</p>
+          <h2>${tradeCase.title}</h2>
+          <p>${tradeCase.description}</p>
+          <div class="hero-actions">
+            <button class="primary-button trade-copilot-install" data-trade="${normalizedProfession}">${svg("spark")} Ajouter ce copilote</button>
+            <button class="secondary-button trade-copilot-email" data-trade="${normalizedProfession}">Recevoir un apercu</button>
+          </div>
+        </div>
+        <div class="trade-use-case-visual">
+          ${tradeCase.visual === "map" ? `
+            <div class="mini-map">
+              <span style="--x:45%;--y:48%"></span>
+              <span style="--x:62%;--y:42%"></span>
+              <span style="--x:55%;--y:62%"></span>
+              <span style="--x:34%;--y:58%"></span>
+            </div>
+          ` : `
+            <div class="mini-work-list">
+              ${tradeCase.panels.map((panel, index) => `<span><strong>0${index + 1}</strong>${panel}</span>`).join("")}
+            </div>
+          `}
+          <div class="trade-use-case-tags">
+            ${tradeCase.panels.map((panel) => `<em>${panel}</em>`).join("")}
+          </div>
+        </div>
+      </article>
 
       <div class="card copilot-smart-filter-card simplified">
         <div class="filter-heading">
@@ -5118,7 +5263,13 @@ document.addEventListener("click", (event) => {
   const assistantAsk = event.target.closest(".assistant-ask");
   if (assistantAsk) {
     const input = el(assistantAsk.dataset.input);
-    const targetView = viewFromAssistantPrompt(input ? input.value : "");
+    const prompt = input ? input.value.trim() : "";
+    if (!prompt) {
+      showView("ai-center");
+      toast("Dites simplement ce que vous voulez faire, Qualifyr vous guide.");
+      return;
+    }
+    const targetView = viewFromAssistantPrompt(prompt);
     showView(targetView);
     toast("Qualifyr AI a compris votre demande et ouvre la bonne page.");
     return;
@@ -5126,6 +5277,11 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest("#addLead")) {
     toast("Client ajoute avec ses coordonnees, son historique et ses documents.");
+  }
+
+  if (event.target.closest(".calendar-demo-action")) {
+    openCalendarDemoModal();
+    return;
   }
 
   const clientRow = event.target.closest("[data-client]");
@@ -5575,6 +5731,13 @@ document.addEventListener("submit", async (event) => {
     saveAccount({ role: "client", ...data, plan: state.checkoutPlan || recommendedPlanForProfession(data.profession), status: "Installation en cours" });
     toast("Copilote prepare. Le paiement et le widget sont prets.");
     openWidgetModal(lead);
+    return;
+  }
+
+  if (type === "calendar-demo") {
+    toast("Demo agenda lancee : Qualifyr prepare l'aperçu avec vos rendez-vous.");
+    closeModal();
+    showView("calendar");
     return;
   }
 
