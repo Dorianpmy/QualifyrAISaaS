@@ -914,6 +914,9 @@ function renderResponsiveMenu() {
   const node = el("mobileNavPopover");
   if (!node) return;
   const adminVisible = isAdminSession();
+  const session = getSession();
+  const accountName = session?.name || "Utilisateur";
+  const accountEmail = session?.email || "votre.email@entreprise.fr";
   const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
   const secondaryItems = [
     ["integrations", "Connexions", "workflow", "Google, WhatsApp, email"],
@@ -969,8 +972,8 @@ function renderResponsiveMenu() {
     </div>
     <div class="mobile-nav-account">
       <div class="mobile-account-line">
-        <span class="mobile-account-avatar">D</span>
-        <span><strong>Dorian</strong><small>contact@qualifyragence.com</small></span>
+        <span class="mobile-account-avatar">${safeText(accountName.slice(0, 1).toUpperCase())}</span>
+        <span><strong>${safeText(accountName)}</strong><small>${safeText(accountEmail)}</small></span>
       </div>
       <button data-view="commercial">${svg("card")} Mes paiements</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
@@ -2729,7 +2732,7 @@ const subscriptionCenter = {
     ["Devis IA", "Meilleure estimation de la main d'oeuvre."]
   ],
   ambassador: {
-    link: "qualifyr.ai/invite/dorian-scale",
+    link: "qualifyr.ai/invite/pro-copilote",
     invites: 7,
     rewards: "2 mois offerts + 50 EUR de credit"
   },
@@ -3790,48 +3793,53 @@ function getRelevantBusinessPacks() {
 
 function renderCopilotLibrary(targetId) {
   const relevantTradeCopilots = getRelevantTradeCopilots();
-  const relevantBusinessPacks = getRelevantBusinessPacks();
   const normalizedProfession = normalizeProfessionName(state.profession);
   const tradeCase = tradeUseCases[normalizedProfession] || tradeUseCases.Autre;
   const hasDedicatedCopilot = relevantTradeCopilots.some((copilot) => copilot.profession === normalizeProfessionName(state.profession));
   const copilotFilterGroups = [
-    ["Metier", "Votre activite"],
-    ["Objectif", "Appels, devis, relances"],
+    ["Metier", "Voir les IA utiles"],
+    ["Objectif", "Selon votre probleme"],
     ["Canal", "Site, email, WhatsApp"],
-    ["Budget", "79, 149 ou 229 EUR"],
-    ["Installation", "Site ou email"],
-    ["Concurrents", "Sources publiques"]
+    ["Budget", "Prix clair"],
+    ["Installation", "Comment l'activer"],
+    ["Concurrents", "Analyse publique"]
   ];
   const activeFilter = state.activeCopilotFilter || "Metier";
   const filterCopy = {
     Metier: {
-      title: `Les copilotes utiles pour ${state.profession}.`,
-      text: "Qualifyr masque les aides qui ne servent pas a votre activite.",
+      label: "Ce qui est utile pour votre metier",
+      title: `Pour ${state.profession}, commencez par ce copilote.`,
+      text: "Qualifyr masque les modules inutiles et garde seulement les aides qui peuvent servir a votre activite.",
       cards: relevantTradeCopilots
     },
     Objectif: {
-      title: "Choisissez selon le resultat attendu.",
-      text: "Priorite aux copilotes qui font gagner du temps, recuperent des demandes ou accelerent les devis.",
+      label: "Ce que vous voulez regler",
+      title: "Choisissez le probleme le plus urgent.",
+      text: "Appels rates, devis trop longs, messages non traites ou planning complique : le bon copilote depend du resultat attendu.",
       cards: relevantTradeCopilots.slice(0, 2)
     },
     Canal: {
-      title: "Choisissez selon l'endroit ou arrivent vos demandes.",
+      label: "Ou arrivent vos demandes",
+      title: "Choisissez le canal que vos clients utilisent deja.",
       text: "Site, WhatsApp, email ou telephone : le copilote depend du canal que vos clients utilisent deja.",
       cards: relevantTradeCopilots.filter((copilot) => /whatsapp|email|appel|telephone|site/i.test(`${copilot.includes} ${copilot.description}`)).concat(relevantTradeCopilots.slice(0, 1)).slice(0, 3)
     },
     Budget: {
+      label: "Combien ca coute",
       title: "Choisissez une formule simple.",
-      text: "Starter pour tester, Pro pour vendre serieusement, Equipe pour plusieurs personnes.",
+      text: "Starter pour tester, Pro pour automatiser les demandes, Equipe pour plusieurs utilisateurs.",
       cards: relevantTradeCopilots.slice().sort((a, b) => String(a.price).localeCompare(String(b.price))).slice(0, 3)
     },
     Installation: {
-      title: "Installez-le sur le site ou recevez-le par email.",
+      label: "Comment ca se met en place",
+      title: "Activez le copilote sans reglage technique.",
       text: "Le prospect choisit le mode le plus simple. Aucune configuration technique n'est visible.",
       cards: relevantTradeCopilots
     },
     Concurrents: {
-      title: "Ajoutez l'analyse publique des concurrents.",
-      text: "Qualifyr peut comparer le site, les avis Google et les publicites Meta visibles publiquement.",
+      label: "Ce que les concurrents montrent",
+      title: "Comparez uniquement les informations publiques.",
+      text: "Qualifyr peut preparer une lecture simple du site, des avis Google et des publicites Meta visibles publiquement quand elles existent.",
       cards: relevantTradeCopilots.slice(0, 2)
     }
   };
@@ -3840,7 +3848,8 @@ function renderCopilotLibrary(targetId) {
   const mapSrc = tradeCase.visual === "google-map"
     ? `https://www.google.com/maps?q=${encodeURIComponent(tradeCase.mapQuery || state.profession)}&output=embed`
     : "";
-  const copilotMatchRows = relevantTradeCopilots.slice(0, 3).map((copilot, index) => ({
+  const stayView = targetId === "view-copilots" ? "copilots" : "marketplace";
+  const copilotMatchRows = visibleTradeCopilots.slice(0, 3).map((copilot, index) => ({
     name: copilot.name,
     fit: index === 0 && copilot.profession !== "Autre" ? "Recommande" : "Option",
     reason: index === 0 && copilot.profession !== "Autre"
@@ -3849,22 +3858,22 @@ function renderCopilotLibrary(targetId) {
     gain: copilot.savedTime,
     price: copilot.price
   }));
+  const bestCopilot = visibleTradeCopilots[0] || relevantTradeCopilots[0];
   el(targetId).innerHTML = `
-    <section class="trade-copilot-hero card">
+    <section class="trade-copilot-hero card compact-copilot-hero">
       <div>
         <p class="eyebrow">Copilotes IA par metier</p>
-        <h2>Ajoutez un assistant IA utile a votre activite.</h2>
-        <p>Le client choisit son metier, renseigne ses besoins, puis Qualifyr prepare un copilote a installer sur son site ou a recevoir par email.</p>
+        <h2>Trouvez l'IA qui aide vraiment votre entreprise.</h2>
+        <p>Choisissez un metier, voyez la recommandation, puis demandez l'installation. Le reste est guide, sans vocabulaire technique.</p>
         <div class="hero-actions">
           <button class="primary-button trade-scroll-form">${svg("spark")} Trouver mon copilote</button>
           <button class="secondary-button" data-view="commercial">Voir l'abonnement</button>
         </div>
       </div>
-      <div class="trade-widget-preview">
-        <span class="trade-widget-icon">${svg("spark")}</span>
-        <strong>Assistant client Qualifyr</strong>
-        <small>Collecte le besoin, les coordonnees et les informations utiles.</small>
-        <button class="primary-button">Demarrer</button>
+      <div class="copilot-path-steps" aria-label="Parcours d'activation">
+        <span><b>1</b><strong>Metier</strong><small>Le prospect choisit son activite.</small></span>
+        <span><b>2</b><strong>Recommandation</strong><small>Qualifyr affiche les IA utiles.</small></span>
+        <span><b>3</b><strong>Activation</strong><small>Vous recevez la demande et le paiement.</small></span>
       </div>
     </section>
 
@@ -3872,26 +3881,26 @@ function renderCopilotLibrary(targetId) {
       <div class="section-header compact-header">
         <div>
           <p class="eyebrow">Choisissez un metier</p>
-          <h2>Le SaaS affiche uniquement les IA utiles pour ${state.profession}.</h2>
-          <p>Quand le prospect indique son metier, l'interface montre seulement les copilotes pertinents pour eviter l'effet catalogue.</p>
+          <h2>${state.profession} : les IA inutiles sont cachees.</h2>
+          <p>Le prospect ne voit pas tout le catalogue. Il voit le copilote qui correspond a son quotidien.</p>
         </div>
       </div>
       <div class="card profession-setup-card">
         <div>
           <span class="status success">Metier actif</span>
           <h3>${state.profession}</h3>
-          <p>${hasDedicatedCopilot ? "Copilote dedie trouve. Les modules inutiles sont masques." : "Aucun copilote dedie pour ce metier. Qualifyr propose une IA sur mesure et les packs generiques."}</p>
+          <p>${hasDedicatedCopilot ? "Copilote dedie trouve. Le parcours se concentre sur ce besoin." : "Aucun copilote dedie pour ce metier. Qualifyr propose une IA sur mesure."}</p>
         </div>
         <div class="profession-chip-grid">
           ${["Plombier", "Electricien", "Chauffagiste", "Garage automobile", "Restaurant", "Dentiste", "Societe de nettoyage", "Paysagiste", "Macon", "Menuisier", "Agence immobiliere", "Autre"].map((profession) => `
-            <button class="profession-chip ${state.profession === profession ? "active" : ""}" data-profession="${profession}" data-stay-view="marketplace">${profession}</button>
+            <button class="profession-chip ${state.profession === profession ? "active" : ""}" data-profession="${profession}" data-stay-view="${stayView}">${profession}</button>
           `).join("")}
         </div>
       </div>
 
       <article class="card trade-use-case-card ${tradeCase.visual}">
         <div class="trade-use-case-copy">
-          <p class="eyebrow">Exemple ${state.profession}</p>
+          <p class="eyebrow">Cas concret ${state.profession}</p>
           <h2>${tradeCase.title}</h2>
           <p>${tradeCase.description}</p>
           <div class="hero-actions">
@@ -3926,9 +3935,9 @@ function renderCopilotLibrary(targetId) {
 
       <div class="card copilot-smart-filter-card simplified">
         <div class="filter-heading">
-          <span>Filtrer par :</span>
-          <strong>Copilotes</strong>
-          <small>Simple et sans jargon</small>
+          <span>Affiner la recommandation :</span>
+          <strong>${activeFilterCopy.label}</strong>
+          <small>Chaque choix change les copilotes proposes plus bas.</small>
         </div>
         <div class="copilot-filter-bar">
           ${copilotFilterGroups.map(([label, hint]) => `
@@ -3941,19 +3950,19 @@ function renderCopilotLibrary(targetId) {
         </div>
       </div>
 
-      <div class="competitor-intelligence-grid">
+      <div class="competitor-intelligence-grid guided-copilot-grid">
         <article class="card competitor-intel-card">
-          <p class="eyebrow">Vision marketing</p>
-          <h2>Comparer ce que vos concurrents montrent publiquement.</h2>
-          <p>Qualifyr peut preparer une analyse a partir du site, des avis, de la fiche Google et des publicites Meta visibles publiquement quand elles existent.</p>
+          <p class="eyebrow">Option utile</p>
+          <h2>Comprendre ce que vos concurrents montrent en public.</h2>
+          <p>Cette aide ne lit que des informations publiques : site, fiche Google, avis et publicites Meta visibles quand elles existent.</p>
           <div class="competitor-signal-grid">
             ${["Avis Google", "Site web", "Publicites Meta publiques", "Google Business"].map((signal) => `<span>${svg("spark")} ${signal}</span>`).join("")}
           </div>
-          <small class="source-note">Pas de donnees privees, pas de budgets exacts, pas d'espionnage.</small>
+          <small class="source-note">Pas de donnees privees. Pas de budgets exacts. Pas de promesse impossible.</small>
           <button class="secondary-button competitor-action">Preparer une analyse</button>
         </article>
         <article class="card copilot-match-card">
-          <p class="eyebrow">Meilleure solution pour ${state.profession}</p>
+          <p class="eyebrow">Recommandation</p>
           <h2>${activeFilterCopy.title}</h2>
           <p>${activeFilterCopy.text}</p>
           ${copilotMatchRows.map((row) => `
@@ -3964,6 +3973,14 @@ function renderCopilotLibrary(targetId) {
             </div>
           `).join("")}
         </article>
+      </div>
+
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Copilotes recommandes</p>
+          <h2>${bestCopilot ? `${bestCopilot.name} en premier.` : "Choisissez un copilote."}</h2>
+          <p>Les cartes ci-dessous changent selon le metier et le choix selectionne.</p>
+        </div>
       </div>
 
       <div class="trade-copilot-grid focus-grid">
@@ -3988,9 +4005,9 @@ function renderCopilotLibrary(targetId) {
 
     <section class="section trade-lead-and-pricing">
       <article class="card trade-lead-form" id="tradeCopilotForm">
-        <p class="eyebrow">Formulaire avant activation</p>
-        <h2>Configurer le copilote en 2 minutes.</h2>
-        <p>Le client donne les informations utiles. Qualifyr AI prepare ensuite le copilote sans reglages compliques.</p>
+        <p class="eyebrow">Demande d'activation</p>
+        <h2>Recevoir la demande du prospect.</h2>
+        <p>Le prospect laisse ses informations. Vous pouvez ensuite valider le besoin, envoyer le paiement et preparer l'installation.</p>
         <div class="trade-form-grid">
           <div class="field"><label>Metier</label><select><option>Plombier</option><option>Electricien</option><option>Garage</option><option>Restaurant</option><option>Dentiste</option><option>Autre</option></select></div>
           <div class="field"><label>Nom de l'entreprise</label><input value="Atelier Martin"></div>
@@ -4000,14 +4017,6 @@ function renderCopilotLibrary(targetId) {
           <div class="field"><label>Objectif principal</label><select><option>Ne plus perdre de demandes</option><option>Faire plus de devis</option><option>Gagner du temps au telephone</option><option>Relancer mes clients</option></select></div>
         </div>
         <button class="primary-button trade-form-submit">${svg("spark")} Preparer mon copilote</button>
-      </article>
-      <article class="card trade-marketing-card">
-        <span class="status success">Formule conseillee</span>
-        <h2>Vendre le copilote comme un employe IA.</h2>
-        <p><strong>Promesse simple :</strong> “Votre assistant repond, qualifie et vous envoie les demandes pretes a traiter.”</p>
-        <div class="list-row"><span>Prix d'appel</span><strong>79 EUR / mois</strong></div>
-        <div class="list-row"><span>Offre recommandee</span><strong>149 EUR / mois</strong></div>
-        <div class="list-row"><span>Positionnement</span><strong>Moins cher qu'un appel manque</strong></div>
       </article>
     </section>
 
@@ -5521,7 +5530,13 @@ document.addEventListener("click", (event) => {
   const copilotFilterChip = event.target.closest(".copilot-filter-chip");
   if (copilotFilterChip) {
     state.activeCopilotFilter = copilotFilterChip.dataset.filter || "Metier";
-    renderMarketplace();
+    if (state.view === "copilots") {
+      renderCopilots();
+      showView("copilots");
+    } else {
+      renderMarketplace();
+      showView("marketplace");
+    }
     toast(`Filtre ${state.activeCopilotFilter} applique.`);
     return;
   }
