@@ -406,7 +406,9 @@ function saveAccount(account) {
     name: account.name || existing?.name || "Dorian",
     email: normalizedEmail || existing?.email || "contact@qualifyragence.com",
     profession: account.profession || existing?.profession || state.profession,
-    plan: account.plan || existing?.plan || state.checkoutPlan || "Pro"
+    plan: account.plan || existing?.plan || state.checkoutPlan || "Pro",
+    adminToken: account.adminToken || existing?.adminToken || null,
+    adminExpiresAt: account.adminExpiresAt || existing?.adminExpiresAt || null
   };
   const next = [nextAccount, ...accounts.filter((item) => item.email !== nextAccount.email)].slice(0, 80);
   localStorage.setItem("qualifyrAccounts", JSON.stringify(next));
@@ -446,20 +448,17 @@ function renderAccountButton() {
   button.dataset.view = session?.role === "admin" ? "admin" : "auth";
 }
 
-const adminAccess = {
-  email: "contact@qualifyragence.com",
-  code: "QUALIFYR-ADMIN"
-};
-
-function createAdminSession() {
+function createAdminSession(payload = {}) {
   return saveAccount({
     role: "admin",
-    name: "Dorian",
-    company: "Qualifyr Agence",
-    email: adminAccess.email,
+    name: payload.name || "Dorian",
+    company: payload.company || "Qualifyr Agence",
+    email: payload.email || "contact@qualifyragence.com",
     profession: "Autre",
     plan: "Interne",
-    status: "Admin actif"
+    status: "Admin actif",
+    adminToken: payload.token || null,
+    adminExpiresAt: payload.expiresAt || null
   });
 }
 
@@ -471,12 +470,12 @@ function openAdminLoginModal(error = "") {
       <p>Utilisez cet acces pour traiter les demandes, suivre les paiements et activer les copilotes clients.</p>
       ${error ? `<div class="modal-warning-note"><strong>Acces refuse</strong><span>${safeText(error)}</span></div>` : ""}
       <div class="modal-grid">
-        <div class="modal-field"><label>Email admin</label><input name="email" value="${adminAccess.email}" autocomplete="email"></div>
-        <div class="modal-field"><label>Code admin</label><input name="code" value="" placeholder="QUALIFYR-ADMIN" autocomplete="one-time-code"></div>
+        <div class="modal-field"><label>Email admin</label><input name="email" value="contact@qualifyragence.com" autocomplete="email"></div>
+        <div class="modal-field"><label>Mot de passe</label><input name="password" type="password" value="" autocomplete="current-password"></div>
       </div>
       <div class="modal-warning-note">
         <strong>Note importante</strong>
-        <span>Cet acces admin est local pour piloter la version actuelle. Pour une vraie mise en production, il faudra le remplacer par Supabase Auth avec roles securises.</span>
+        <span>L'email et le mot de passe sont verifies cote serveur via les variables Vercel ADMIN_EMAIL et ADMIN_PASSWORD.</span>
       </div>
       <div class="modal-actions">
         <button class="primary-button" type="submit">${svg("shield")} Me connecter en admin</button>
@@ -1631,7 +1630,8 @@ function renderAiCenter() {
 
 function renderAdmin() {
   const session = getSession();
-  if (session?.role !== "admin") {
+  const adminSessionValid = session?.role === "admin" && session.adminToken && (!session.adminExpiresAt || new Date(session.adminExpiresAt).getTime() > Date.now());
+  if (!adminSessionValid) {
     el("view-admin").innerHTML = `
       <div class="section-header">
         <div>
@@ -1765,7 +1765,7 @@ function renderAuth() {
           <h3>Je gere les demandes Qualifyr</h3>
           <p>Accedez au tableau admin pour voir les prospects, paiements et installations de copilotes.</p>
           <button class="secondary-button" type="button" data-login-admin>${svg("shield")} Connexion admin</button>
-          <p class="muted-note">Code local actuel : QUALIFYR-ADMIN. A remplacer par Supabase Auth avant commercialisation.</p>
+          <p class="muted-note">Reserve a contact@qualifyragence.com. Le mot de passe est gere cote serveur.</p>
         </article>
         <form class="card auth-card" data-modal-form="auth-signup">
           <p class="eyebrow">Nouveau client</p>
@@ -5720,11 +5720,16 @@ document.addEventListener("submit", async (event) => {
 
   if (type === "auth-login") {
     const email = String(data.email || "").trim().toLowerCase();
-    const account = getAccounts().find((item) => item.email === email) || saveAccount({
-      role: email === "contact@qualifyragence.com" ? "admin" : "client",
+    if (email === "contact@qualifyragence.com") {
+      openAdminLoginModal("Cet email est reserve a l'administration. Utilisez le mot de passe admin.");
+      return;
+    }
+    const storedAccount = getAccounts().find((item) => item.email === email && item.role !== "admin");
+    const account = storedAccount || saveAccount({
+      role: "client",
       email,
-      name: email === "contact@qualifyragence.com" ? "Dorian" : "Client Qualifyr",
-      company: email === "contact@qualifyragence.com" ? "Qualifyr Agence" : "Entreprise cliente",
+      name: "Client Qualifyr",
+      company: "Entreprise cliente",
       profession: state.profession,
       plan: "Pro"
     });
@@ -5736,16 +5741,30 @@ document.addEventListener("submit", async (event) => {
 
   if (type === "admin-login") {
     const email = String(data.email || "").trim().toLowerCase();
-    const code = String(data.code || "").trim();
-    if (email !== adminAccess.email || code !== adminAccess.code) {
-      openAdminLoginModal("Email admin ou code incorrect. Utilisez contact@qualifyragence.com avec le code QUALIFYR-ADMIN.");
+    const password = String(data.password || "");
+    if (!email || !password) {
+      openAdminLoginModal("Renseignez votre email admin et votre mot de passe.");
       return;
     }
-    const admin = createAdminSession();
-    closeModal();
-    setSession(admin);
-    renderAll();
-    showView("admin");
+    try {
+      const response = await fetch("/api/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        openAdminLoginModal(payload.error || "Email admin ou mot de passe incorrect.");
+        return;
+      }
+      const admin = createAdminSession(payload.admin || {});
+      closeModal();
+      setSession(admin);
+      renderAll();
+      showView("admin");
+    } catch {
+      openAdminLoginModal("Connexion admin indisponible. Verifiez les variables ADMIN_EMAIL et ADMIN_PASSWORD sur Vercel.");
+    }
     return;
   }
 

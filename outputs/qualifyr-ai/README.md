@@ -66,11 +66,26 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - Creation de comptes clients cote interface.
 - Session client/admin conservee localement.
 - Espace client avec formule, metier, demandes et installation.
-- Admin Qualifyr avec demandes entrantes, qualification, paiement et activation client.
+- Admin Qualifyr reserve a `ADMIN_EMAIL`, avec mot de passe verifie cote serveur.
 - Route serveur `POST /api/checkout` pour creer un paiement Mollie sans exposer la cle cote client.
 - Route serveur `POST /api/webhooks/payment` pour verifier le paiement Mollie et preparer l'activation.
 - Route serveur `POST /api/leads` pour envoyer les demandes vers Supabase quand la base est configuree.
+- Route serveur `POST /api/admin-login` pour verifier l'acces admin sans exposer le mot de passe cote client.
 - Les donnees sont pretes a etre remplacees par Supabase : les points d'entree sont `saveLead`, `saveAccount`, `setSession` et `upsertLeadStatus`.
+
+## Acces admin
+
+L'espace admin n'est pas accessible depuis la connexion client classique.
+Il passe par `POST /api/admin-login`, qui verifie les variables serveur :
+
+```txt
+ADMIN_EMAIL=contact@qualifyragence.com
+ADMIN_PASSWORD=mot_de_passe_fort
+ADMIN_SESSION_SECRET=secret_long_pour_signer_la_session
+```
+
+Ne jamais mettre le mot de passe admin dans `app.js`.
+Pour une version finale multi-utilisateurs, remplacer cette etape par Supabase Auth avec roles `admin` et `client`.
 
 ## Paiement reel
 
@@ -99,6 +114,8 @@ Pour rendre les donnees persistantes :
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=xxxx
 ADMIN_EMAIL=contact@qualifyragence.com
+ADMIN_PASSWORD=mot_de_passe_fort
+ADMIN_SESSION_SECRET=secret_long_pour_signer_la_session
 RESEND_API_KEY=re_xxxx
 EMAIL_FROM=Qualifyr AI <contact@qualifyragence.com>
 ```
