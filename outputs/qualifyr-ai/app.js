@@ -446,6 +446,46 @@ function renderAccountButton() {
   button.dataset.view = session?.role === "admin" ? "admin" : "auth";
 }
 
+const adminAccess = {
+  email: "contact@qualifyragence.com",
+  code: "QUALIFYR-ADMIN"
+};
+
+function createAdminSession() {
+  return saveAccount({
+    role: "admin",
+    name: "Dorian",
+    company: "Qualifyr Agence",
+    email: adminAccess.email,
+    profession: "Autre",
+    plan: "Interne",
+    status: "Admin actif"
+  });
+}
+
+function openAdminLoginModal(error = "") {
+  openModal(`
+    <form class="modal-content" data-modal-form="admin-login">
+      <p class="eyebrow">Connexion admin</p>
+      <h2 id="actionModalTitle">Acceder a l'espace Qualifyr.</h2>
+      <p>Utilisez cet acces pour traiter les demandes, suivre les paiements et activer les copilotes clients.</p>
+      ${error ? `<div class="modal-warning-note"><strong>Acces refuse</strong><span>${safeText(error)}</span></div>` : ""}
+      <div class="modal-grid">
+        <div class="modal-field"><label>Email admin</label><input name="email" value="${adminAccess.email}" autocomplete="email"></div>
+        <div class="modal-field"><label>Code admin</label><input name="code" value="" placeholder="QUALIFYR-ADMIN" autocomplete="one-time-code"></div>
+      </div>
+      <div class="modal-warning-note">
+        <strong>Note importante</strong>
+        <span>Cet acces admin est local pour piloter la version actuelle. Pour une vraie mise en production, il faudra le remplacer par Supabase Auth avec roles securises.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">${svg("shield")} Me connecter en admin</button>
+        <button class="secondary-button" type="button" data-close-modal>Annuler</button>
+      </div>
+    </form>
+  `);
+}
+
 function safeText(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -663,21 +703,28 @@ function openCheckoutModal(planName = "Pro") {
 function openCompetitorModal() {
   openModal(`
     <form class="modal-content" data-modal-form="competitors">
-      <p class="eyebrow">Analyse concurrents</p>
-      <h2 id="actionModalTitle">Voyez ce que vos concurrents font mieux.</h2>
-      <p>Qualifyr analyse uniquement des informations publiques : site, fiche Google, avis, reseaux sociaux et publicites visibles. Pas de donnees privees, pas d'acces protege.</p>
-      <div class="modal-grid">
-        <div class="modal-field"><label>Votre site</label><input name="website" value="https://atelier-martin.fr"></div>
-        <div class="modal-field"><label>Concurrent 1</label><input name="competitor1" value="https://plombier-lyon.fr"></div>
-        <div class="modal-field"><label>Concurrent 2</label><input name="competitor2" value="https://urgence-fuite-lyon.fr"></div>
-        <div class="modal-field"><label>Concurrent 3</label><input name="competitor3" value="https://artisan-local.fr"></div>
+      <p class="eyebrow">Sources publiques</p>
+      <h2 id="actionModalTitle">Comparer vos concurrents sans promesse magique.</h2>
+      <p>Qualifyr peut preparer une analyse a partir d'informations publiques : site, fiche Google, avis, reseaux sociaux et publicites visibles dans la Meta Ad Library quand elles existent.</p>
+      <div class="competitor-modal-layout">
+        <div class="modal-grid">
+          <div class="modal-field"><label>Votre site</label><input name="website" value=""></div>
+          <div class="modal-field"><label>Concurrent 1</label><input name="competitor1" value=""></div>
+          <div class="modal-field"><label>Concurrent 2</label><input name="competitor2" value=""></div>
+          <div class="modal-field"><label>Concurrent 3</label><input name="competitor3" value=""></div>
+        </div>
+        <div class="competitor-plain-card">
+          <strong>Ce que l'analyse peut verifier</strong>
+          <span>${svg("star")} Ads Meta actives si la Page est retrouvee</span>
+          <span>${svg("star")} Qualite du site et du formulaire</span>
+          <span>${svg("star")} Avis Google et messages publics</span>
+        </div>
       </div>
-      <div class="modal-choice-grid">
-        <div class="modal-choice"><strong>Avis Google</strong><small>Note, frequence, reponses.</small></div>
-        <div class="modal-choice"><strong>Site web</strong><small>Promesse, formulaire, rapidite.</small></div>
-        <div class="modal-choice"><strong>Publicites visibles</strong><small>Meta Ad Library et messages publics.</small></div>
+      <div class="modal-warning-note">
+        <strong>Important</strong>
+        <span>Qualifyr ne lit pas les donnees privees, ne voit pas les budgets publicitaires exacts et ne peut pas garantir qu'un concurrent diffuse des pubs Meta.</span>
       </div>
-      <button class="primary-button" type="submit">${svg("star")} Lancer l'analyse</button>
+      <button class="primary-button" type="submit">${svg("star")} Preparer l'analyse</button>
     </form>
   `);
 }
@@ -885,6 +932,7 @@ function renderResponsiveMenu() {
       </div>
       <button data-view="commercial">${svg("card")} Mes paiements</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
+      <button data-login-admin>${svg("shield")} Connexion admin</button>
       <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>
     </div>
   `;
@@ -1591,7 +1639,7 @@ function renderAdmin() {
           <h2>Connectez-vous pour gerer les demandes clients.</h2>
           <p>L'espace admin centralise les prospects, comptes, paiements et installations de copilotes.</p>
         </div>
-        <button class="primary-button" data-login-admin>${svg("shield")} Entrer en admin</button>
+        <button class="primary-button" data-login-admin>${svg("shield")} Connexion admin</button>
       </div>
       <article class="card auth-card">
         <h3>Ce que l'admin permet de faire</h3>
@@ -1677,7 +1725,7 @@ function renderAuth() {
         <h2>${session ? `Bonjour ${safeText(session.name)}.` : "Connectez-vous a Qualifyr AI."}</h2>
         <p>${session ? "Votre compte, votre formule et vos demandes sont regroupes ici." : "Un artisan peut creer son compte, retrouver son copilote et suivre son installation."}</p>
       </div>
-      ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : `<button class="secondary-button" data-login-admin>${svg("shield")} Acces admin</button>`}
+      ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : `<button class="secondary-button" data-login-admin>${svg("shield")} Connexion admin</button>`}
     </div>
     ${session ? `
       <div class="grid grid-3">
@@ -1712,6 +1760,13 @@ function renderAuth() {
           <button class="primary-button" type="submit">${svg("shield")} Entrer dans mon espace</button>
           <p class="muted-note">Pour la version publique, ce formulaire sera branche a Supabase Auth ou Clerk.</p>
         </form>
+        <article class="card auth-card admin-login-card">
+          <p class="eyebrow">Administration</p>
+          <h3>Je gere les demandes Qualifyr</h3>
+          <p>Accedez au tableau admin pour voir les prospects, paiements et installations de copilotes.</p>
+          <button class="secondary-button" type="button" data-login-admin>${svg("shield")} Connexion admin</button>
+          <p class="muted-note">Code local actuel : QUALIFYR-ADMIN. A remplacer par Supabase Auth avant commercialisation.</p>
+        </article>
         <form class="card auth-card" data-modal-form="auth-signup">
           <p class="eyebrow">Nouveau client</p>
           <h3>Creer mon espace</h3>
@@ -3564,31 +3619,20 @@ function getRelevantBusinessPacks() {
 }
 
 function renderCopilotLibrary(targetId) {
-  const categories = ["📞 Communication", "📄 Commercial", "📅 Organisation", "💰 Finance", "⭐ Reputation", "📸 Marketing", "🏢 Gestion", "⭐ IA Premium", "🤖 IA personnalisees", "🛠️ IA sur mesure"];
-  const installed = digitalEmployees.filter((item) => item.status === "Installe").length;
-  const tasks = digitalEmployees.reduce((sum, item) => sum + Number((item.stats[0] || "0").match(/\d+/)?.[0] || 0), 0);
-  const featured = digitalEmployees[0];
-  const autonomyScore = 86;
   const relevantTradeCopilots = getRelevantTradeCopilots();
   const relevantBusinessPacks = getRelevantBusinessPacks();
   const hasDedicatedCopilot = relevantTradeCopilots.some((copilot) => copilot.profession === normalizeProfessionName(state.profession));
   const copilotFilterGroups = [
-    ["Metier", "Plombier, garage, restaurant"],
-    ["Objectif", "Plus d'appels, plus de devis"],
-    ["Canal", "Site, WhatsApp, telephone"],
+    ["Metier", "Votre activite"],
+    ["Objectif", "Appels, devis, relances"],
+    ["Canal", "Site, email, WhatsApp"],
     ["Budget", "79, 149 ou 299 EUR"],
-    ["Temps gagne", "4h, 8h, 12h / semaine"],
-    ["Outils", "Google, Meta, email"],
-    ["Niveau IA", "Simple ou autonome"],
     ["Installation", "Site ou email"],
-    ["Avis clients", "Google, Trustpilot"],
-    ["Concurrents", "Ce qu'ils utilisent"],
-    ["Urgence", "Appels manques"],
-    ["Equipe", "Solo ou PME"]
+    ["Concurrents", "Sources publiques"]
   ];
   const copilotMatchRows = relevantTradeCopilots.slice(0, 3).map((copilot, index) => ({
     name: copilot.name,
-    fit: index === 0 && copilot.profession !== "Autre" ? "96%" : index === 0 ? "82%" : "74%",
+    fit: index === 0 && copilot.profession !== "Autre" ? "Recommande" : "Option",
     reason: index === 0 && copilot.profession !== "Autre"
       ? `Adapte au metier ${state.profession}, avec ${copilot.includes.toLowerCase()}.`
       : "Utile si vos demandes sont encore trop differentes pour un pack standard.",
@@ -3599,17 +3643,17 @@ function renderCopilotLibrary(targetId) {
     <section class="trade-copilot-hero card">
       <div>
         <p class="eyebrow">Copilotes IA par metier</p>
-        <h2>Un employe IA deja forme pour votre metier.</h2>
-        <p>Le prospect choisit son metier, remplit un formulaire simple, puis il peut ajouter le copilote a son site ou recevoir chaque demande par email.</p>
+        <h2>Ajoutez un assistant IA utile a votre activite.</h2>
+        <p>Le client choisit son metier, renseigne ses besoins, puis Qualifyr prepare un copilote a installer sur son site ou a recevoir par email.</p>
         <div class="hero-actions">
           <button class="primary-button trade-scroll-form">${svg("spark")} Trouver mon copilote</button>
           <button class="secondary-button trade-scroll-pricing">Voir les tarifs</button>
         </div>
       </div>
       <div class="trade-widget-preview">
-        <span>🤖</span>
-        <strong>Bonjour, je suis l'assistant de votre entreprise.</strong>
-        <small>Expliquez votre besoin, j'organise la suite.</small>
+        <span>${svg("spark")}</span>
+        <strong>Assistant client Qualifyr</strong>
+        <small>Collecte le besoin, les coordonnees et les informations utiles.</small>
         <button class="primary-button">Demarrer</button>
       </div>
     </section>
@@ -3619,7 +3663,7 @@ function renderCopilotLibrary(targetId) {
         <div>
           <p class="eyebrow">Choisissez un metier</p>
           <h2>Le SaaS affiche uniquement les IA utiles pour ${state.profession}.</h2>
-          <p>Quand le prospect indique son metier, Qualifyr AI active les bons copilotes et masque les autres pour eviter la confusion.</p>
+          <p>Quand le prospect indique son metier, l'interface montre seulement les copilotes pertinents pour eviter l'effet catalogue.</p>
         </div>
       </div>
       <div class="card profession-setup-card">
@@ -3635,11 +3679,11 @@ function renderCopilotLibrary(targetId) {
         </div>
       </div>
 
-      <div class="card copilot-smart-filter-card">
+      <div class="card copilot-smart-filter-card simplified">
         <div class="filter-heading">
           <span>Filtrer par :</span>
           <strong>Copilotes</strong>
-          <small>Analyse concurrents</small>
+          <small>Simple et sans jargon</small>
         </div>
         <div class="copilot-filter-bar">
           ${copilotFilterGroups.map(([label, hint]) => `
@@ -3655,12 +3699,13 @@ function renderCopilotLibrary(targetId) {
       <div class="competitor-intelligence-grid">
         <article class="card competitor-intel-card">
           <p class="eyebrow">Vision marketing</p>
-          <h2>Qualifyr peut aussi analyser vos concurrents visibles.</h2>
-          <p>Le prospect renseigne 3 concurrents. Qualifyr observe leurs canaux publics : site, avis Google, Facebook, Instagram, publicites visibles et vitesse de reponse apparente.</p>
+          <h2>Comparer ce que vos concurrents montrent publiquement.</h2>
+          <p>Qualifyr peut preparer une analyse a partir du site, des avis, de la fiche Google et des publicites Meta visibles publiquement quand elles existent.</p>
           <div class="competitor-signal-grid">
-            ${["Avis Google", "Site web", "Publicites Meta", "WhatsApp", "Google Business", "Formulaires"].map((signal) => `<span>${svg("spark")} ${signal}</span>`).join("")}
+            ${["Avis Google", "Site web", "Publicites Meta publiques", "Google Business"].map((signal) => `<span>${svg("spark")} ${signal}</span>`).join("")}
           </div>
-          <button class="secondary-button competitor-action">Analyser mes concurrents</button>
+          <small class="source-note">Pas de donnees privees, pas de budgets exacts, pas d'espionnage.</small>
+          <button class="secondary-button competitor-action">Preparer une analyse</button>
         </article>
         <article class="card copilot-match-card">
           <p class="eyebrow">Meilleure solution pour ${state.profession}</p>
@@ -3675,7 +3720,7 @@ function renderCopilotLibrary(targetId) {
         </article>
       </div>
 
-      <div class="trade-copilot-grid">
+      <div class="trade-copilot-grid focus-grid">
         ${relevantTradeCopilots.map((copilot) => `
           <article class="card trade-copilot-card">
             <span class="trade-emoji">${svg("spark")}</span>
@@ -3752,223 +3797,23 @@ function renderCopilotLibrary(targetId) {
       </div>
     </section>
 
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">✨ Bibliotheque des Copilotes</p>
-        <h2>🤖 Mes copilotes IA</h2>
-        <p>Choisissez les employes numeriques qui travailleront pour votre entreprise.</p>
-      </div>
-      <button class="secondary-button" data-view="custom-ai">IA sur mesure</button>
-    </div>
-    <div class="copilot-search-panel card">
-      <div class="assistant-input-row">
-        <input value="Repondre au telephone, creer des devis, WhatsApp, Google, emails..." aria-label="Rechercher un copilote">
-        <button class="primary-button">${svg("spark")} Rechercher</button>
-      </div>
-      <div class="suggestion-chips">
-        ${["Les plus populaires", "Les plus utilises", "Les nouveautes", "Recommandes pour vous"].map((filter) => `<button>${filter}</button>`).join("")}
-      </div>
-    </div>
-    <div class="grid grid-4">
-      ${metric("Copilotes installes", installed, "employes numeriques actifs")}
-      ${metric("Temps economise", "54h", "par semaine")}
-      ${metric("Taches realisees", tasks.toLocaleString("fr-FR"), "ce mois-ci")}
-      ${metric("Argent economise", "8 420 EUR", "estimation mensuelle")}
-    </div>
-
-    <section class="section copilot-autonomy-hero">
-      <div>
-        <p class="eyebrow">Niveau de l'entreprise</p>
-        <h2>Entreprise autonome : ${autonomyScore}/100</h2>
-        <p>Chaque pack, copilote, mission automatique et connexion active augmente votre capacite a laisser Qualifyr AI travailler pour vous.</p>
-        <div class="assistant-score-line"><span style="width:${autonomyScore}%"></span></div>
-      </div>
-      <div class="commercial-benefit-grid">
-        <span><strong>54 h</strong><small>Temps gagne / semaine</small></span>
-        <span><strong>${installed}</strong><small>Copilotes actifs</small></span>
-        <span><strong>284</strong><small>Missions executees</small></span>
-        <span><strong>7</strong><small>Connexions actives</small></span>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-header compact-header">
-        <div>
-          <p class="eyebrow">Packs metiers</p>
-          <h2>Installez un metier complet en un clic.</h2>
-          <p>Chaque pack active les copilotes IA, missions automatiques, connexions recommandees, parametres, modeles et tableaux de bord adaptes.</p>
-        </div>
-        <button class="primary-button pack-auto-install">${svg("spark")} ✨ Installer automatiquement</button>
-      </div>
-      <div class="business-pack-grid">
-        ${relevantBusinessPacks.map((pack) => `
-          <article class="card business-pack-card">
-            <span class="status success">+${pack.scoreGain} points autonomie</span>
-            <h3>${pack.name}</h3>
-            <p>${pack.description}</p>
-            <div class="list-row"><span>Copilotes inclus</span><strong>${pack.copilots}</strong></div>
-            <div class="list-row"><span>Missions automatiques</span><strong>${pack.automations}</strong></div>
-            <div class="list-row"><span>Modeles inclus</span><strong>${pack.models}</strong></div>
-            <div class="list-row"><span>Connexion recommandee</span><strong>${pack.connections}</strong></div>
-            <div class="assistant-mini-grid">
-              <span><strong>${pack.savedTime}</strong><small>Temps gagne</small></span>
-              <span><strong>${pack.roi}</strong><small>ROI estime</small></span>
-            </div>
-            <div class="hero-actions">
-              <button class="primary-button pack-install" data-pack="${pack.name}">Installer le pack</button>
-              <button class="secondary-button pack-demo" data-pack="${pack.name}">Voir l'apercu</button>
-            </div>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-
-    <section class="section grid grid-2">
-      <article class="card demo-experience-card">
-        <p class="eyebrow">Apercu concret</p>
-        <h2>Voyez le resultat avant de l'installer.</h2>
-        <div class="digital-video">Parcours complet : appel entrant, qualification, devis prepare, rendez-vous cree.</div>
-        <div class="assistant-mini-grid">
-          <span><strong>3 scenarios</strong><small>Parcours metier prets</small></span>
-          <span><strong>2 min</strong><small>Pour comprendre l'interet</small></span>
-          <span><strong>100%</strong><small>Sans configuration technique</small></span>
-        </div>
-        <button class="primary-button demo-action">${svg("spark")} Voir l'apercu</button>
-      </article>
+    <section class="section grid grid-2 copilot-process-section">
       <article class="card install-assistant-card">
-        <p class="eyebrow">Assistant d'installation</p>
-        <h2>Operationnel en moins de deux minutes.</h2>
-        ${installationSteps.map(([step, title, description]) => `
+        <p class="eyebrow">Activation</p>
+        <h2>Ce qui se passe apres le choix du copilote.</h2>
+        ${installationSteps.slice(0, 4).map(([step, title, description]) => `
           <div class="install-step">
             <strong>${step}</strong>
             <span><b>${title}</b><small>${description}</small></span>
           </div>
         `).join("")}
-        <button class="primary-button pack-auto-install">${svg("spark")} ✨ Installer automatiquement</button>
-      </article>
-    </section>
-
-    <section class="section">
-      <div class="section-header compact-header">
-        <div>
-          <p class="eyebrow">Recommandations Qualifyr AI</p>
-          <h2>Ce que votre entreprise devrait embaucher ensuite.</h2>
-        </div>
-      </div>
-      <div class="grid grid-3">
-        ${aiModuleRecommendations.map(([problem, action, impact, view]) => `<article class="card"><span class="module-icon">${svg("spark")}</span><h3>${problem}</h3><p>${action}</p><div class="list-row"><span>Impact estime</span><strong>${impact}</strong></div><button class="primary-button" data-view="${view}">${action}</button></article>`).join("")}
-      </div>
-    </section>
-    <div class="copilot-category-tabs">
-      ${categories.map((category) => `<button>${category}</button>`).join("")}
-    </div>
-    <article class="card premium-copilot-note">
-      <span class="status warning">⭐ IA Premium</span>
-      <strong>Reservee aux abonnements superieurs.</strong>
-      <p>Ces copilotes analysent votre entreprise en profondeur et donnent des conseils de pilotage simples.</p>
-    </article>
-    <div class="copilot-library-grid">
-        ${digitalEmployees.map((employee) => `
-        <article class="card digital-employee-card">
-          <div class="digital-shot">
-            <span class="digital-shot-icon">${svg("spark")}</span>
-            <strong>${employee.capture}</strong>
-            <small>${employee.name}</small>
-          </div>
-          <div class="module-head">
-            <span class="module-icon ai-emoji">${svg("spark")}</span>
-            <span class="status ${employee.health.includes("🔴") ? "danger" : employee.health.includes("🟠") ? "warning" : "success"}">${employee.health.replace("🟢 ", "").replace("🟠 ", "").replace("🔴 ", "")}</span>
-          </div>
-          <p class="eyebrow">${employee.category.replace("📞 ", "").replace("📄 ", "").replace("📅 ", "").replace("⭐ ", "").replace("📸 ", "").replace("💰 ", "").replace("👥 ", "").replace("📈 ", "").replace("🏢 ", "")}</p>
-          <h3>${employee.name}</h3>
-          <p>${employee.description}</p>
-          <div class="assistant-stats">
-            <span><strong>${employee.savedTime}</strong><small>Temps economise</small></span>
-            <span><strong>${employee.popularity}</strong><small>Popularite</small></span>
-            <span><strong>${employee.companies}</strong><small>Utilisation</small></span>
-            <span><strong>${employee.rating}</strong><small>Avis</small></span>
-          </div>
-          <details open>
-            <summary>Presentation</summary>
-            <p>${employee.example}</p>
-          </details>
-          <details>
-            <summary>Fonctionnement</summary>
-            <div class="tag-list">${employee.features.map((feature) => `<span class="tag">${feature}</span>`).join("")}</div>
-          </details>
-          <details>
-            <summary>Configuration</summary>
-            <div class="tag-list">${employee.configuration.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
-          </details>
-          <details open>
-            <summary>ROI avant installation</summary>
-            <div class="list-row"><span>Temps gagne estime</span><strong>${employee.savedTime}</strong></div>
-            <div class="list-row"><span>Argent economise</span><strong>${employee.status === "Premium" ? "2 900 EUR / mois" : "1 850 EUR / mois"}</strong></div>
-            <div class="list-row"><span>Prospects recuperes</span><strong>${employee.category.includes("Communication") ? "18 / mois" : "7 / mois"}</strong></div>
-            <div class="list-row"><span>Taches automatisees</span><strong>${employee.stats[0]}</strong></div>
-            <div class="list-row"><span>Retour sur investissement</span><strong>x${employee.status === "Premium" ? "5,8" : "4,6"}</strong></div>
-          </details>
-          <details>
-            <summary>Compatible avec</summary>
-            <div class="tag-list">${["Google", "WhatsApp", "Mollie", "Facebook", "Instagram", "Gmail", "Google Calendar", "Les autres copilotes", ...employee.compatibility].map((item) => `<span class="tag">${item}</span>`).join("")}</div>
-          </details>
-          <details>
-            <summary>Statistiques et historique</summary>
-            ${employee.stats.map((item) => `<div class="list-row"><span>${item}</span><strong>Stat</strong></div>`).join("")}
-            ${employee.history.map((item) => `<div class="list-row"><span>${item}</span><strong>Fait</strong></div>`).join("")}
-          </details>
-          <div class="hero-actions">
-            <button class="${employee.status === "Installe" ? "secondary-button" : "primary-button"} copilot-hire" data-employee="${employee.name}">${employee.status === "Installe" ? "Ouvrir" : employee.status === "Premium" ? "Debloquer" : "Installer"}</button>
-            <button class="secondary-button copilot-demo" data-employee="${employee.name}">Apercu</button>
-            ${employee.status === "Installe" ? "" : `<button class="secondary-button copilot-configure" data-employee="${employee.name}">Configurer</button>`}
-            <button class="danger-button copilot-remove" data-employee="${employee.name}">Desinstaller</button>
-          </div>
-        </article>
-      `).join("")}
-    </div>
-    <section class="section grid grid-2">
-      <article class="card copilot-detail-card">
-        <p class="eyebrow">Page de details</p>
-        <h2>${featured.name}</h2>
-        <div class="digital-video">Apercu video - ${featured.capture}</div>
-        <div class="grid grid-2">
-          <div class="digital-image">Capture appels</div>
-          <div class="digital-image">Historique client</div>
-        </div>
-        <h3>Pourquoi il est utile</h3>
-        <p>${featured.description}</p>
-        <div class="tag-list">${featured.compatibility.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
-        <div class="list-row"><span>Temps economise</span><strong>${featured.savedTime}</strong></div>
-        <div class="list-row"><span>Questions frequentes</span><strong>${featured.faq[0]}</strong></div>
-        <button class="primary-button copilot-hire" data-employee="${featured.name}">Installer ${featured.name}</button>
       </article>
       <article class="card form-grid">
-        <p class="eyebrow">🛠️ IA sur mesure</p>
-        <h2>Votre entreprise est unique. Votre IA aussi.</h2>
-        <p>Nous developpons des copilotes entierement personnalises selon votre metier, vos logiciels et vos processus internes.</p>
-        ${["Nom", "Entreprise", "Secteur", "Nombre d'employes", "Objectif", "Description", "Logiciels utilises", "Budget", "Documents", "Captures d'ecran", "PDF", "Videos", "Telephone", "Email"].map((label, index) => `<div class="field"><label>${label}</label><input value="${index < 2 ? ["Dorian", "Atelier Qualifyr Demo"][index] : ""}"></div>`).join("")}
-        <button class="primary-button" id="customStudy">${svg("message")} Recevoir une etude personnalisee</button>
+        <p class="eyebrow">IA sur mesure</p>
+        <h2>Votre metier n'est pas dans la liste ?</h2>
+        <p>Dans ce cas, Qualifyr collecte votre besoin puis propose une configuration manuelle. Rien n'est presente comme installe tant que la demande n'est pas validee.</p>
+        <button class="secondary-button" data-view="custom-ai">Demander une IA sur mesure</button>
       </article>
-    </section>
-
-    <section class="section">
-      <div class="section-header compact-header">
-        <div>
-          <p class="eyebrow">Centre des nouveautes</p>
-          <h2>Ce que Qualifyr AI vient d'ameliorer.</h2>
-        </div>
-      </div>
-      <div class="grid grid-4">
-        ${productUpdates.map(([type, description, capture, impact]) => `
-          <article class="card update-card">
-            <span class="status success">${type}</span>
-            <div class="digital-image">${capture}</div>
-            <p>${description}</p>
-            <div class="list-row"><span>Impact</span><strong>${impact}</strong></div>
-            <button class="secondary-button update-discover">Decouvrir</button>
-          </article>
-        `).join("")}
-      </div>
     </section>
   `;
 }
@@ -5172,17 +5017,7 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest("[data-login-admin]")) {
-    const admin = saveAccount({
-      role: "admin",
-      name: "Dorian",
-      company: "Qualifyr Agence",
-      email: "contact@qualifyragence.com",
-      profession: "Autre",
-      plan: "Interne"
-    });
-    setSession(admin);
-    renderAll();
-    showView("admin");
+    openAdminLoginModal();
     return;
   }
 
@@ -5896,6 +5731,21 @@ document.addEventListener("submit", async (event) => {
     setSession(account);
     renderAll();
     showView(account.role === "admin" ? "admin" : "auth");
+    return;
+  }
+
+  if (type === "admin-login") {
+    const email = String(data.email || "").trim().toLowerCase();
+    const code = String(data.code || "").trim();
+    if (email !== adminAccess.email || code !== adminAccess.code) {
+      openAdminLoginModal("Email admin ou code incorrect. Utilisez contact@qualifyragence.com avec le code QUALIFYR-ADMIN.");
+      return;
+    }
+    const admin = createAdminSession();
+    closeModal();
+    setSession(admin);
+    renderAll();
+    showView("admin");
     return;
   }
 

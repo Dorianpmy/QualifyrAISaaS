@@ -11112,3 +11112,135 @@ body.simple-ux .mobile-menu span {
     background: #fff !important;
   }
 }
+
+/* Honest copilot marketplace cleanup: less noise, more Qualifyr, fewer unsupported claims. */
+body.simple-ux .copilot-smart-filter-card.simplified {
+  padding: 18px !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(17, 17, 17, 0.08) !important;
+  box-shadow: 0 14px 40px rgba(17, 17, 17, 0.05) !important;
+}
+
+body.simple-ux .copilot-smart-filter-card.simplified .filter-heading {
+  gap: 10px !important;
+  padding-bottom: 2px !important;
+}
+
+body.simple-ux .copilot-smart-filter-card.simplified .filter-heading strong {
+  border-bottom-color: var(--primary) !important;
+  font-weight: 620 !important;
+}
+
+body.simple-ux .copilot-smart-filter-card.simplified .copilot-filter-bar {
+  gap: 8px !important;
+}
+
+body.simple-ux .copilot-smart-filter-card.simplified .copilot-filter-chip {
+  min-height: 40px !important;
+  grid-template-columns: auto auto !important;
+  padding: 7px 11px !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  background: #fafafa !important;
+}
+
+body.simple-ux .copilot-smart-filter-card.simplified .copilot-filter-chip small {
+  display: none !important;
+}
+
+body.simple-ux .competitor-intelligence-grid {
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr) !important;
+}
+
+body.simple-ux .competitor-intel-card,
+body.simple-ux .copilot-match-card {
+  border-radius: 20px !important;
+  padding: 22px !important;
+}
+
+body.simple-ux .competitor-intel-card h2,
+body.simple-ux .copilot-match-card h2 {
+  font-size: clamp(22px, 1.8vw, 30px) !important;
+  font-weight: 620 !important;
+  letter-spacing: -0.035em !important;
+}
+
+body.simple-ux .competitor-signal-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.simple-ux .source-note {
+  color: #6e6e6e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.simple-ux .focus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+}
+
+body.simple-ux .focus-grid .trade-copilot-card {
+  min-height: auto !important;
+}
+
+body.simple-ux .copilot-process-section {
+  align-items: stretch;
+}
+
+body.simple-ux .competitor-modal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: 18px;
+  align-items: start;
+}
+
+body.simple-ux .competitor-plain-card,
+body.simple-ux .modal-warning-note {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 16px;
+  background: #fafafa;
+}
+
+body.simple-ux .competitor-plain-card strong,
+body.simple-ux .modal-warning-note strong {
+  font-size: 15px;
+  font-weight: 620;
+}
+
+body.simple-ux .competitor-plain-card span,
+body.simple-ux .modal-warning-note span {
+  color: #6e6e6e;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+body.simple-ux .competitor-plain-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.simple-ux .competitor-plain-card svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+body.simple-ux .admin-login-card {
+  border-color: rgba(34, 197, 94, 0.26) !important;
+}
+
+@media (max-width: 900px) {
+  body.simple-ux .competitor-intelligence-grid,
+  body.simple-ux .competitor-modal-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.simple-ux .competitor-signal-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
