@@ -11781,3 +11781,91 @@ body.simple-ux .trade-use-case-tags em {
     padding: 22px !important;
   }
 }
+
+/* Final mobile drawer correction: sharp menu, centered trigger, no blurred panel. */
+@media (max-width: 820px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+  }
+
+  body.simple-ux .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+
+  body.simple-ux .mobile-menu {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+    justify-self: start !important;
+    margin: 0 !important;
+    min-width: 92px !important;
+    width: 92px !important;
+    height: 42px !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+  }
+
+  body.mobile-menu-open .mobile-nav-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 110 !important;
+    background: rgba(0, 0, 0, 0.46) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+  }
+
+  body.mobile-menu-open .mobile-nav-popover,
+  body.simple-ux .mobile-nav-popover {
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+
+  body.mobile-menu-open .mobile-nav-popover {
+    display: block !important;
+    position: fixed !important;
+    z-index: 120 !important;
+    top: max(12px, env(safe-area-inset-top)) !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: auto !important;
+    width: min(330px, calc(100vw - 28px)) !important;
+    max-width: calc(100vw - 28px) !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 18px 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 24px !important;
+    overflow-y: auto !important;
+    background: #020202 !important;
+    box-shadow: 18px 0 60px rgba(0, 0, 0, 0.28) !important;
+    transform: translateX(0) !important;
+    will-change: transform !important;
+  }
+
+  body.mobile-menu-open .mobile-nav-popover * {
+    filter: none !important;
+    opacity: 1;
+  }
+
+  body.mobile-menu-open .mobile-nav-row small,
+  body.mobile-menu-open .mobile-nav-head span {
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  body.simple-ux .mobile-menu {
+    min-width: 48px !important;
+    width: 48px !important;
+    border-radius: 16px !important;
+  }
+}
