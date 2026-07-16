@@ -449,6 +449,14 @@ function renderAccountButton() {
   button.dataset.view = session?.role === "admin" ? "admin" : "auth";
 }
 
+function isAdminSession(session = getSession()) {
+  return Boolean(
+    session?.role === "admin" &&
+    session.adminToken &&
+    (!session.adminExpiresAt || new Date(session.adminExpiresAt).getTime() > Date.now())
+  );
+}
+
 function createAdminSession(payload = {}) {
   return saveAccount({
     role: "admin",
@@ -904,6 +912,7 @@ function renderBottomNav() {
 function renderResponsiveMenu() {
   const node = el("mobileNavPopover");
   if (!node) return;
+  const adminVisible = isAdminSession();
   const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
   const secondaryItems = [
     ["commercial", "Abonnement", "card", "Factures et paiement"],
@@ -965,7 +974,7 @@ function renderResponsiveMenu() {
       </div>
       <button data-view="commercial">${svg("card")} Mes paiements</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
-      <button data-login-admin>${svg("shield")} Connexion admin</button>
+      ${adminVisible ? `<button data-view="admin">${svg("shield")} Admin Qualifyr</button>` : ""}
       <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>
     </div>
   `;
@@ -1664,7 +1673,7 @@ function renderAiCenter() {
 
 function renderAdmin() {
   const session = getSession();
-  const adminSessionValid = session?.role === "admin" && session.adminToken && (!session.adminExpiresAt || new Date(session.adminExpiresAt).getTime() > Date.now());
+  const adminSessionValid = isAdminSession(session);
   if (!adminSessionValid) {
     el("view-admin").innerHTML = `
       <div class="section-header">
@@ -1751,6 +1760,7 @@ function renderAdmin() {
 
 function renderAuth() {
   const session = getSession();
+  const adminVisible = isAdminSession(session);
   const leads = getStoredLeads().filter((lead) => !session || lead.email === session.email || session.role === "admin");
   el("view-auth").innerHTML = `
     <div class="section-header">
@@ -1759,7 +1769,7 @@ function renderAuth() {
         <h2>${session ? `Bonjour ${safeText(session.name)}.` : "Connectez-vous a Qualifyr AI."}</h2>
         <p>${session ? "Votre compte, votre formule et vos demandes sont regroupes ici." : "Un artisan peut creer son compte, retrouver son copilote et suivre son installation."}</p>
       </div>
-      ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : `<button class="secondary-button" data-login-admin>${svg("shield")} Connexion admin</button>`}
+      ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : ""}
     </div>
     ${session ? `
       <div class="grid grid-3">
@@ -1790,17 +1800,19 @@ function renderAuth() {
         <form class="card auth-card" data-modal-form="auth-login">
           <p class="eyebrow">Connexion</p>
           <h3>J'ai deja un compte</h3>
-          <div class="field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
+          <div class="field"><label>Email</label><input name="email" placeholder="votre@email.fr"></div>
           <button class="primary-button" type="submit">${svg("shield")} Entrer dans mon espace</button>
-          <p class="muted-note">Pour la version publique, ce formulaire sera branche a Supabase Auth ou Clerk.</p>
+          <p class="muted-note">Votre espace affiche vos demandes, votre abonnement et l'installation de vos copilotes.</p>
         </form>
+        ${adminVisible ? `
         <article class="card auth-card admin-login-card">
           <p class="eyebrow">Administration</p>
           <h3>Je gere les demandes Qualifyr</h3>
           <p>Accedez au tableau admin pour voir les prospects, paiements et installations de copilotes.</p>
-          <button class="secondary-button" type="button" data-login-admin>${svg("shield")} Connexion admin</button>
+          <button class="secondary-button" type="button" data-view="admin">${svg("shield")} Ouvrir l'admin</button>
           <p class="muted-note">Reserve a contact@qualifyragence.com. Le mot de passe est gere cote serveur.</p>
         </article>
+        ` : ""}
         <form class="card auth-card" data-modal-form="auth-signup">
           <p class="eyebrow">Nouveau client</p>
           <h3>Creer mon espace</h3>
@@ -3158,6 +3170,7 @@ function renderDashboard() {
 
 function renderCrm() {
   const search = (state.crmSearch || "").toLowerCase();
+  const adminVisible = isAdminSession();
   const accounts = getAccounts().filter((account) => account.role === "client");
   const leads = getStoredLeads();
   const realContacts = [
@@ -3205,7 +3218,7 @@ function renderCrm() {
     <div class="toolbar">
       <input id="crmSearch" class="search-input" value="${state.crmSearch || ""}" placeholder="Rechercher un nom, un telephone ou une entreprise" aria-label="Rechercher un client">
       <select id="crmFilter"><option>Tous</option><option>Demandes</option><option>Clients actifs</option></select>
-      <button class="secondary-button" data-view="admin">Voir l'admin</button>
+      ${adminVisible ? `<button class="secondary-button" data-view="admin">Voir l'admin</button>` : ""}
     </div>
     ${realContacts.length ? `
       <div class="section data-table quiet-crm-list">
@@ -3216,7 +3229,7 @@ function renderCrm() {
             <span class="status ${contact.kind === "Client" ? "success" : "warning"}">${safeText(contact.status)}</span>
             <span class="admin-actions">
               <button class="secondary-button" data-open-talk="Rappeler ${safeText(contact.company)}">Rappeler</button>
-              <button class="primary-button" data-view="admin">Traiter</button>
+              ${adminVisible ? `<button class="primary-button" data-view="admin">Traiter</button>` : `<button class="primary-button" data-open-talk="Preparer la prochaine action pour ${safeText(contact.company)}">Preparer</button>`}
             </span>
           </article>
         `).join("")}
@@ -3228,7 +3241,7 @@ function renderCrm() {
         <p>Quand un prospect remplit un formulaire, paie une formule ou demande un copilote, il apparaitra ici. Pour l'instant, Qualifyr garde cette page propre.</p>
         <div class="modal-actions">
           <button class="primary-button" data-view="marketplace">${svg("grid")} Ajouter une IA</button>
-          <button class="secondary-button" data-view="admin">Ouvrir l'admin</button>
+          ${adminVisible ? `<button class="secondary-button" data-view="admin">Ouvrir l'admin</button>` : `<button class="secondary-button" data-open-talk="Je veux comprendre le suivi client">Demander a Qualifyr</button>`}
         </div>
       </article>
     `}
@@ -4887,6 +4900,7 @@ function renderSettings() {
 }
 
 function renderMore() {
+  const adminVisible = isAdminSession();
   const moreItems = [
     ["quotes", "Mes devis", "Creer, modifier, signer et exporter en PDF", "file"],
     ["landing", "Page de presentation", "Presenter Qualifyr AI a de futurs clients", "spark"],
@@ -4899,7 +4913,7 @@ function renderMore() {
     ["marketplace", "Ajouter une IA", "Installer de nouvelles aides intelligentes", "grid"],
     ["custom-ai", "IA sur mesure", "Recevoir une etude personnalisee", "message"],
     ["auth", "Espace client", "Connexion, compte et installation", "users"],
-    ["admin", "Admin Qualifyr", "Demandes, paiements et installations", "shield"],
+    ...(adminVisible ? [["admin", "Admin Qualifyr", "Demandes, paiements et installations", "shield"]] : []),
     ["settings", "Mon entreprise", "Entreprise, TVA, horaires et equipe", "shield"],
     ["billing", "Mes factures", "Factures, paiements, relances et exports", "card"],
     ["help", "Aide", "Guides simples et support", "help"]
@@ -5778,18 +5792,19 @@ document.addEventListener("submit", async (event) => {
       throw new Error("Lien de paiement absent.");
     } catch (error) {
       saveAccount({ ...account, status: "Paiement a configurer" });
+      const adminVisible = isAdminSession();
       openModal(`
         <div class="modal-content">
           <p class="eyebrow">Paiement non disponible</p>
           <h2 id="actionModalTitle">Il manque la configuration Mollie.</h2>
-          <p>${safeText(error.message)}. La demande est quand meme enregistree dans l'espace admin pour etre traitee manuellement.</p>
+          <p>${safeText(error.message)}. La demande est enregistree et pourra etre traitee manuellement.</p>
           <div class="integration-roadmap">
             <div class="roadmap-step"><strong>1. Ajouter MOLLIE_API_KEY</strong><small>Dans Vercel, variables d'environnement.</small></div>
             <div class="roadmap-step"><strong>2. Redeployer</strong><small>Le bouton ouvrira Mollie automatiquement.</small></div>
             <div class="roadmap-step"><strong>3. Activer</strong><small>Le webhook confirmera le paiement.</small></div>
           </div>
           <div class="modal-actions">
-            <button class="primary-button" data-view="admin">${svg("shield")} Voir la demande admin</button>
+            ${adminVisible ? `<button class="primary-button" data-view="admin">${svg("shield")} Voir la demande admin</button>` : ""}
             <button class="secondary-button" data-close-modal>Fermer</button>
           </div>
         </div>
@@ -5847,13 +5862,14 @@ document.addEventListener("submit", async (event) => {
       throw new Error("Lien de paiement absent.");
     } catch (error) {
       saveAccount({ ...account, status: "Paiement a configurer" });
+      const adminVisible = isAdminSession();
       openModal(`
         <div class="modal-content">
           <p class="eyebrow">Paiement non disponible</p>
           <h2 id="actionModalTitle">La demande pack est enregistree.</h2>
-          <p>${safeText(error.message)}. Vous pouvez traiter cette demande depuis l'admin Qualifyr.</p>
+          <p>${safeText(error.message)}. La demande est conservee pour etre traitee manuellement.</p>
           <div class="modal-actions">
-            <button class="primary-button" data-view="admin">${svg("shield")} Ouvrir l'admin</button>
+            ${adminVisible ? `<button class="primary-button" data-view="admin">${svg("shield")} Ouvrir l'admin</button>` : ""}
             <button class="secondary-button" data-close-modal>Fermer</button>
           </div>
         </div>
