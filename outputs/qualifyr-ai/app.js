@@ -442,6 +442,15 @@ function upsertLeadStatus(id, status) {
   localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
 }
 
+function deleteLead(id) {
+  const leads = getStoredLeads().filter((lead) => lead.id !== id);
+  localStorage.setItem("qualifyrLeads", JSON.stringify(leads));
+}
+
+function clearStoredLeads() {
+  localStorage.setItem("qualifyrLeads", JSON.stringify([]));
+}
+
 function renderAccountButton() {
   const button = el("accountButton");
   if (!button) return;
@@ -1774,24 +1783,21 @@ function renderAdmin() {
       </div>
       <div class="section-actions">
         <button class="secondary-button" data-view="auth">${svg("users")} Voir mon compte</button>
+        <button class="secondary-button" data-admin-clear-leads>${svg("shield")} Vider les demandes</button>
         <button class="primary-button" data-admin-seed>${svg("spark")} Ajouter une demande test</button>
       </div>
     </div>
     <div class="grid grid-3">
-      ${metric("Demandes recues", leads.length || 8, "Site, paiement et copilotes")}
-      ${metric("Comptes clients", accounts.filter((account) => account.role === "client").length || 3, "Prets a connecter")}
-      ${metric("Installations", installs.length || 5, "Copilotes a activer")}
+      ${metric("Demandes recues", leads.length, "Site, paiement et copilotes")}
+      ${metric("Comptes clients", accounts.filter((account) => account.role === "client").length, "Prets a connecter")}
+      ${metric("Installations", installs.length, "Copilotes a activer")}
     </div>
     <section class="section data-table admin-leads-table">
       <div class="simple-section-title">
         <span>Demandes entrantes</span>
         <h2>Les prospects a rappeler maintenant.</h2>
       </div>
-      ${(leads.length ? leads : [
-        { id: "seed-1", company: "Atelier Martin", name: "Jean Martin", email: "contact@qualifyragence.com", profession: "Plombier", type: "Installation copilote", plan: "Copilote metier", status: "Nouvelle demande", createdAt: new Date().toISOString(), goal: "Installer un copilote pour qualifier les urgences fuite." },
-        { id: "seed-2", company: "Garage Bel Air", name: "Nassim Belkacem", email: "garage@demo.fr", profession: "Garage automobile", type: "Paiement", plan: "Equipe locale", status: "Paiement prepare", createdAt: new Date().toISOString(), goal: "Automatiser les appels atelier et les rappels controle technique." },
-        { id: "seed-3", company: "Roux Nettoyage Pro", name: "Benedicte Roux", email: "contact@roux-nettoyage.fr", profession: "Societe de nettoyage", type: "Analyse concurrents", plan: "Copilote metier", status: "A qualifier", createdAt: new Date().toISOString(), goal: "Comparer les concurrents et installer les bons copilotes." }
-      ]).map((lead) => `
+      ${leads.length ? leads.map((lead) => `
         <article class="table-row admin-lead-row">
           <span><strong>${safeText(lead.company || lead.name || "Nouvelle entreprise")}</strong><small>${safeText(lead.profession || "Metier a confirmer")} · ${safeText(lead.email || "email a demander")}</small></span>
           <span>${safeText(lead.type || "Demande")}<small>${safeText(lead.plan || "Formule a choisir")}</small></span>
@@ -1800,9 +1806,15 @@ function renderAdmin() {
             <button class="secondary-button lead-action" data-lead="${safeText(lead.id)}" data-status="A rappeler">A rappeler</button>
             <button class="secondary-button lead-action" data-lead="${safeText(lead.id)}" data-status="Paiement envoye">Paiement</button>
             <button class="primary-button lead-action" data-lead="${safeText(lead.id)}" data-status="Client actif">Activer</button>
+            <button class="danger-button lead-delete" data-lead-delete="${safeText(lead.id)}">Supprimer</button>
           </span>
         </article>
-      `).join("")}
+      `).join("") : `
+        <article class="empty-admin-state">
+          <strong>Aucune demande pour le moment.</strong>
+          <span>Les prochaines demandes du site apparaitront ici automatiquement.</span>
+        </article>
+      `}
     </section>
     <div class="grid grid-2 section">
       <article class="card">
@@ -3938,9 +3950,9 @@ function renderCopilotLayerBuilder(relevantTradeCopilots) {
             <strong>Ajoutez les aides utiles</strong>
             <small>Chaque bloc est optionnel. Vous pouvez tester sans engagement.</small>
           </div>
-          ${layers.map((layer) => `
+          ${layers.map((layer, index) => `
             <button class="layer-choice ${selectedIds.includes(layer.id) ? "active" : ""}" data-toggle-layer="${layer.id}">
-              <span>${selectedIds.includes(layer.id) ? svg("spark") : svg("plus")}</span>
+              <span class="layer-choice-index">${String(index + 1).padStart(2, "0")}</span>
               <b>${layer.title}</b>
               <small>${layer.plain}</small>
               <em>${layer.gain}</em>
@@ -5304,9 +5316,9 @@ function renderDashboard() {
     ["Installer WhatsApp IA", "Les demandes avec photos seront triees seules.", "Installer", "marketplace"]
   ];
   const wowProof = [
-    ["+3 400 EUR", "A recuperer", "Qualifyr a repere un devis chaud a relancer maintenant.", "quotes"],
-    ["2 h 35", "Gagnees cette semaine", "Les relances, messages et rendez-vous ont ete prepares pour vous.", "ai-center"],
-    ["18", "Demandes traitees", "Les nouveaux messages ont ete classes avant meme votre ouverture.", "crm"]
+    ["Relance utile", "Devis chaud detecte", "Qualifyr a repere une opportunite a traiter maintenant.", "quotes"],
+    ["Temps libere", "2 h 35 cette semaine", "Les relances, messages et rendez-vous ont ete prepares pour vous.", "ai-center"],
+    ["Demandes classees", "18 messages tries", "Les nouveaux messages sont ranges pour etre traites plus vite.", "crm"]
   ];
   el("view-dashboard").innerHTML = `
     <section class="simple-home-hero">
@@ -5513,6 +5525,21 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (event.target.closest("[data-admin-clear-leads]")) {
+    clearStoredLeads();
+    renderAdmin();
+    toast("Toutes les demandes admin ont ete supprimees.");
+    return;
+  }
+
+  const leadDelete = event.target.closest("[data-lead-delete]");
+  if (leadDelete) {
+    deleteLead(leadDelete.dataset.leadDelete);
+    renderAdmin();
+    toast("Demande supprimee.");
+    return;
+  }
+
   const leadAction = event.target.closest(".lead-action");
   if (leadAction) {
     upsertLeadStatus(leadAction.dataset.lead, leadAction.dataset.status);
@@ -5625,8 +5652,8 @@ document.addEventListener("click", (event) => {
     const input = el(assistantAsk.dataset.input);
     const prompt = input ? input.value.trim() : "";
     if (!prompt) {
-      showView("ai-center");
-      toast("Dites simplement ce que vous voulez faire, Qualifyr vous guide.");
+      showView("marketplace");
+      toast("Je vous montre les copilotes adaptes a votre metier.");
       return;
     }
     const targetView = viewFromAssistantPrompt(prompt);
