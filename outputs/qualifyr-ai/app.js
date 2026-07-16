@@ -316,6 +316,7 @@ const state = {
   profession: "Plombier",
   selectedCopilotName: "WhatsApp IA",
   selectedCopilotMode: "install",
+  activeCopilotFilter: "Metier",
   checkoutPlan: "Pro",
   session: null,
   lastLead: null,
@@ -1365,8 +1366,29 @@ function renderPricing() {
       </article>
     </section>
 
-    <section class="section grid grid-3">
-      ${commercialSuite.coupons.map(([code, value, status, usage]) => `<article class="card"><p class="eyebrow">Coupon</p><h3>${code}</h3><p>${value}</p><div class="list-row"><span>${status}</span><strong>${usage}</strong></div></article>`).join("")}
+    <section class="section">
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Offres d'activation</p>
+          <h2>Des offres simples pour demarrer.</h2>
+        </div>
+      </div>
+      <div class="coupon-strip">
+        ${commercialSuite.coupons.map(([code, value, status, usage]) => `
+          <article class="card coupon-card">
+            <div>
+              <p class="eyebrow">Offre</p>
+              <h3>${code}</h3>
+              <p>${value}</p>
+            </div>
+            <div class="coupon-meta">
+              <span>${status}</span>
+              <small>${usage}</small>
+            </div>
+            <button class="secondary-button coupon-action" data-coupon="${code}">Utiliser</button>
+          </article>
+        `).join("")}
+      </div>
     </section>
   `;
 }
@@ -1455,12 +1477,17 @@ function renderCommercial() {
       <div class="grid grid-3">
         ${subscriptionCenter.premiumFeatures.map(([name, description, saved, popularity, why]) => `
           <article class="card premium-feature-card">
-            <span class="status success">${popularity}</span>
+            <div class="premium-feature-top">
+              <span class="status success">${popularity}</span>
+              <strong>${saved}</strong>
+            </div>
             <h3>${name}</h3>
             <p>${description}</p>
-            <div class="list-row"><span>Temps gagne</span><strong>${saved}</strong></div>
-            <div class="list-row"><span>Pourquoi l'utiliser</span><strong>${why}</strong></div>
-            <button class="primary-button option-unlock" data-option="${name}">Debloquer</button>
+            <div class="premium-reason">
+              <span>Utile pour</span>
+              <strong>${why}</strong>
+            </div>
+            <button class="primary-button option-unlock" data-option="${name}" data-open-checkout="Pro">Debloquer</button>
           </article>
         `).join("")}
       </div>
@@ -2576,9 +2603,9 @@ const commercialSuite = {
     ["Terrain", "12 licences", "9 utilisees", "RDV, photos, commentaires"]
   ],
   coupons: [
-    ["QUALIFYR-START", "-20% pendant 3 mois", "Actif", "18 utilisations"],
-    ["ARTISAN2026", "1 mois offert", "Actif", "7 utilisations"],
-    ["PARTENAIRE-LYON", "-15% annuel", "Planifie", "0 utilisation"]
+    ["BIENVENUE", "-20% pendant 3 mois", "Disponible", "Pour les nouveaux clients"],
+    ["ATELIER", "1 mois offert", "Disponible", "Pour les artisans"],
+    ["LOCAL", "-15% sur l'abonnement annuel", "Sur validation", "Pour les partenaires locaux"]
   ],
   referrals: [
     ["Hugo Perrin", "Garage Martin", "1 mois offert", "Valide"],
@@ -3760,6 +3787,41 @@ function renderCopilotLibrary(targetId) {
     ["Installation", "Site ou email"],
     ["Concurrents", "Sources publiques"]
   ];
+  const activeFilter = state.activeCopilotFilter || "Metier";
+  const filterCopy = {
+    Metier: {
+      title: `Les copilotes utiles pour ${state.profession}.`,
+      text: "Qualifyr masque les aides qui ne servent pas a votre activite.",
+      cards: relevantTradeCopilots
+    },
+    Objectif: {
+      title: "Choisissez selon le resultat attendu.",
+      text: "Priorite aux copilotes qui font gagner du temps, recuperent des demandes ou accelerent les devis.",
+      cards: relevantTradeCopilots.slice(0, 2)
+    },
+    Canal: {
+      title: "Choisissez selon l'endroit ou arrivent vos demandes.",
+      text: "Site, WhatsApp, email ou telephone : le copilote depend du canal que vos clients utilisent deja.",
+      cards: relevantTradeCopilots.filter((copilot) => /whatsapp|email|appel|telephone|site/i.test(`${copilot.includes} ${copilot.description}`)).concat(relevantTradeCopilots.slice(0, 1)).slice(0, 3)
+    },
+    Budget: {
+      title: "Choisissez une formule simple.",
+      text: "Starter pour tester, Pro pour vendre serieusement, Scale pour une equipe.",
+      cards: relevantTradeCopilots.slice().sort((a, b) => String(a.price).localeCompare(String(b.price))).slice(0, 3)
+    },
+    Installation: {
+      title: "Installez-le sur le site ou recevez-le par email.",
+      text: "Le prospect choisit le mode le plus simple. Aucune configuration technique n'est visible.",
+      cards: relevantTradeCopilots
+    },
+    Concurrents: {
+      title: "Ajoutez l'analyse publique des concurrents.",
+      text: "Qualifyr peut comparer le site, les avis Google et les publicites Meta visibles publiquement.",
+      cards: relevantTradeCopilots.slice(0, 2)
+    }
+  };
+  const activeFilterCopy = filterCopy[activeFilter] || filterCopy.Metier;
+  const visibleTradeCopilots = activeFilterCopy.cards.length ? activeFilterCopy.cards : relevantTradeCopilots;
   const copilotMatchRows = relevantTradeCopilots.slice(0, 3).map((copilot, index) => ({
     name: copilot.name,
     fit: index === 0 && copilot.profession !== "Autre" ? "Recommande" : "Option",
@@ -3846,7 +3908,7 @@ function renderCopilotLibrary(targetId) {
         </div>
         <div class="copilot-filter-bar">
           ${copilotFilterGroups.map(([label, hint]) => `
-            <button class="copilot-filter-chip" data-filter="${label}">
+            <button class="copilot-filter-chip ${activeFilter === label ? "active" : ""}" data-filter="${label}">
               ${svg(label === "Concurrents" ? "star" : label === "Canal" ? "message" : label === "Budget" ? "card" : label === "Outils" ? "grid" : "spark")}
               <span>${label}</span>
               <small>${hint}</small>
@@ -3868,7 +3930,8 @@ function renderCopilotLibrary(targetId) {
         </article>
         <article class="card copilot-match-card">
           <p class="eyebrow">Meilleure solution pour ${state.profession}</p>
-          <h2>Qualifyr croise vos besoins et recommande le bon copilote.</h2>
+          <h2>${activeFilterCopy.title}</h2>
+          <p>${activeFilterCopy.text}</p>
           ${copilotMatchRows.map((row) => `
             <div class="copilot-match-row">
               <span><strong>${row.name}</strong><small>${row.reason}</small></span>
@@ -3880,7 +3943,7 @@ function renderCopilotLibrary(targetId) {
       </div>
 
       <div class="trade-copilot-grid focus-grid">
-        ${relevantTradeCopilots.map((copilot) => `
+        ${visibleTradeCopilots.map((copilot) => `
           <article class="card trade-copilot-card">
             <span class="trade-emoji">${svg("spark")}</span>
             <h3>${copilot.name}</h3>
@@ -5245,7 +5308,16 @@ document.addEventListener("click", (event) => {
 
   const optionUnlock = event.target.closest(".option-unlock");
   if (optionUnlock) {
-    toast(`${optionUnlock.dataset.option} : ROI calcule et option prete a etre debloquee.`);
+    state.checkoutPlan = "Pro";
+    openCheckoutModal("Pro");
+    return;
+  }
+
+  const couponAction = event.target.closest(".coupon-action");
+  if (couponAction) {
+    state.activeCoupon = couponAction.dataset.coupon;
+    toast(`Offre ${state.activeCoupon} appliquee au paiement.`);
+    openCheckoutModal("Pro");
     return;
   }
 
@@ -5382,7 +5454,9 @@ document.addEventListener("click", (event) => {
 
   const copilotFilterChip = event.target.closest(".copilot-filter-chip");
   if (copilotFilterChip) {
-    toast(`Filtre ${copilotFilterChip.dataset.filter} applique : Qualifyr croise metier, canaux, budget et objectifs.`);
+    state.activeCopilotFilter = copilotFilterChip.dataset.filter || "Metier";
+    renderMarketplace();
+    toast(`Filtre ${state.activeCopilotFilter} applique.`);
     return;
   }
 
