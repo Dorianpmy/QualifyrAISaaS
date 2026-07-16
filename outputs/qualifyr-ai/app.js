@@ -581,7 +581,7 @@ function openPackInstallModal(packName) {
       <p>Qualifyr prepare les copilotes, les automatisations, les connexions recommandees et les modeles utiles. Le paiement lance ensuite l'installation.</p>
       <div class="modal-choice-grid">
         <div class="modal-choice"><strong>${safeText(pack.savedTime)}</strong><small>Temps gagne estime</small></div>
-        <div class="modal-choice"><strong>${safeText(pack.roi)}</strong><small>ROI estime</small></div>
+        <div class="modal-choice"><strong>${safeText(pack.roi)}</strong><small>Abonnement estime</small></div>
         <div class="modal-choice"><strong>${plan}</strong><small>Formule conseillee</small></div>
       </div>
       <div class="checkout-summary">
@@ -595,7 +595,7 @@ function openPackInstallModal(packName) {
         <div class="modal-field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
         <div class="modal-field"><label>Telephone</label><input name="phone" value="06 18 42 90 15"></div>
         <div class="modal-field"><label>Metier</label><input name="profession" value="${safeText(pack.name.replace("Pack ", ""))}"></div>
-        <div class="modal-field"><label>Formule</label><select name="plan"><option ${plan === "Pro" ? "selected" : ""}>Pro</option><option ${plan === "Equipe" ? "selected" : ""}>Equipe</option><option>Essentiel</option></select></div>
+        <div class="modal-field"><label>Formule</label><select name="plan"><option ${plan === "Pro" ? "selected" : ""}>Pro</option><option ${plan === "Equipe" ? "selected" : ""}>Equipe</option><option>Starter</option></select></div>
       </div>
       <div class="modal-actions">
         <button class="primary-button" type="submit">${svg("card")} Continuer vers le paiement</button>
@@ -916,7 +916,6 @@ function renderResponsiveMenu() {
   const adminVisible = isAdminSession();
   const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
   const secondaryItems = [
-    ["commercial", "Abonnement", "card", "Factures et paiement"],
     ["integrations", "Connexions", "workflow", "Google, WhatsApp, email"],
     ["help", "Aide", "star", "Tutoriels et support"]
   ];
@@ -1445,6 +1444,29 @@ function renderCommercial() {
       </article>
     </section>
 
+    <section class="section plan-choice-section">
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Changer de formule</p>
+          <h2>Choisissez le niveau qui correspond a votre entreprise.</h2>
+        </div>
+      </div>
+      <div class="plan-choice-grid">
+        ${commercialSuite.plans.slice(0, 4).map((plan) => `
+          <article class="card plan-choice-card ${plan.highlighted ? "recommended" : ""}">
+            <span class="status ${plan.highlighted ? "success" : ""}">${plan.trial}</span>
+            <h3>${plan.name}</h3>
+            <div class="plan-choice-price">${plan.price}</div>
+            <p>${plan.description}</p>
+            <div class="plan-choice-features">
+              ${plan.features.slice(0, 4).map((feature) => `<span>${svg("spark")} ${feature}</span>`).join("")}
+            </div>
+            <button class="${plan.highlighted ? "primary-button" : "secondary-button"}" ${plan.name === "Sur mesure" ? 'data-view="custom-ai"' : `data-open-checkout="${plan.name}"`}>${plan.name === "Sur mesure" ? "Parler a Qualifyr" : "Choisir " + plan.name}</button>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+
     <section class="section grid grid-2">
       <article class="card">
         <p class="eyebrow">Fonctionnalites incluses</p>
@@ -1793,7 +1815,7 @@ function renderAuth() {
     <div class="section-header">
       <div>
         <p class="eyebrow">Espace client</p>
-        <h2>${session ? `Bonjour ${safeText(session.name)}.` : "Connectez-vous a Qualifyr AI."}</h2>
+        <h2>${session ? "Bonjour." : "Connectez-vous a Qualifyr AI."}</h2>
         <p>${session ? "Votre compte, votre formule et vos demandes sont regroupes ici." : "Un artisan peut creer son compte, retrouver son copilote et suivre son installation."}</p>
       </div>
       ${session ? `<button class="secondary-button" data-logout>${svg("shield")} Se deconnecter</button>` : ""}
@@ -2023,7 +2045,7 @@ const platformRegistry = {
       description: "Classe factures, rapproche paiements et prepare les exports comptables.",
       stats: ["Export CSV pret", "Regles TVA pretes", "Mollie compatible"],
       settings: ["Plan comptable", "TVA", "Exports", "Rapprochement bancaire"],
-      history: ["Beta reservee aux plans Scale"]
+      history: ["Beta reservee aux plans Equipe"]
     },
     {
       id: "hr-ai",
@@ -2567,12 +2589,12 @@ const commercialSuite = {
       highlighted: true
     },
     {
-      name: "Scale",
-      price: "299 EUR",
-      target: "PME multi-equipes",
-      trial: "30 jours accompagnes",
-      description: "Workflows avances, API, webhooks, licences equipe, roles et support prioritaire.",
-      features: ["15 utilisateurs", "10 000 automatisations/mois", "API", "Webhooks", "Licences equipe", "Support prioritaire"],
+      name: "Equipe",
+      price: "229 EUR",
+      target: "PME avec plusieurs personnes",
+      trial: "Audit offert",
+      description: "Plusieurs utilisateurs, plusieurs canaux, planning partage, factures et suivi d'equipe sans complexite technique.",
+      features: ["10 utilisateurs", "Canaux multiples", "Planning equipe", "Factures", "Support prioritaire"],
       highlighted: false
     },
     {
@@ -2587,12 +2609,12 @@ const commercialSuite = {
   ],
   subscriptions: [
     ["Atelier Perrin", "Pro", "149 EUR/mois", "Actif", "Renouvellement 01/08/2026"],
-    ["Roux Nettoyage Pro", "Scale", "299 EUR/mois", "Actif", "Renouvellement 03/08/2026"],
+    ["Roux Nettoyage Pro", "Equipe", "229 EUR/mois", "Actif", "Renouvellement 03/08/2026"],
     ["Belkacem Paysage", "Starter", "79 EUR/mois", "Essai gratuit", "Fin essai 24/07/2026"],
     ["Cabinet Lacroix Dentaire", "Pro", "149 EUR/mois", "Paiement en attente", "Carte a verifier"]
   ],
   billingEvents: [
-    ["Paiement Mollie", "Roux Nettoyage Pro", "299 EUR", "Reussi"],
+    ["Paiement Mollie", "Roux Nettoyage Pro", "229 EUR", "Reussi"],
     ["Essai gratuit", "Belkacem Paysage", "14 jours", "Actif"],
     ["Facture abonnement", "Atelier Perrin", "149 EUR", "Envoyee"],
     ["Carte expiree", "Cabinet Lacroix Dentaire", "149 EUR", "Action requise"]
@@ -2629,26 +2651,26 @@ const commercialSuite = {
   faq: [
     ["Peut-on essayer sans carte bancaire ?", "Oui, l'essai gratuit peut etre active sans paiement pour les plans Starter et Pro."],
     ["Mollie est-il obligatoire ?", "Non, Mollie est prevu pour la production, mais les devis et factures restent utilisables sans paiement en ligne."],
-    ["Les appels IA sont-ils inclus ?", "Ils sont inclus dans Pro et Scale avec des limites d'usage configurables."],
+    ["Les appels IA sont-ils inclus ?", "Ils sont inclus dans Pro et Equipe avec des limites d'usage configurables."],
     ["Peut-on ajouter un metier ?", "Oui, les copilotes marketplace sont declaratifs et extensibles."],
     ["Ou sont stockees les cles API ?", "Cote serveur uniquement, jamais dans le client."]
   ],
   support: [
     ["Chat support", "Temps moyen 4 min", "Ouvert"],
     ["Email support", "support@qualifyr-ai.fr", "Priorite Pro"],
-    ["Onboarding accompagne", "Session 45 min", "Inclus Scale"],
+    ["Onboarding accompagne", "Session 45 min", "Inclus Equipe"],
     ["Base de connaissance", "42 articles", "Disponible"]
   ]
 };
 
 const subscriptionCenter = {
   currentPlan: {
-    name: "Scale Automation",
-    price: "299 EUR / mois",
+    name: "Pro Copilote",
+    price: "149 EUR / mois",
     renewal: "01/08/2026",
-    users: "4 utilisateurs actifs / 8 inclus",
-    copilots: "12 copilotes inclus / 20",
-    connections: "7 connexions incluses / 15",
+    users: "2 utilisateurs actifs / 5 inclus",
+    copilots: "4 copilotes inclus / 8",
+    connections: "5 connexions incluses / 10",
     storage: "42 Go utilises / 100 Go",
     potential: 68
   },
@@ -2659,7 +2681,7 @@ const subscriptionCenter = {
     ["Assistant Commercial IA", "Repere les opportunites et propose les meilleures relances.", "3 h / semaine", "Nouveau", "Signer plus de devis sans y penser."],
     ["Assistant Marketing IA", "Prepare publications, campagnes locales et offres saisonnieres.", "2 h / semaine", "Populaire", "Recevoir plus de demandes qualifiees."],
     ["Previsions IA", "Anticipe le chiffre d'affaires, la charge et les creux d'activite.", "1 h / semaine", "Pro", "Mieux organiser les prochaines semaines."],
-    ["Analyse Business IA", "Explique les chiffres importants avec des actions simples.", "2 h / semaine", "Scale", "Savoir quoi ameliorer en premier."],
+    ["Analyse Business IA", "Explique les chiffres importants avec des actions simples.", "2 h / semaine", "Equipe", "Savoir quoi ameliorer en premier."],
     ["Signature electronique", "Fait signer les devis en ligne et range les preuves.", "1 h / semaine", "Indispensable", "Faire accepter les devis plus rapidement."]
   ],
   optionShop: [
@@ -2681,7 +2703,7 @@ const subscriptionCenter = {
     monthlyEstimate: "4 920 EUR / mois"
   },
   history: [
-    ["Changement d'offre", "Passage vers Scale Automation", "01/07/2026"],
+    ["Changement d'offre", "Passage vers Pro Copilote", "01/07/2026"],
     ["Ajout d'un copilote", "WhatsApp IA avance active", "03/07/2026"],
     ["Paiement", "Facture abonnement reglee", "05/07/2026"],
     ["Facture", "QAI-SUB-2026-071 disponible", "05/07/2026"],
@@ -2697,7 +2719,7 @@ const subscriptionCenter = {
     ["FAQ", "Reponses simples aux questions frequentes.", "12 articles"],
     ["Tutoriels", "Guides pas a pas pour demarrer rapidement.", "8 videos"],
     ["Videos", "Demos courtes par metier et par objectif.", "14 contenus"],
-    ["Support", "Aide humaine pour les reglages importants.", "Priorite Scale"],
+    ["Support", "Aide humaine pour les reglages importants.", "Priorite Equipe"],
     ["Documentation", "Parametres, facturation, equipes et securite.", "42 pages"]
   ],
   news: [
@@ -2724,7 +2746,7 @@ const subscriptionCenter = {
     ["Inviter votre collaborateur", "Une personne peut suivre les factures et documents.", "1 h / semaine"]
   ],
   paymentHistory: [
-    ["QAI-SUB-2026-071", "05/07/2026", "299 EUR", "Payee"],
+    ["QAI-SUB-2026-071", "05/07/2026", "229 EUR", "Payee"],
     ["QAI-SUB-2026-062", "05/06/2026", "149 EUR", "Payee"],
     ["QAI-OPTION-2026-061", "18/06/2026", "29 EUR", "Payee"],
     ["QAI-SUB-2026-052", "05/05/2026", "149 EUR", "Payee"]
@@ -3054,7 +3076,7 @@ function renderDashboard() {
     <div class="mobile-home">
       <div class="mobile-greeting">
         <p class="eyebrow">Accueil</p>
-        <h2>Bonjour Dorian 👋</h2>
+        <h2>Bonjour 👋</h2>
         <p>Aujourd'hui voici ce qui demande votre attention.</p>
       </div>
       <div class="mobile-summary-grid">
@@ -3080,7 +3102,7 @@ function renderDashboard() {
     <section class="copilot-command">
       <div class="copilot-command-main">
         <p class="eyebrow">Accueil</p>
-        <h2>Bonjour Dorian 👋</h2>
+        <h2>Bonjour 👋</h2>
         <p>Aujourd'hui voici ce qui demande votre attention. Je vous montre seulement les actions utiles pour gagner du temps ou recuperer de l'argent.</p>
         <div class="copilot-today-grid">
           ${attentionCards.map(([value, title, desc, view, icon]) => `<button data-view="${view}"><span class="today-icon">${svg(icon)}</span><strong>${value}</strong><span>${title}</span><small>${desc}</small></button>`).join("")}
@@ -3125,7 +3147,7 @@ function renderDashboard() {
         <p class="eyebrow">Mon assistant IA</p>
         <h2>Que puis-je faire pour vous aujourd'hui ?</h2>
         <div class="chat-bubble ai-bubble">
-          <strong>Bonjour Dorian 👋</strong>
+          <strong>Bonjour 👋</strong>
           <p>Aujourd'hui je te conseille de relancer le devis de M. Martin. Tu peux recuperer 2 400 EUR.</p>
         </div>
         <div class="chat-bubble ai-bubble">
@@ -3606,17 +3628,17 @@ const digitalEmployees = [
 ];
 
 const businessPacks = [
-  ["Pack Plombier", "Fuites, urgences, photos WhatsApp, tournee par secteur et relances devis.", "Telephone IA, WhatsApp IA, Devis IA, Planning IA", "11 h / semaine", "4 800 EUR / mois", 12],
-  ["Pack Electricien", "Qualification securite, photos tableau, interventions urgentes et suivi clients.", "Telephone IA, Devis IA, Planning IA, Relation Client IA", "9 h / semaine", "3 900 EUR / mois", 10],
-  ["Pack Chauffagiste", "Contrats entretien, rappels saisonniers, urgences panne et facturation.", "Telephone IA, Planning IA, Facturation IA, Relation Client IA", "10 h / semaine", "4 200 EUR / mois", 11],
-  ["Pack Garage", "Appels atelier, controle technique, relances pneus, devis et planning equipe.", "Telephone IA, WhatsApp IA, Planning IA, Facturation IA", "12 h / semaine", "5 100 EUR / mois", 13],
-  ["Pack Restaurant", "Reservations, groupes, avis Google, messages Instagram et relances evenements.", "WhatsApp IA, Reseaux Sociaux IA, Avis Google IA, Planning IA", "8 h / semaine", "3 200 EUR / mois", 9],
-  ["Pack Paysagiste", "Saisonnalite, devis espaces verts, tournees, photos chantier et entretien recurrent.", "Planning IA, Devis IA, WhatsApp IA, Relation Client IA", "9 h / semaine", "3 700 EUR / mois", 10],
-  ["Pack Nettoyage", "Contrats recurrents, preuves photos, planning equipe et factures mensuelles.", "Planning IA, Facturation IA, WhatsApp IA, Relation Client IA", "11 h / semaine", "4 600 EUR / mois", 12],
-  ["Pack Dentiste", "Rendez-vous, rappels patients, emails, avis Google et suivi administratif.", "Email IA, Planning IA, Avis Google IA, Relation Client IA", "7 h / semaine", "2 900 EUR / mois", 8],
-  ["Pack Immobilier", "Demandes visites, estimation, relances mandats, emails et planning.", "Email IA, Planning IA, Relation Client IA, Reseaux Sociaux IA", "10 h / semaine", "5 400 EUR / mois", 12],
-  ["Pack Artisan", "Base complete pour appels, clients, devis, planning, documents et avis.", "Telephone IA, WhatsApp IA, Devis IA, Planning IA", "10 h / semaine", "4 100 EUR / mois", 11],
-  ["Pack PME", "Pilotage equipe, facturation, performance, connexions et copilotes premium.", "Performance IA, Facturation IA, Email IA, Relation Client IA", "16 h / semaine", "7 800 EUR / mois", 16]
+  ["Pack Plombier", "Fuites, urgences, photos WhatsApp, tournee par secteur et relances devis.", "Telephone IA, WhatsApp IA, Devis IA, Planning IA", "11 h / semaine", "149 EUR / mois", 12],
+  ["Pack Electricien", "Qualification securite, photos tableau, interventions urgentes et suivi clients.", "Telephone IA, Devis IA, Planning IA, Relation Client IA", "9 h / semaine", "149 EUR / mois", 10],
+  ["Pack Chauffagiste", "Contrats entretien, rappels saisonniers, urgences panne et facturation.", "Telephone IA, Planning IA, Facturation IA, Relation Client IA", "10 h / semaine", "179 EUR / mois", 11],
+  ["Pack Garage", "Appels atelier, controle technique, relances pneus, devis et planning equipe.", "Telephone IA, WhatsApp IA, Planning IA, Facturation IA", "12 h / semaine", "179 EUR / mois", 13],
+  ["Pack Restaurant", "Reservations, groupes, avis Google, messages Instagram et relances evenements.", "WhatsApp IA, Reseaux Sociaux IA, Avis Google IA, Planning IA", "8 h / semaine", "129 EUR / mois", 9],
+  ["Pack Paysagiste", "Saisonnalite, devis espaces verts, tournees, photos chantier et entretien recurrent.", "Planning IA, Devis IA, WhatsApp IA, Relation Client IA", "9 h / semaine", "149 EUR / mois", 10],
+  ["Pack Nettoyage", "Contrats recurrents, preuves photos, planning equipe et factures mensuelles.", "Planning IA, Facturation IA, WhatsApp IA, Relation Client IA", "11 h / semaine", "149 EUR / mois", 12],
+  ["Pack Dentiste", "Rendez-vous, rappels patients, emails, avis Google et suivi administratif.", "Email IA, Planning IA, Avis Google IA, Relation Client IA", "7 h / semaine", "199 EUR / mois", 8],
+  ["Pack Immobilier", "Demandes visites, estimation, relances mandats, emails et planning.", "Email IA, Planning IA, Relation Client IA, Reseaux Sociaux IA", "10 h / semaine", "199 EUR / mois", 12],
+  ["Pack Artisan", "Base complete pour appels, clients, devis, planning, documents et avis.", "Telephone IA, WhatsApp IA, Devis IA, Planning IA", "10 h / semaine", "149 EUR / mois", 11],
+  ["Pack PME", "Pilotage equipe, facturation, performance, connexions et copilotes premium.", "Performance IA, Facturation IA, Email IA, Relation Client IA", "16 h / semaine", "229 EUR / mois", 16]
 ].map(([name, description, copilots, savedTime, roi, automations], index) => ({
   name,
   description,
@@ -3652,18 +3674,18 @@ const aiModuleRecommendations = [
 ];
 
 const tradeCopilots = [
-  ["🔧", "Copilote Plombier", "Qualifie les urgences, demande photos, adresse, disponibilites et prepare le devis.", "Appels, WhatsApp, devis fuite, planning", "6 h / semaine", "149 EUR / mois", "Plombier"],
-  ["⚡", "Copilote Electricien", "Trie les demandes, detecte les urgences securite et prepare les interventions.", "Photos tableau, urgence, devis, relance", "5 h / semaine", "149 EUR / mois", "Electricien"],
-  ["🔥", "Copilote Chauffagiste", "Gere pannes, entretiens, rappels saisonniers et contrats de maintenance.", "Panne chaudiere, entretien, planning, facture", "7 h / semaine", "179 EUR / mois", "Chauffagiste"],
-  ["🚗", "Copilote Garage", "Repond aux demandes atelier, organise les rendez-vous et relance les devis.", "Revision, pneus, devis, planning atelier", "8 h / semaine", "179 EUR / mois", "Garage"],
-  ["🍽️", "Copilote Restaurant", "Gere reservations, messages, avis Google et publications locales.", "Reservations, avis, Instagram, evenements", "5 h / semaine", "129 EUR / mois", "Restaurant"],
-  ["🦷", "Copilote Dentiste", "Prepare rappels patients, rendez-vous, messages et avis Google.", "Rappels, planning, emails, reputation", "4 h / semaine", "199 EUR / mois", "Dentiste"],
-  ["🏡", "Copilote Immobilier", "Classe les demandes, propose visites, relance prospects et suit les mandats.", "Visites, leads, relances, dossiers", "7 h / semaine", "199 EUR / mois", "Immobilier"],
-  ["🧼", "Copilote Nettoyage", "Gere demandes recurrentes, preuves photos, planning equipe et factures.", "Contrats, photos, planning, facture", "8 h / semaine", "179 EUR / mois", "Nettoyage"],
-  ["🌿", "Copilote Paysagiste", "Prepare devis, tournees, entretiens saisonniers et suivi client.", "Photos jardin, devis, tournees, relances", "6 h / semaine", "149 EUR / mois", "Paysagiste"],
-  ["🧱", "Copilote Macon", "Structure les demandes chantier, photos, metrage, devis et planning.", "Chantiers, photos, devis, interventions", "6 h / semaine", "149 EUR / mois", "Macon"],
-  ["🪵", "Copilote Menuisier", "Qualifie les projets, collecte dimensions, photos et prepare les devis.", "Mesures, photos, devis, rendez-vous", "5 h / semaine", "149 EUR / mois", "Menuisier"],
-  ["🤖", "Copilote sur mesure", "Un copilote adapte a votre metier, vos questions et votre facon de travailler.", "Formulaire, audit, configuration, test", "Sur mesure", "Sur devis", "Autre"]
+  ["🔧", "Copilote Plombier", "Detecte les urgences fuite, demande photos, coupe d'eau, adresse et prepare une fiche intervention claire.", "Appels manques, WhatsApp photos, devis fuite, creneaux urgence", "6 h / semaine", "149 EUR / mois", "Plombier"],
+  ["⚡", "Copilote Electricien", "Trie les pannes, repere les risques securite, demande les photos du tableau et prepare le materiel utile.", "Panne generale, tableau, court-circuit, diagnostic avant passage", "5 h / semaine", "149 EUR / mois", "Electricien"],
+  ["🔥", "Copilote Chauffagiste", "Suit les pannes chauffage, contrats entretien, rappels saisonniers et relances avant hiver.", "Panne chaudiere, entretien annuel, rappel client, facture", "7 h / semaine", "179 EUR / mois", "Chauffagiste"],
+  ["🚗", "Copilote Garage", "Classe les demandes atelier, identifie le vehicule, le motif, les pieces possibles et propose un creneau.", "Revision, pneus, controle technique, planning atelier", "8 h / semaine", "179 EUR / mois", "Garage"],
+  ["🍽️", "Copilote Restaurant", "Repond aux demandes de reservation, groupes, evenements, avis et messages recus hors service.", "Reservations, groupes, avis, Instagram, evenements", "5 h / semaine", "129 EUR / mois", "Restaurant"],
+  ["🦷", "Copilote Dentiste", "Confirme les rendez-vous, prepare les rappels patients, trie les urgences et suit les messages administratifs.", "Rappels patient, urgences, planning, reputation", "4 h / semaine", "199 EUR / mois", "Dentiste"],
+  ["🏡", "Copilote Immobilier", "Centralise les biens, proprietaires, acheteurs, visites et relances pour ne plus perdre les opportunites terrain.", "Carte prospects, visites, relances mandats, dossiers", "7 h / semaine", "199 EUR / mois", "Immobilier"],
+  ["🧼", "Copilote Nettoyage", "Organise les contrats recurrents, preuves photos, passages equipe, devis et factures mensuelles.", "Contrats, photos avant/apres, planning equipe, facture", "8 h / semaine", "149 EUR / mois", "Nettoyage"],
+  ["🌿", "Copilote Paysagiste", "Regroupe les visites proches, suit les photos de jardin, devis entretien et relances saisonnieres.", "Carte tournees, photos jardin, devis entretien, relances saison", "6 h / semaine", "149 EUR / mois", "Paysagiste"],
+  ["🧱", "Copilote Macon", "Structure les demandes chantier, photos, surfaces, materiaux, devis et suivi des prochaines etapes.", "Chantier, metrage, materiaux, photos, intervention", "6 h / semaine", "149 EUR / mois", "Macon"],
+  ["🪵", "Copilote Menuisier", "Collecte dimensions, photos, type de bois, contraintes de pose et prepare un devis plus propre.", "Mesures, photos, variantes, devis, rendez-vous", "5 h / semaine", "149 EUR / mois", "Menuisier"],
+  ["🤖", "Copilote sur mesure", "Pour un metier ou un process specifique, Qualifyr collecte le besoin puis prepare une configuration adaptee.", "Formulaire, audit, configuration, test accompagne", "Sur mesure", "Sur devis", "Autre"]
 ].map(([emoji, name, description, includes, savedTime, price, profession]) => ({
   emoji,
   name,
@@ -3675,64 +3697,68 @@ const tradeCopilots = [
 }));
 
 const copilotPlans = [
-  ["Essentiel", "79 EUR / mois", "Pour tester un copilote sur un site vitrine.", ["Widget IA sur le site", "Formulaire intelligent", "Reception par email", "Historique des demandes"], "Recevoir par email"],
+  ["Starter", "79 EUR / mois", "Pour tester un copilote sur un site vitrine.", ["Widget IA sur le site", "Formulaire intelligent", "Reception par email", "Historique des demandes"], "Recevoir par email"],
   ["Pro", "149 EUR / mois", "Le meilleur choix pour un artisan qui veut gagner du temps chaque semaine.", ["Copilote metier complet", "Ajout sur le site", "Espace Qualifyr AI", "Devis et relances", "Support prioritaire"], "Choisir Pro", true],
-  ["Equipe", "299 EUR / mois", "Pour PME avec plusieurs utilisateurs, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
+  ["Equipe", "229 EUR / mois", "Pour PME avec plusieurs utilisateurs, plusieurs canaux et besoin de suivi.", ["Plusieurs copilotes", "WhatsApp + email", "Planning et factures", "Statistiques avancees", "Onboarding personnalise"], "Parler a Qualifyr"]
 ].map(([name, price, description, features, cta, recommended]) => ({ name, price, description, features, cta, recommended }));
 
 const tradeUseCases = {
   Plombier: {
     title: "Urgences et devis fuite",
     description: "Le copilote classe les demandes par urgence, demande les photos, l'adresse et propose un creneau.",
-    panels: ["Urgence detectee", "Photo demandee", "Devis prepare", "Planning rempli"],
+    panels: ["Question urgence", "Photo fuite", "Creneau proche", "Devis depannage"],
     visual: "priority"
   },
   Electricien: {
     title: "Securite et interventions",
     description: "Il repere les pannes urgentes, collecte les photos du tableau et prepare la fiche intervention.",
-    panels: ["Panne urgente", "Photo tableau", "Materiel utile", "Client confirme"],
+    panels: ["Risque securite", "Photo tableau", "Puissance compteur", "Materiel a prevoir"],
     visual: "checklist"
   },
   Garage: {
     title: "Atelier et rendez-vous",
     description: "Il trie les demandes atelier, note le vehicule, le besoin et propose les bons creneaux.",
-    panels: ["Vehicule", "Motif", "Piece a prevoir", "Creneau atelier"],
+    panels: ["Plaque vehicule", "Motif atelier", "Piece possible", "Creneau libre"],
     visual: "timeline"
   },
   Restaurant: {
     title: "Reservations et avis",
     description: "Il aide a repondre aux messages, confirmer les reservations et demander les avis au bon moment.",
-    panels: ["Reservation", "Message client", "Avis a demander", "Evenement local"],
+    panels: ["Nombre de couverts", "Allergies", "Confirmation", "Avis apres repas"],
     visual: "inbox"
   },
   Dentiste: {
     title: "Rappels patients",
     description: "Il prepare les rappels, confirmations de rendez-vous et messages simples aux patients.",
-    panels: ["Rappel patient", "RDV confirme", "Document recu", "Avis possible"],
+    panels: ["Motif patient", "Creneau confirme", "Document recu", "Rappel J-1"],
     visual: "timeline"
   },
   Immobilier: {
     title: "Carte prospects immobilier",
-    description: "Un espace simple pour suivre les biens, proprietaires, visites, notes terrain et relances.",
-    panels: ["Lots a visiter", "Proprietaires", "Relances 14 jours", "Visites planifiees"],
-    visual: "map"
+    description: "Le copilote aide a suivre les biens, proprietaires, visites, notes terrain et relances par secteur.",
+    panels: ["Biens a visiter", "Proprietaires", "Relances 14 jours", "Visites planifiees"],
+    visual: "google-map",
+    mapQuery: "agence immobiliere lyon",
+    mapTitle: "Carte Google - prospects immobiliers Lyon"
   },
   Nettoyage: {
     title: "Contrats et preuves photos",
     description: "Il organise les contrats recurrents, photos avant/apres, planning equipe et facturation.",
-    panels: ["Contrat recurrent", "Photo avant/apres", "Equipe", "Facture prete"],
+    panels: ["Surface", "Frequence", "Photo preuve", "Facture mensuelle"],
     visual: "checklist"
   },
   Paysagiste: {
-    title: "Saisonnalite et tournees",
-    description: "Il prepare les devis jardin, entretiens recurrents et tournees par secteur.",
-    panels: ["Entretien", "Photo jardin", "Tournee", "Relance saison"],
-    visual: "map"
+    title: "Tournees jardin par secteur",
+    description: "Le copilote aide a regrouper les visites proches, suivre les photos de jardin et relancer les entretiens saisonniers.",
+    panels: ["Adresse jardin", "Photo terrain", "Tournee optimisee", "Relance saison"],
+    visual: "google-map",
+    mapQuery: "paysagiste lyon",
+    mapTitle: "Carte Google - tournees paysagiste Lyon"
   },
   Autre: {
     title: "Copilote metier sur mesure",
     description: "Qualifyr transforme votre processus en outil simple : demandes, suivi, relances et planning.",
-    panels: ["Demande", "Client", "Action", "Suivi"],
+    panels: ["Besoin client", "Infos utiles", "Action proposee", "Suivi simple"],
     visual: "checklist"
   }
 };
@@ -3772,7 +3798,7 @@ function renderCopilotLibrary(targetId) {
     ["Metier", "Votre activite"],
     ["Objectif", "Appels, devis, relances"],
     ["Canal", "Site, email, WhatsApp"],
-    ["Budget", "79, 149 ou 299 EUR"],
+    ["Budget", "79, 149 ou 229 EUR"],
     ["Installation", "Site ou email"],
     ["Concurrents", "Sources publiques"]
   ];
@@ -3795,7 +3821,7 @@ function renderCopilotLibrary(targetId) {
     },
     Budget: {
       title: "Choisissez une formule simple.",
-      text: "Starter pour tester, Pro pour vendre serieusement, Scale pour une equipe.",
+      text: "Starter pour tester, Pro pour vendre serieusement, Equipe pour plusieurs personnes.",
       cards: relevantTradeCopilots.slice().sort((a, b) => String(a.price).localeCompare(String(b.price))).slice(0, 3)
     },
     Installation: {
@@ -3811,6 +3837,9 @@ function renderCopilotLibrary(targetId) {
   };
   const activeFilterCopy = filterCopy[activeFilter] || filterCopy.Metier;
   const visibleTradeCopilots = activeFilterCopy.cards.length ? activeFilterCopy.cards : relevantTradeCopilots;
+  const mapSrc = tradeCase.visual === "google-map"
+    ? `https://www.google.com/maps?q=${encodeURIComponent(tradeCase.mapQuery || state.profession)}&output=embed`
+    : "";
   const copilotMatchRows = relevantTradeCopilots.slice(0, 3).map((copilot, index) => ({
     name: copilot.name,
     fit: index === 0 && copilot.profession !== "Autre" ? "Recommande" : "Option",
@@ -3871,12 +3900,18 @@ function renderCopilotLibrary(targetId) {
           </div>
         </div>
         <div class="trade-use-case-visual">
-          ${tradeCase.visual === "map" ? `
-            <div class="mini-map">
-              <span style="--x:45%;--y:48%"></span>
-              <span style="--x:62%;--y:42%"></span>
-              <span style="--x:55%;--y:62%"></span>
-              <span style="--x:34%;--y:58%"></span>
+          ${tradeCase.visual === "google-map" ? `
+            <div class="google-map-preview">
+              <iframe
+                title="${safeText(tradeCase.mapTitle || `Carte Google ${state.profession}`)}"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                src="${mapSrc}">
+              </iframe>
+              <div class="map-insight-card">
+                <strong>${state.profession === "Agence immobiliere" ? "Secteurs de prospection" : "Tournee par secteur"}</strong>
+                <small>${state.profession === "Agence immobiliere" ? "Visites, proprietaires et relances a suivre." : "Adresses proches, photos terrain et entretiens saisonniers."}</small>
+              </div>
             </div>
           ` : `
             <div class="mini-work-list">
@@ -4301,7 +4336,7 @@ function renderAiCenter() {
       </div>
       <div class="assistant-briefing">
         <span class="status warning">Briefing pret</span>
-        <h3>Bonjour Dorian 👋</h3>
+        <h3>Bonjour 👋</h3>
         <p>Aujourd'hui voici ce qui merite votre attention.</p>
         <ul>
           <li>${copilot.newProspects.length} nouveaux prospects</li>
@@ -5082,7 +5117,7 @@ function renderDashboard() {
     <section class="simple-home-hero">
       <article class="card simple-main-card">
         <span class="status warning">A faire aujourd'hui</span>
-        <h2>Bonjour Dorian 👋</h2>
+        <h2>Bonjour 👋</h2>
         <p>Voici les choses importantes. Cliquez sur une carte, Qualifyr AI vous emmene au bon endroit.</p>
         <div class="simple-attention-list">
           ${todayActions.map((item) => `
