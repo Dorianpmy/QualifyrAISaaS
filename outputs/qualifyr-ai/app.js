@@ -991,6 +991,7 @@ function renderResponsiveMenu() {
         <span><strong>${safeText(accountName)}</strong><small>${safeText(accountEmail)}</small></span>
       </div>
       <button data-view="commercial">${svg("card")} Mes paiements</button>
+      <button data-view="integrations">${svg("workflow")} Connexions</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
       ${adminVisible ? `<button data-view="admin">${svg("shield")} Admin Qualifyr</button>` : ""}
       <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>

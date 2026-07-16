@@ -14488,3 +14488,64 @@ body.simple-ux .universal-command.universal-copilot-cta:hover {
     font-size: 12px !important;
   }
 }
+
+/* Final mobile polish: one clear menu icon, stable bottom CTA and visible connections access. */
+@media (max-width: 760px) {
+  body.simple-ux .mobile-menu {
+    overflow: visible !important;
+  }
+
+  body.simple-ux .mobile-menu::before,
+  body.simple-ux .mobile-menu::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  body.simple-ux .mobile-menu > span {
+    display: none !important;
+  }
+
+  body.simple-ux .mobile-menu .mobile-menu-icon {
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    flex: 0 0 20px !important;
+    color: currentColor !important;
+  }
+
+  body.simple-ux .mobile-menu .mobile-menu-icon path {
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2.35 !important;
+    stroke-linecap: round !important;
+  }
+
+  body.simple-ux .universal-command.universal-copilot-cta,
+  body.simple-ux .universal-command.universal-copilot-cta:hover,
+  body.simple-ux .universal-command.universal-copilot-cta:focus-within,
+  body.simple-ux .universal-command.universal-copilot-cta:active {
+    position: fixed !important;
+    left: 16px !important;
+    right: 16px !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    display: grid !important;
+    grid-template-columns: 38px minmax(0, 1fr) auto !important;
+    z-index: 920 !important;
+  }
+
+  body.simple-ux .universal-command.universal-copilot-cta .primary-button,
+  body.simple-ux .universal-command.universal-copilot-cta .universal-cta {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    white-space: nowrap !important;
+  }
+
+  body.simple-ux .mobile-nav-account button[data-view="integrations"] {
+    display: flex !important;
+  }
+}
