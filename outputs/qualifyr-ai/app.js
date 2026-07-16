@@ -290,6 +290,7 @@ const navItems = [
   ["calendar", "Mon planning", "calendar", "📅", "Rendez-vous et trajets"],
   ["automations", "Mes automatisations", "workflow", "⚡", "Taches qui se font seules"],
   ["marketplace", "Ajouter une IA", "grid", "🧩", "Copilotes par metier"],
+  ["integrations", "Connexions", "workflow", "", "Google, WhatsApp, email"],
   ["commercial", "Abonnement", "card", "", "Offre, paiement et options"],
   ["notifications", "Mon activite", "dashboard", "📈", "Resultats et alertes"],
   ["settings", "Mon entreprise", "shield", "🏢", "Infos, equipe, abonnement"]
@@ -298,7 +299,7 @@ const navItems = [
 const navGroups = [
   ["Chaque jour", ["dashboard", "ai-center"]],
   ["Travailler", ["crm", "quotes", "calendar"]],
-  ["Gagner du temps", ["automations", "marketplace"]],
+  ["Gagner du temps", ["automations", "marketplace", "integrations"]],
   ["Suivre", ["commercial", "notifications", "settings"]]
 ];
 
@@ -935,10 +936,7 @@ function renderResponsiveMenu() {
   const accountName = session?.name || "Utilisateur";
   const accountEmail = session?.email || "votre.email@entreprise.fr";
   const byId = Object.fromEntries(navItems.map((item) => [item[0], item]));
-  const secondaryItems = [
-    ["integrations", "Connexions", "workflow", "Google, WhatsApp, email"],
-    ["help", "Aide", "star", "Tutoriels et support"]
-  ];
+  const secondaryItems = [["help", "Aide", "star", "Tutoriels et support"]];
   const sectionMarkup = navGroups
     .map(([group, ids]) => `
       <div class="mobile-nav-section">
