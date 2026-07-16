@@ -1429,7 +1429,16 @@ function renderCommercial() {
       <button class="primary-button" data-view="pricing">Voir les options</button>
     </div>
 
-    <section class="subscription-hero">
+    <nav class="subscription-tab-nav" aria-label="Navigation abonnement">
+      <button class="active" data-scroll-section="subscription-current">Offre actuelle</button>
+      <button data-scroll-section="subscription-plans">Formules</button>
+      <button data-scroll-section="subscription-included">Inclus</button>
+      <button data-scroll-section="subscription-unlocks">Options</button>
+      <button data-scroll-section="subscription-billing">Paiements</button>
+      <button data-scroll-section="subscription-help">Aide</button>
+    </nav>
+
+    <section class="subscription-hero" id="subscription-current">
       <article class="card current-plan-card">
         <p class="eyebrow">Mon offre actuelle</p>
         <h2>${current.name}</h2>
@@ -1455,7 +1464,7 @@ function renderCommercial() {
       </article>
     </section>
 
-    <section class="section plan-choice-section">
+    <section class="section plan-choice-section" id="subscription-plans">
       <div class="section-header compact-header">
         <div>
           <p class="eyebrow">Changer de formule</p>
@@ -1478,7 +1487,7 @@ function renderCommercial() {
       </div>
     </section>
 
-    <section class="section grid grid-2">
+    <section class="section grid grid-2" id="subscription-included">
       <article class="card">
         <p class="eyebrow">Fonctionnalites incluses</p>
         <h2>Ce que vous possedez deja.</h2>
@@ -1500,7 +1509,7 @@ function renderCommercial() {
       </article>
     </section>
 
-    <section class="section">
+    <section class="section" id="subscription-unlocks">
       <div class="section-header compact-header">
         <div>
           <p class="eyebrow">Fonctionnalites Premium</p>
@@ -1559,7 +1568,7 @@ function renderCommercial() {
       </article>
     </section>
 
-    <section class="section grid grid-2">
+    <section class="section grid grid-2" id="subscription-billing">
       <article class="card">
         <p class="eyebrow">Mes licences</p>
         <h2>${subscriptionCenter.currentPlan.users}</h2>
@@ -1577,7 +1586,7 @@ function renderCommercial() {
       </article>
     </section>
 
-    <section class="section grid grid-2">
+    <section class="section grid grid-2" id="subscription-help">
       <article class="card">
         <p class="eyebrow">Historique</p>
         <h2>Les changements importants.</h2>
@@ -5461,6 +5470,18 @@ document.addEventListener("click", (event) => {
   const openCheckout = event.target.closest("[data-open-checkout]");
   if (openCheckout) {
     openCheckoutModal(openCheckout.dataset.openCheckout || "Pro");
+    return;
+  }
+
+  const scrollSectionButton = event.target.closest("[data-scroll-section]");
+  if (scrollSectionButton) {
+    const target = el(scrollSectionButton.dataset.scrollSection);
+    if (target) {
+      document.querySelectorAll(".subscription-tab-nav button").forEach((button) => {
+        button.classList.toggle("active", button === scrollSectionButton);
+      });
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     return;
   }
 
