@@ -13582,3 +13582,294 @@ body.simple-ux .mobile-nav-row:hover svg,
 body.simple-ux .mobile-nav-primary:hover svg {
   stroke: #137542 !important;
 }
+
+/* Copilot whiteboard: a simple builder for prospects who do not know what to ask for. */
+body.simple-ux .copilot-workshop-card {
+  padding: clamp(20px, 2.6vw, 34px) !important;
+  border-color: rgba(19, 138, 75, 0.18) !important;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(19, 138, 75, 0.07), transparent 34%),
+    #fff !important;
+}
+
+body.simple-ux .workshop-heading,
+body.simple-ux .workshop-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+body.simple-ux .workshop-heading h2 {
+  font-size: clamp(28px, 2.5vw, 44px) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.025em !important;
+  max-width: 760px;
+}
+
+body.simple-ux .workshop-heading p {
+  max-width: 760px;
+}
+
+body.simple-ux .workshop-result {
+  min-width: 250px;
+  padding: 16px 18px;
+  border: 1px solid rgba(19, 138, 75, 0.18);
+  border-radius: 22px;
+  background: rgba(238, 248, 242, 0.78);
+}
+
+body.simple-ux .workshop-result span,
+body.simple-ux .workshop-result small,
+body.simple-ux .workshop-footer small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+body.simple-ux .workshop-result strong {
+  display: block;
+  margin: 6px 0;
+  color: #137542;
+  font-size: 22px;
+}
+
+body.simple-ux .workshop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.8fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+body.simple-ux .blank-canvas,
+body.simple-ux .layer-picker {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 18px;
+}
+
+body.simple-ux .blank-canvas {
+  min-height: 390px;
+  background:
+    linear-gradient(rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+    #fff;
+  background-size: 34px 34px;
+}
+
+body.simple-ux .blank-canvas-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+body.simple-ux .blank-canvas-top span,
+body.simple-ux .layer-choice > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #f7f7f4;
+  border: 1px solid var(--border);
+}
+
+body.simple-ux .blank-canvas-top small {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+body.simple-ux .layer-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+body.simple-ux .layer-stack-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  text-align: left;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(19, 138, 75, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(17, 17, 17, 0.04);
+}
+
+body.simple-ux .layer-stack-item b {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #137542;
+  background: rgba(19, 138, 75, 0.08);
+}
+
+body.simple-ux .layer-stack-item strong,
+body.simple-ux .layer-choice b {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+}
+
+body.simple-ux .layer-stack-item small,
+body.simple-ux .layer-choice small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+body.simple-ux .empty-layer-state {
+  min-height: 210px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+body.simple-ux .empty-layer-state strong {
+  color: var(--text);
+}
+
+body.simple-ux .layer-picker {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+body.simple-ux .layer-picker-head {
+  margin-bottom: 6px;
+}
+
+body.simple-ux .layer-picker-head strong,
+body.simple-ux .workshop-footer strong {
+  display: block;
+  color: var(--text);
+}
+
+body.simple-ux .layer-picker-head small {
+  color: var(--muted);
+}
+
+body.simple-ux .layer-choice {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon title gain"
+    "icon text gain";
+  align-items: center;
+  gap: 2px 12px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+body.simple-ux .layer-choice > span {
+  grid-area: icon;
+}
+
+body.simple-ux .layer-choice b {
+  grid-area: title;
+}
+
+body.simple-ux .layer-choice small {
+  grid-area: text;
+}
+
+body.simple-ux .layer-choice em {
+  grid-area: gain;
+  font-style: normal;
+  color: #137542;
+  font-weight: 750;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+body.simple-ux .layer-choice.active {
+  border-color: rgba(19, 138, 75, 0.28);
+  background: rgba(238, 248, 242, 0.78);
+}
+
+body.simple-ux .workshop-footer {
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+body.simple-ux .workshop-footer > span {
+  min-width: 170px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+body.simple-ux .workshop-footer .hero-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 1180px) {
+  body.simple-ux .workshop-grid,
+  body.simple-ux .workshop-heading,
+  body.simple-ux .workshop-footer {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  body.simple-ux .workshop-result,
+  body.simple-ux .workshop-footer > span {
+    min-width: 0;
+  }
+
+  body.simple-ux .workshop-footer .hero-actions {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  body.simple-ux .copilot-workshop-card {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  body.simple-ux .workshop-heading h2 {
+    font-size: clamp(26px, 8vw, 34px) !important;
+  }
+
+  body.simple-ux .blank-canvas {
+    min-height: 0;
+  }
+
+  body.simple-ux .blank-canvas,
+  body.simple-ux .layer-picker {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  body.simple-ux .layer-choice {
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-areas:
+      "icon title"
+      "icon text"
+      "icon gain";
+  }
+}

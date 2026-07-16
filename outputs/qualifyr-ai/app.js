@@ -3774,6 +3774,81 @@ const tradeUseCases = {
   }
 };
 
+const copilotLayerCatalog = [
+  {
+    id: "capture",
+    title: "Recevoir les demandes",
+    plain: "L'assistant pose les bonnes questions et range la demande.",
+    gain: "Base",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Garage", "Restaurant", "Dentiste", "Nettoyage", "Paysagiste", "Immobilier", "Autre"],
+    examples: {
+      Paysagiste: "Demande le type de jardin, l'adresse, la frequence et les photos.",
+      Immobilier: "Classe le bien, le proprietaire, la ville et le niveau d'urgence.",
+      Garage: "Note le vehicule, le symptome, le kilometrage et le creneau souhaite."
+    }
+  },
+  {
+    id: "photos",
+    title: "Demander des photos",
+    plain: "L'assistant recupere les photos utiles avant de vous deranger.",
+    gain: "Moins d'allers-retours",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Nettoyage", "Paysagiste", "Immobilier", "Garage"],
+    examples: {
+      Paysagiste: "Photos du terrain, acces, haies, pelouse et zones a entretenir.",
+      Plombier: "Photo de la fuite, robinetterie, ballon, compteur ou zone touchee.",
+      Immobilier: "Photos de facade, entree, pieces et travaux visibles."
+    }
+  },
+  {
+    id: "planning",
+    title: "Organiser les rendez-vous",
+    plain: "L'assistant propose un creneau et evite les doublons.",
+    gain: "Planning plus clair",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Garage", "Dentiste", "Nettoyage", "Paysagiste", "Immobilier", "Autre"],
+    examples: {
+      Paysagiste: "Regroupe les visites proches pour reduire les trajets.",
+      Immobilier: "Propose les visites selon les disponibilites du proprietaire.",
+      Dentiste: "Confirme les rendez-vous et prepare les rappels."
+    }
+  },
+  {
+    id: "quote",
+    title: "Preparer le devis",
+    plain: "L'assistant transforme les infos recues en brouillon de devis.",
+    gain: "Devis plus rapide",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Garage", "Nettoyage", "Paysagiste", "Menuisier", "Macon", "Autre"],
+    examples: {
+      Paysagiste: "Prepare entretien, taille, tonte, evacuation et frequence.",
+      Electricien: "Prepare diagnostic, main d'oeuvre, tableau, prises et securite.",
+      Garage: "Prepare diagnostic, pieces possibles et main d'oeuvre."
+    }
+  },
+  {
+    id: "followup",
+    title: "Relancer sans y penser",
+    plain: "L'assistant rappelle les devis, impayes ou clients silencieux.",
+    gain: "Plus de reponses",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Garage", "Restaurant", "Dentiste", "Nettoyage", "Paysagiste", "Immobilier", "Autre"],
+    examples: {
+      Paysagiste: "Relance les entretiens saisonniers au bon moment.",
+      Immobilier: "Relance proprietaires, visites et dossiers en attente.",
+      Restaurant: "Relance les groupes et demandes d'evenements."
+    }
+  },
+  {
+    id: "reviews",
+    title: "Demander des avis",
+    plain: "L'assistant demande un avis aux bons clients apres une mission.",
+    gain: "Reputation locale",
+    professions: ["Plombier", "Electricien", "Chauffagiste", "Garage", "Restaurant", "Dentiste", "Nettoyage", "Paysagiste", "Autre"],
+    examples: {
+      Paysagiste: "Demande un avis apres un entretien ou une creation terminee.",
+      Garage: "Demande un avis apres restitution du vehicule.",
+      Restaurant: "Demande un avis apres reservation ou evenement."
+    }
+  }
+];
+
 function normalizeProfessionName(value) {
   const aliases = {
     "Garage automobile": "Garage",
@@ -3782,6 +3857,98 @@ function normalizeProfessionName(value) {
     "Carrossier": "Garage"
   };
   return aliases[value] || value;
+}
+
+function getCopilotLayersForProfession(profession = state.profession) {
+  const normalized = normalizeProfessionName(profession);
+  return copilotLayerCatalog.filter((layer) => layer.professions.includes(normalized) || layer.professions.includes("Autre"));
+}
+
+function selectedCopilotLayerIds() {
+  if (!Array.isArray(state.selectedCopilotLayers) || !state.selectedCopilotLayers.length) {
+    const normalized = normalizeProfessionName(state.profession);
+    if (normalized === "Paysagiste") return ["capture", "photos", "planning", "quote"];
+    if (normalized === "Immobilier") return ["capture", "planning", "followup"];
+    if (normalized === "Restaurant") return ["capture", "planning", "reviews"];
+    return ["capture", "planning", "quote"];
+  }
+  return state.selectedCopilotLayers;
+}
+
+function renderCopilotLayerBuilder(relevantTradeCopilots) {
+  const layers = getCopilotLayersForProfession();
+  const selectedIds = selectedCopilotLayerIds();
+  state.selectedCopilotLayers = selectedIds;
+  const selectedLayers = layers.filter((layer) => selectedIds.includes(layer.id));
+  const recommended = selectedLayers.length >= 5
+    ? "Equipe locale"
+    : selectedLayers.length >= 3
+      ? "Copilote metier"
+      : "Premiers clients";
+  const mainCopilot = relevantTradeCopilots[0] || selectedTradeCopilot();
+  const minutes = Math.max(2, selectedLayers.length * 2);
+  const weeklyGain = Math.max(2, selectedLayers.length * 2);
+  const exampleFor = (layer) => layer.examples[normalizeProfessionName(state.profession)] || layer.examples[state.profession] || layer.examples.Autre || layer.plain;
+  return `
+    <section class="card copilot-workshop-card">
+      <div class="workshop-heading">
+        <div>
+          <p class="eyebrow">Atelier blanc</p>
+          <h2>Construisez votre assistant a votre sauce.</h2>
+          <p>Si vous ne savez pas quel copilote choisir, cochez simplement ce que vous voulez que Qualifyr fasse pour vous. La recommandation se met a jour toute seule.</p>
+        </div>
+        <div class="workshop-result">
+          <span>Recommandation</span>
+          <strong>${recommended}</strong>
+          <small>${selectedLayers.length} aide${selectedLayers.length > 1 ? "s" : ""} choisie${selectedLayers.length > 1 ? "s" : ""} · environ ${weeklyGain} h / semaine</small>
+        </div>
+      </div>
+      <div class="workshop-grid">
+        <div class="blank-canvas">
+          <div class="blank-canvas-top">
+            <span>${svg("spark")}</span>
+            <strong>${mainCopilot.name}</strong>
+            <small>${state.profession}</small>
+          </div>
+          <div class="layer-stack">
+            ${selectedLayers.length ? selectedLayers.map((layer, index) => `
+              <button class="layer-stack-item" data-toggle-layer="${layer.id}">
+                <b>${String(index + 1).padStart(2, "0")}</b>
+                <span><strong>${layer.title}</strong><small>${exampleFor(layer)}</small></span>
+              </button>
+            `).join("") : `
+              <div class="empty-layer-state">
+                <strong>Votre page est vide.</strong>
+                <small>Ajoutez une premiere aide a droite pour voir ce que le copilote fera.</small>
+              </div>
+            `}
+          </div>
+        </div>
+        <div class="layer-picker">
+          <div class="layer-picker-head">
+            <strong>Ajoutez les aides utiles</strong>
+            <small>Chaque bloc est optionnel. Vous pouvez tester sans engagement.</small>
+          </div>
+          ${layers.map((layer) => `
+            <button class="layer-choice ${selectedIds.includes(layer.id) ? "active" : ""}" data-toggle-layer="${layer.id}">
+              <span>${selectedIds.includes(layer.id) ? svg("spark") : svg("plus")}</span>
+              <b>${layer.title}</b>
+              <small>${layer.plain}</small>
+              <em>${layer.gain}</em>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      <div class="workshop-footer">
+        <span><strong>${minutes} min</strong><small>Pour preparer la premiere version</small></span>
+        <span><strong>${mainCopilot.price}</strong><small>Prix indicatif selon les aides choisies</small></span>
+        <div class="hero-actions">
+          <button class="primary-button trade-copilot-install" data-trade="${mainCopilot.profession}">${svg("spark")} Creer cette combinaison</button>
+          <button class="secondary-button trade-copilot-email" data-trade="${mainCopilot.profession}">Recevoir le recap</button>
+        </div>
+      </div>
+    </section>
+  `;
 }
 
 function getRelevantTradeCopilots() {
@@ -3905,6 +4072,8 @@ function renderCopilotLibrary(targetId) {
           `).join("")}
         </div>
       </div>
+
+      ${renderCopilotLayerBuilder(relevantTradeCopilots)}
 
       <article class="card trade-use-case-card ${tradeCase.visual}">
         <div class="trade-use-case-copy">
@@ -5378,6 +5547,7 @@ document.addEventListener("click", (event) => {
   const professionButton = event.target.closest("[data-profession]");
   if (professionButton) {
     state.profession = professionButton.dataset.profession;
+    state.selectedCopilotLayers = null;
     const stayView = professionButton.dataset.stayView;
     renderAll();
     showView(stayView || "onboarding");
@@ -5391,8 +5561,8 @@ document.addEventListener("click", (event) => {
 
   const optionUnlock = event.target.closest(".option-unlock");
   if (optionUnlock) {
-    state.checkoutPlan = "Pro";
-    openCheckoutModal("Pro");
+    state.checkoutPlan = "Copilote metier";
+    openCheckoutModal("Copilote metier");
     return;
   }
 
@@ -5532,6 +5702,27 @@ document.addEventListener("click", (event) => {
     state.profession = tradeEmail.dataset.trade || state.profession;
     openCopilotLeadModal("email", state.profession);
     toast(`${copilot?.name || "Le copilote"} : reception email preparee.`);
+    return;
+  }
+
+  const layerToggle = event.target.closest("[data-toggle-layer]");
+  if (layerToggle) {
+    const layerId = layerToggle.dataset.toggleLayer;
+    const current = new Set(selectedCopilotLayerIds());
+    if (current.has(layerId)) {
+      current.delete(layerId);
+    } else {
+      current.add(layerId);
+    }
+    state.selectedCopilotLayers = Array.from(current);
+    if (state.view === "copilots") {
+      renderCopilots();
+      showView("copilots");
+    } else {
+      renderMarketplace();
+      showView("marketplace");
+    }
+    toast(current.has(layerId) ? "Aide ajoutee au copilote." : "Aide retiree du copilote.");
     return;
   }
 
