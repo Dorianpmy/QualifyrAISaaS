@@ -1,4 +1,9 @@
 {
+  "rewrites": [
+    { "source": "/s/:slug/sitemap.xml", "destination": "/api/site-public?slug=:slug&page=sitemap-xml" },
+    { "source": "/s/:slug/:page", "destination": "/api/site-public?slug=:slug&page=:page" },
+    { "source": "/s/:slug", "destination": "/api/site-public?slug=:slug" }
+  ],
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [

@@ -283,24 +283,25 @@ const integrationCatalog = [
 ];
 
 const navItems = [
-  ["dashboard", "Accueil", "dashboard", "🏠", "Ce qui demande votre attention"],
-  ["ai-center", "Mon assistant IA", "spark", "🤖", "Demandez quoi faire maintenant"],
-  ["crm", "Mes clients", "users", "👥", "Contacts, rappels et historique"],
-  ["quotes", "Mes devis", "file", "📄", "Creer, envoyer, relancer"],
-  ["calendar", "Mon planning", "calendar", "📅", "Rendez-vous et trajets"],
-  ["automations", "Mes automatisations", "workflow", "⚡", "Taches qui se font seules"],
-  ["marketplace", "Ajouter une IA", "grid", "🧩", "Copilotes par metier"],
-  ["integrations", "Connexions", "workflow", "", "Google, WhatsApp, email"],
-  ["commercial", "Abonnement", "card", "", "Offre, paiement et options"],
-  ["notifications", "Mon activite", "dashboard", "📈", "Resultats et alertes"],
-  ["settings", "Mon entreprise", "shield", "🏢", "Infos, equipe, abonnement"]
+  ["dashboard", "Vue d'ensemble", "dashboard", "🏠", "Priorites et resultats du jour"],
+  ["ai-center", "Demander a l'IA", "spark", "🤖", "Posez une question simplement"],
+  ["modules", "Mes outils", "grid", "🧩", "Tout ce qui fait fonctionner votre entreprise"],
+  ["crm", "Clients et demandes", "users", "👥", "Tous les contacts au meme endroit"],
+  ["quotes", "Devis et relances", "file", "📄", "Transformez les demandes en ventes"],
+  ["calendar", "Rendez-vous", "calendar", "📅", "Organisez la journee sans doublon"],
+  ["automations", "Taches automatiques", "workflow", "⚡", "Ce que Qualifyr fait a votre place"],
+  ["marketplace", "Choisir un copilote", "grid", "🧩", "Ajoutez une aide selon votre besoin"],
+  ["integrations", "Connecter mes outils", "workflow", "", "Autorisez Google, WhatsApp et email"],
+  ["commercial", "Mon abonnement", "card", "", "Formule, credits et factures"],
+  ["notifications", "Resultats et alertes", "dashboard", "📈", "Ce qui fonctionne ou demande une action"],
+  ["settings", "Reglages entreprise", "shield", "🏢", "Coordonnees, equipe et horaires"]
 ];
 
 const navGroups = [
-  ["Chaque jour", ["dashboard", "ai-center"]],
-  ["Travailler", ["crm", "quotes", "calendar"]],
-  ["Gagner du temps", ["automations", "marketplace", "integrations"]],
-  ["Suivre", ["commercial", "notifications", "settings"]]
+  ["Commencer ici", ["dashboard", "ai-center", "modules"]],
+  ["Gerer mon activite", ["crm", "quotes", "calendar"]],
+  ["Faire travailler Qualifyr", ["automations", "marketplace", "integrations"]],
+  ["Compte et suivi", ["commercial", "notifications", "settings"]]
 ];
 
 const bottomNavItems = [
@@ -348,6 +349,25 @@ const icons = {
 
 function svg(name) {
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.dashboard}</svg>`;
+}
+
+function brandIcon(provider) {
+  if (provider === "google") {
+    return `
+      <svg class="brand-auth-icon google-auth-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8Z"/>
+        <path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6.1-4.5H2.2v2.8A11 11 0 0 0 12 23Z"/>
+        <path fill="#FBBC05" d="M5.9 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.2a11 11 0 0 0 0 9.8l3.7-2.8Z"/>
+        <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A10.8 10.8 0 0 0 12 1 11 11 0 0 0 2.2 7.1l3.7 2.8c.9-2.6 3.3-4.5 6.1-4.5Z"/>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg class="brand-auth-icon apple-auth-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M16.4 12.7c0-1.8 1.5-2.7 1.6-2.7-.9-1.3-2.2-1.5-2.7-1.5-1.1-.1-2.2.7-2.8.7-.6 0-1.5-.7-2.5-.6-1.3 0-2.5.8-3.2 1.9-1.4 2.4-.4 5.9 1 7.9.7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.6.6 2.6.6 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0-.1-2.7-1.1-2.7-3.4ZM14.6 7.3c.6-.7 1-1.7.8-2.7-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.9 2.5 1 .1 1.9-.4 2.5-1Z"/>
+    </svg>
+  `;
 }
 
 function el(id) {
@@ -430,12 +450,16 @@ function getSession() {
 function setSession(account) {
   localStorage.setItem("qualifyrSession", JSON.stringify(account));
   state.session = account;
+  connectionRecords = {};
+  connectionLoadStarted = false;
   renderAccountButton();
 }
 
 function clearSession() {
   localStorage.removeItem("qualifyrSession");
   state.session = null;
+  connectionRecords = {};
+  connectionLoadStarted = false;
   renderAccountButton();
 }
 
@@ -455,11 +479,72 @@ function clearStoredLeads() {
 
 function renderAccountButton() {
   const button = el("accountButton");
+  renderAuthMenu();
   if (!button) return;
   const session = getSession();
   button.textContent = session ? "Mon compte" : "Se connecter";
-  button.dataset.view = "auth";
-  button.setAttribute("aria-label", session ? "Ouvrir mon compte" : "Se connecter");
+  delete button.dataset.view;
+  const isOpen = document.body.classList.contains("account-menu-open");
+  button.setAttribute("aria-label", session ? "Ouvrir le menu du compte" : "Ouvrir le menu de connexion");
+  button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+function renderAuthMenu() {
+  const menu = el("accountMenu");
+  if (!menu) return;
+  const session = getSession();
+  if (session) {
+    menu.innerHTML = `
+      <div class="account-popover-head">
+        <span class="eyebrow">Compte</span>
+        <strong>${safeText(session.name || "Utilisateur")}</strong>
+        <small>${safeText(session.email || "Compte connecte")}</small>
+      </div>
+      <button class="popover-menu-row" type="button" data-view="auth">${svg("shield")} Mon espace</button>
+      ${isAdminSession(session) ? `<button class="popover-menu-row" type="button" data-view="admin">${svg("dashboard")} Admin Qualifyr</button>` : ""}
+      <button class="popover-menu-row muted" type="button" data-logout>${svg("shield")} Se deconnecter</button>
+    `;
+    return;
+  }
+  menu.innerHTML = `
+    <div class="account-popover-head">
+      <span class="eyebrow">Connexion</span>
+      <strong>Acceder a Qualifyr AI</strong>
+      <small>Connectez-vous avec Google, Apple ou votre email.</small>
+    </div>
+    <button class="secondary-button social-auth-button popover-auth-button" type="button" data-social-auth="google">
+      ${brandIcon("google")}
+      Continuer avec Google
+    </button>
+    <button class="secondary-button social-auth-button popover-auth-button" type="button" data-social-auth="apple">
+      ${brandIcon("apple")}
+      Continuer avec Apple
+    </button>
+    <button class="popover-menu-row" type="button" data-view="auth">${svg("shield")} Me connecter par email</button>
+  `;
+}
+
+function closeAuthMenu() {
+  const menu = el("accountMenu");
+  const button = el("accountButton");
+  document.body.classList.remove("account-menu-open");
+  if (menu) menu.hidden = true;
+  if (button) button.setAttribute("aria-expanded", "false");
+}
+
+function openAuthMenu() {
+  renderAuthMenu();
+  const menu = el("accountMenu");
+  const button = el("accountButton");
+  document.body.classList.add("account-menu-open");
+  if (menu) menu.hidden = false;
+  if (button) button.setAttribute("aria-expanded", "true");
+}
+
+function toggleAuthMenu() {
+  const menu = el("accountMenu");
+  if (menu && !menu.hidden) closeAuthMenu();
+  else openAuthMenu();
 }
 
 function handleSocialAuth(provider) {
@@ -475,6 +560,7 @@ function handleSocialAuth(provider) {
     status: `Connecte avec ${providerLabel}`,
     authProvider: provider
   });
+  closeAuthMenu();
   setSession(account);
   renderAll();
   showView("auth");
@@ -576,6 +662,69 @@ function openModal(content) {
   modal.setAttribute("aria-hidden", "false");
   const firstInput = target.querySelector("input, select, textarea, button");
   if (firstInput) window.setTimeout(() => firstInput.focus(), 40);
+}
+
+function openConnectionTestModal(dataset = {}) {
+  const rawTool = dataset.tool || "Cette connexion";
+  const tool = safeText(rawTool);
+  const category = safeText(dataset.category || "Outil");
+  const stateLabel = safeText(dataset.state || "Non configure");
+  const connected = dataset.connected === "true";
+  const lastSync = safeText(dataset.lastSync || "Jamais");
+  const nextSync = safeText(dataset.nextSync || (connected ? "Test manuel" : "Apres connexion"));
+  const savedTime = safeText(dataset.savedTime || "Gain a confirmer");
+  const health = safeText(dataset.health || (connected ? "Fonctionne" : "A connecter"));
+  const why = safeText(dataset.why || "Qualifyr verifie que cette connexion peut aider votre entreprise.");
+  const title = connected ? `${tool} peut etre teste maintenant.` : `${tool} doit etre connecte avant un test reel.`;
+  const intro = connected
+    ? "Qualifyr verifie la connexion, la derniere synchronisation et l'action que cet outil peut lancer."
+    : "Le test est prepare, mais aucune donnee externe n'est lue tant que vous n'avez pas autorise la connexion.";
+  const checks = connected
+    ? [
+        ["Connexion presente", "Le compte est reconnu dans votre espace."],
+        ["Synchronisation", `Derniere verification : ${lastSync}.`],
+        ["Action test", "Qualifyr peut lancer une verification simple depuis cet outil."],
+        ["Securite", "Aucune donnee n'est modifiee pendant le test."]
+      ]
+    : [
+        ["Outil reconnu", "Qualifyr sait preparer cette connexion."],
+        ["Autorisation manquante", "Vous devez valider le compte avant un test reel."],
+        ["Test prepare", `Prochaine etape : ${nextSync}.`],
+        ["Donnees protegees", "Rien n'est lu sans votre accord."]
+      ];
+
+  openModal(`
+    <div class="modal-content connection-test-result">
+      <p class="eyebrow">Test de connexion</p>
+      <h2>${title}</h2>
+      <p>${intro}</p>
+      <div class="connection-test-summary">
+        <div class="connection-test-metric"><span>Outil</span><strong>${tool}</strong></div>
+        <div class="connection-test-metric"><span>Categorie</span><strong>${category}</strong></div>
+        <div class="connection-test-metric"><span>Etat</span><strong>${stateLabel}</strong></div>
+        <div class="connection-test-metric"><span>Gain estime</span><strong>${savedTime}</strong></div>
+      </div>
+      <div class="connection-test-panel">
+        <strong>Ce que Qualifyr verifie</strong>
+        <p>${why}</p>
+      </div>
+      <div class="connection-test-checks">
+        ${checks.map(([label, text]) => `
+          <div class="connection-test-check">
+            <strong>${safeText(label)}</strong>
+            <span>${safeText(text)}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="connection-test-live" data-test-result>${connected ? `Test pret. Etat actuel : ${health}.` : "En attente de connexion."}</div>
+      <div class="modal-actions">
+        ${connected
+          ? `<button class="primary-button connection-retest" data-tool="${tool}" type="button">Relancer le test</button>`
+          : `<button class="primary-button connection-action" data-tool="${tool}" type="button">Connecter maintenant</button>`}
+        <button class="secondary-button" type="button" data-close-modal>Fermer</button>
+      </div>
+    </div>
+  `);
 }
 
 function recommendedPlanForProfession(profession = state.profession) {
@@ -692,7 +841,7 @@ function openCopilotLeadModal(mode = "site", profession = state.profession) {
     <form class="modal-content" data-modal-form="copilot-lead" data-install-mode="${mode}" data-copilot="${copilot.name}">
       <p class="eyebrow">Installation du copilote</p>
       <h2 id="actionModalTitle">${copilot.name} peut etre pret en moins de 2 minutes.</h2>
-      <p>Le prospect remplit ces informations. Qualifyr prepare ensuite l'installation, l'abonnement et les prochaines etapes sans reglage technique.</p>
+      <p>Renseignez ces informations pour creer votre espace. Vous choisirez ensuite votre copilote, connecterez vos outils et validerez vous-meme son activation.</p>
       <div class="modal-choice-grid">
         <div class="modal-choice"><strong>${copilot.savedTime}</strong><small>Temps gagne estime</small></div>
         <div class="modal-choice"><strong>${copilot.price}</strong><small>Prix du copilote</small></div>
@@ -1011,7 +1160,7 @@ function renderResponsiveMenu() {
         <span><strong>${safeText(accountName)}</strong><small>${safeText(accountEmail)}</small></span>
       </div>
       <button data-view="commercial">${svg("card")} Mes paiements</button>
-      <button data-view="integrations">${svg("workflow")} Connexions</button>
+      <button data-view="auth" data-account-entry>${svg("users")} ${session ? "Mon compte utilisateur" : "Se connecter"}</button>
       <button data-view="settings">${svg("shield")} Mon entreprise</button>
       <button data-open-talk="Je veux savoir quoi faire maintenant">${svg("spark")} Demander a Qualifyr</button>
     </div>
@@ -1072,6 +1221,8 @@ function simplifyVisibleLanguage(root) {
 }
 
 function showView(view) {
+  if(view==="dashboard"&&typeof dashboardUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(dashboardUi.status)){dashboardUi.status="idle";queueMicrotask(()=>loadDashboard(true));}
+  if(view==="crm"&&typeof crmUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(crmUi.status)){crmUi.status="idle";queueMicrotask(()=>loadCrm(true));}
   const friendlyTitles = {
     dashboard: "Accueil",
     crm: "Mes clients",
@@ -1081,7 +1232,7 @@ function showView(view) {
     automations: "Mes automatisations",
     marketplace: "Ajouter une IA",
     notifications: "Mes alertes",
-    integrations: "Mes connexions",
+    integrations: "Outils connectes",
     documents: "Mes documents",
     settings: "Mon entreprise",
     billing: "Mes factures",
@@ -1137,6 +1288,7 @@ function showView(view) {
   document.body.classList.remove("mobile-menu-open");
   const menuToggle = el("menuToggle");
   if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  if (view === "quotes") loadCompanyQuotes().catch((error) => toast(error.message));
 }
 
 function metric(label, value, trend) {
@@ -1151,7 +1303,7 @@ function metric(label, value, trend) {
   `;
 }
 
-function renderDashboard() {
+function renderDashboardLegacy() {
   el("view-dashboard").innerHTML = `
     <div class="hero-panel">
       <p class="eyebrow">Automatisation premium pour PME et artisans</p>
@@ -1184,60 +1336,77 @@ function renderDashboard() {
   `;
 }
 
-function renderOnboarding() {
-  el("view-onboarding").innerHTML = `
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">Onboarding intelligent</p>
-        <h2>Choisissez le metier pour adapter les automatisations.</h2>
-        <p>Les questions, niveaux d'urgence, workflows, relances et estimations changent selon ce choix.</p>
-      </div>
-      <button class="primary-button" id="saveOnboarding">${svg("spark")} Enregistrer</button>
-    </div>
-    <div class="profession-picker">
-      ${professions.map((item) => `<button class="profession-option ${item === state.profession ? "active" : ""}" data-profession="${item}"><strong>${item}</strong><br><span class="mini-muted">${(professionPlaybooks[item] || professionPlaybooks.Autre).urgency}</span></button>`).join("")}
-    </div>
-    <div class="section grid grid-2">
-      <article class="card">
-        <p class="eyebrow">Questions IA</p>
-        <h3>Qualification automatique</h3>
-        ${playbook().questions.map((q) => `<div class="list-row"><span>${q}</span><strong>Auto</strong></div>`).join("")}
-      </article>
-      <article class="card">
-        <p class="eyebrow">Modules recommandes</p>
-        <h3>Pack ${state.profession}</h3>
-        ${playbook().automations.map((a) => `<div class="list-row"><span>${a}</span><span class="status success">Pret</span></div>`).join("")}
-      </article>
-    </div>
+const onboardingUi = { step: 1, saving: false, error: "", draft: null, recommendation: null, operations: [] };
+function onboardingDraft(){
+  if(onboardingUi.draft) return onboardingUi.draft;
+  try{onboardingUi.draft=JSON.parse(localStorage.getItem("qualifyr_onboarding_draft_v2")||"{}");}catch{onboardingUi.draft={};}
+  const session=getSession(); if(session?.email&&!onboardingUi.draft.email) onboardingUi.draft.email=session.email;
+  return onboardingUi.draft;
+}
+function persistOnboardingDraft(data={}){onboardingUi.draft={...onboardingDraft(),...data};localStorage.setItem("qualifyr_onboarding_draft_v2",JSON.stringify(onboardingUi.draft));return onboardingUi.draft;}
+function onboardingHeaders(){const token=getSession()?.accessToken;return token?{"Content-Type":"application/json",Authorization:`Bearer ${token}`}:{"Content-Type":"application/json"};}
+async function syncOnboardingStep(step,data){
+  persistOnboardingDraft(data); const token=getSession()?.accessToken; if(!token) return {ok:true,local:true};
+  const response=await fetch("/api/onboarding",{method:"POST",headers:onboardingHeaders(),body:JSON.stringify({action:"save_step",step,data:onboardingDraft()})});
+  const payload=await response.json().catch(()=>({})); if(!response.ok) throw Object.assign(new Error(payload.error||"Sauvegarde impossible."),{fields:payload.fields}); return payload;
+}
+function onboardingInput(id){return el(id)?.value?.trim?.()||"";}
+function onboardingStepData(step){
+  if(step===2)return{companyName:onboardingInput("obCompany"),managerName:onboardingInput("obManager"),description:onboardingInput("obDescription"),size:onboardingInput("obSize")};
+  if(step===3)return{tradeId:onboardingDraft().tradeId,customTrade:onboardingInput("obCustomTrade")};
+  if(step===4)return{goals:onboardingDraft().goals||[],primaryGoal:onboardingDraft().primaryGoal||""};
+  if(step===5)return{countryCode:onboardingInput("obCountry"),city:onboardingInput("obCity"),postalCode:onboardingInput("obPostal"),serviceArea:onboardingInput("obArea"),phone:onboardingInput("obPhone"),email:onboardingInput("obEmail"),website:onboardingInput("obWebsite"),locale:"fr-FR",currency:"EUR",timezone:"Europe/Paris"};
+  if(step===6)return{primaryColor:onboardingInput("obPrimaryColor"),secondaryColor:onboardingInput("obSecondaryColor"),tagline:onboardingInput("obTagline"),tone:onboardingInput("obTone"),logoName:el("obLogo")?.files?.[0]?.name||onboardingDraft().logoName||""};
+  return{};
+}
+function onboardingRecommendation(){const d=onboardingDraft();return window.QualifyrOnboarding.recommend({tradeId:d.tradeId,size:d.size,goals:d.goals,website:d.website});}
+function onboardingFrame(content,{title="",intro="",wide=false}={}){return `<section class="smart-onboarding ${wide?"is-wide":""}"><header class="smart-ob-top"><div><span>Qualifyr OS</span><small id="onboardingSaveState">${onboardingUi.saving?"Enregistrement…":"Progression enregistrée"}</small></div><div class="smart-ob-progress"><i style="width:${Math.max(5,onboardingUi.step/9*100)}%"></i></div><b>${onboardingUi.step}/9</b></header>${title?`<div class="smart-ob-heading"><h2>${title}</h2><p>${intro}</p></div>`:""}${onboardingUi.error?`<div class="smart-ob-error" role="alert">${safeText(onboardingUi.error)}</div>`:""}${content}</section>`;}
+function renderOnboarding(){
+  const d=onboardingDraft(); const engine=window.QualifyrOnboarding; let html="";
+  if(onboardingUi.step===1) html=onboardingFrame(`<div class="smart-ob-welcome"><span>✨</span><h2>Créons votre espace entreprise</h2><p>Répondez à quelques questions. Qualifyr configurera les premiers éléments adaptés à votre activité.</p><button class="primary-button" data-ob-next>Commencer</button>${Object.keys(d).length?`<button class="ob-text-button" data-ob-resume>Reprendre ma progression</button>`:""}</div>`);
+  if(onboardingUi.step===2) html=onboardingFrame(`<div class="smart-ob-fields"><label><span>Nom de l’entreprise *</span><input id="obCompany" value="${safeText(d.companyName||"")}" placeholder="Ex. Atelier Martin"></label><label><span>Responsable</span><input id="obManager" value="${safeText(d.managerName||"")}" placeholder="Prénom et nom (facultatif)"></label><label class="full"><span>Décrivez votre activité en quelques mots</span><textarea id="obDescription" maxlength="500" placeholder="Ce que vous faites et pour quels clients">${safeText(d.description||"")}</textarea></label><label class="full"><span>Taille de l’entreprise</span><select id="obSize">${[["independent","Indépendant"],["2_5","2 à 5 personnes"],["6_20","6 à 20 personnes"],["21_50","21 à 50 personnes"],["50_plus","Plus de 50 personnes"]].map(([id,label])=>`<option value="${id}" ${d.size===id?"selected":""}>${label}</option>`).join("")}</select></label></div>${onboardingNav()}`,{title:"Votre entreprise",intro:"Quelques informations suffisent pour préparer un espace à votre image."});
+  if(onboardingUi.step===3){const query=String(d.tradeSearch||"").toLowerCase();html=onboardingFrame(`<label class="smart-ob-search"><span>Rechercher votre métier</span><input id="obTradeSearch" value="${safeText(d.tradeSearch||"")}" placeholder="Ex. plombier, fibre, immobilier…"></label><div class="trade-category-tabs"><button class="active" data-trade-category="all">Tous</button>${engine.tradeCategories.map(c=>`<button data-trade-category="${c.id}">${c.name}</button>`).join("")}</div><div class="trade-card-grid">${engine.allTrades.filter(t=>!query||t.label.toLowerCase().includes(query)).map(t=>`<button class="trade-card ${d.tradeId===t.id?"active":""}" data-trade-id="${t.id}" data-trade-category-id="${t.category}"><span>${svg(t.category==="telecom"?"workflow":t.category==="real_estate"?"shield":"grid")}</span><strong>${t.label}</strong></button>`).join("")}<button class="trade-card ${d.tradeId==="other"?"active":""}" data-trade-id="other"><span>${svg("grid")}</span><strong>Autre activité</strong></button></div>${d.tradeId==="other"?`<label class="smart-ob-inline"><span>Votre activité</span><input id="obCustomTrade" value="${safeText(d.customTrade||"")}" placeholder="Écrivez votre métier"></label>`:""}${onboardingNav()}`,{title:"Quel est votre métier ?",intro:"Choisissez l’activité la plus proche. Vous pourrez l’ajuster plus tard.",wide:true});}
+  if(onboardingUi.step===4) html=onboardingFrame(`<div class="goal-choice-grid">${engine.goals.map(g=>`<button class="goal-choice ${(d.goals||[]).includes(g.id)?"active":""}" data-goal-id="${g.id}"><span>${(d.goals||[]).includes(g.id)?"✓":"+"}</span><strong>${g.label}</strong></button>`).join("")}</div>${(d.goals||[]).length?`<div class="primary-goal"><strong>Votre priorité numéro 1</strong><p>Qualifyr commencera par celle-ci.</p>${(d.goals||[]).map(id=>{const g=engine.goals.find(x=>x.id===id);return`<label><input type="radio" name="primaryGoal" value="${id}" ${d.primaryGoal===id?"checked":""}><span>${g?.label||id}</span></label>`}).join("")}</div>`:""}${onboardingNav()}`,{title:"Que voulez-vous améliorer ?",intro:"Choisissez plusieurs objectifs, puis indiquez le plus important.",wide:true});
+  if(onboardingUi.step===5) html=onboardingFrame(`<div class="smart-ob-fields"><label><span>Pays</span><select id="obCountry"><option value="FR">France</option><option value="BE">Belgique</option><option value="CH">Suisse</option><option value="LU">Luxembourg</option><option value="ID">Indonésie</option><option value="OTHER">Autre pays</option></select></label><label><span>Ville</span><input id="obCity" value="${safeText(d.city||"")}"></label><label><span>Code postal</span><input id="obPostal" value="${safeText(d.postalCode||"")}"></label><label><span>Zone d’intervention</span><input id="obArea" value="${safeText(d.serviceArea||"")}" placeholder="Ex. Lyon et 30 km autour"></label><label><span>Téléphone</span><input id="obPhone" value="${safeText(d.phone||"")}" inputmode="tel"></label><label><span>Email professionnel *</span><input id="obEmail" type="email" value="${safeText(d.email||"")}"></label><label class="full"><span>Site existant</span><input id="obWebsite" value="${safeText(d.website||"")}" placeholder="Facultatif"></label></div>${onboardingNav()}`,{title:"Où travaillez-vous ?",intro:"Ces informations serviront à vos formulaires, rendez-vous et futurs documents."});
+  if(onboardingUi.step===6) html=onboardingFrame(`<div class="identity-preview" style="--brand:${safeText(d.primaryColor||"#126044")};--brand-soft:${safeText(d.secondaryColor||"#EAF7EF")}"><div><span>${d.logoName?"Logo sélectionné":"Q"}</span><strong>${safeText(d.companyName||"Votre entreprise")}</strong><small>${safeText(d.tagline||"Votre slogan apparaîtra ici")}</small></div></div><div class="smart-ob-fields"><label class="full"><span>Logo (PNG, JPG ou WebP, 2 Mo maximum)</span><input id="obLogo" type="file" accept="image/png,image/jpeg,image/webp"></label><label><span>Couleur principale</span><input id="obPrimaryColor" type="color" value="${safeText(d.primaryColor||"#126044")}"></label><label><span>Couleur secondaire</span><input id="obSecondaryColor" type="color" value="${safeText(d.secondaryColor||"#EAF7EF")}"></label><label class="full"><span>Slogan</span><input id="obTagline" value="${safeText(d.tagline||"")}" placeholder="Facultatif"></label><label class="full"><span>Ton de communication</span><select id="obTone">${["professionnel","accessible","premium","direct","chaleureux"].map(t=>`<option ${d.tone===t?"selected":""}>${t[0].toUpperCase()+t.slice(1)}</option>`).join("")}</select></label></div>${onboardingNav()}`,{title:"Votre identité visuelle",intro:"Cette étape est facultative. Nous avons déjà préparé des valeurs sobres."});
+  if(onboardingUi.step===7){const r=onboardingRecommendation();const trade=engine.allTrades.find(t=>t.id===d.tradeId)?.label||d.customTrade||"Autre activité";html=onboardingFrame(`<div class="ob-review-grid"><article><span>Entreprise</span><strong>${safeText(d.companyName)}</strong><small>${safeText(d.description||"Description à compléter")}</small><button data-ob-edit="2">Modifier</button></article><article><span>Métier et pack</span><strong>${safeText(trade)}</strong><small>${r.pack.name}</small><button data-ob-edit="3">Modifier</button></article><article><span>Objectifs</span><strong>${(d.goals||[]).length} objectif(s)</strong><small>${safeText(engine.goals.find(g=>g.id===d.primaryGoal)?.label||"")}</small><button data-ob-edit="4">Modifier</button></article><article><span>Coordonnées</span><strong>${safeText(d.city||d.countryCode||"À compléter")}</strong><small>${safeText(d.email||"")}</small><button data-ob-edit="5">Modifier</button></article></div><div class="recommended-modules"><strong>Modules préparés</strong><div>${r.recommendedModules.map(id=>`<span>${safeText(window.QualifyrOS.modules.find(m=>m.id===id)?.name||id)}</span>`).join("")}</div></div><div class="smart-ob-actions"><button class="secondary-button" data-ob-back>Retour</button><button class="primary-button" data-ob-provision>Configurer mon espace</button></div>`,{title:"Tout est prêt pour la configuration",intro:"Vérifiez le résumé. Aucun élément ne sera envoyé à vos clients.",wide:true});}
+  if(onboardingUi.step===8){const labels={workspace:"Création de votre espace entreprise",profile:"Enregistrement de votre profil",pack:"Installation de votre pack métier",crm:"Préparation de votre CRM et tableau de bord",modules:"Sélection des modules recommandés",goals:"Enregistrement de vos objectifs",finalize:"Finalisation de votre espace"};html=onboardingFrame(`<div class="provisioning-list">${Object.entries(labels).map(([key,label])=>{const op=onboardingUi.operations.find(x=>x.operation_key===key||x.operationKey===key);const status=op?.status||"pending";return`<article class="${status}"><span>${status==="completed"?"✓":status==="failed"?"!":status==="running"?"•••":"○"}</span><strong>${label}</strong><small>${status==="completed"?"Terminé":status==="failed"?"À réessayer":status==="running"?"En cours":"En attente"}</small></article>`}).join("")}</div>${onboardingUi.error?`<button class="primary-button" data-ob-provision>Réessayer</button>`:""}`,{title:"Qualifyr prépare votre espace",intro:"Chaque ligne correspond à une opération réellement enregistrée."});}
+  if(onboardingUi.step===9){const r=onboardingUi.recommendation||onboardingRecommendation();html=onboardingFrame(`<div class="ob-complete"><span>✓</span><h2>Votre espace est prêt</h2><p>${r.pack?.name||r.pack?.id||"Votre pack métier"} est installé avec ${(r.enabledModules||[]).length} modules activés.</p><div><strong>${onboardingUi.operations.filter(o=>o.status==="completed").length||7}</strong><small>éléments préparés</small></div><p>Prochaine action recommandée : <b>${r.nextActions?.[0]||"Découvrir votre tableau de bord"}</b></p><button class="primary-button" data-ob-finish>Accéder à mon espace</button></div>`);}
+  el("view-onboarding").innerHTML=html;
+}
+function onboardingNav(){return `<div class="smart-ob-actions"><button class="secondary-button" data-ob-back>Retour</button><button class="primary-button" data-ob-next>${onboardingUi.saving?"Enregistrement…":"Continuer"}</button></div>`;}
+
+function renderModules() {
+  const registry = window.QualifyrOS;
+  const enabled = new Set(registry?.enabledModules?.() || []);
+  const groups = [...new Set((registry?.modules || []).map((item) => item.group))];
+  el("view-modules").innerHTML = `
+    <header class="os-page-head"><div><p class="eyebrow">Votre entreprise digitale</p><h2>Mes outils</h2><p>Activez uniquement ce dont vous avez besoin. Rien n'est définitif.</p></div><button class="secondary-button" data-view="onboarding">Configurer mon entreprise</button></header>
+    ${groups.map((group) => `<section class="os-module-section"><div class="os-module-title"><h3>${group}</h3><span>${(registry?.modules || []).filter((item) => item.group === group && enabled.has(item.id)).length} actif(s)</span></div><div class="os-module-grid">
+      ${(registry?.modules || []).filter((item) => item.group === group).map((module) => `<article class="os-module-card ${enabled.has(module.id) ? "is-enabled" : ""}">
+        <button class="os-module-open" data-view="${module.route}"><span class="os-module-icon">${svg(module.icon)}</span><span><strong>${module.name}</strong><small>${module.promise}</small></span></button>
+        <button class="os-module-toggle" type="button" data-os-toggle-module="${module.id}" aria-pressed="${enabled.has(module.id)}">${enabled.has(module.id) ? "Activé" : "Activer"}</button>
+      </article>`).join("")}
+    </div></section>`).join("")}
   `;
 }
 
-function renderModules() {
-  el("view-modules").innerHTML = `
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">Bibliotheque de copilotes</p>
-        <h2>Modules actifs pour ${state.profession}</h2>
-        <p>Chaque module partage le meme moteur, mais charge ses scenarios metier et ses connecteurs.</p>
-      </div>
-      <button class="primary-button" data-view="ai-center">${svg("workflow")} Composer un workflow</button>
-    </div>
-    <div class="grid grid-4">
-      ${modules.map((module) => `
-        <article class="card module-card">
-          <div class="module-head">
-            <span class="module-icon">${svg(module.icon)}</span>
-            <span class="status ${module.status}">${module.status === "success" ? "Actif" : "A connecter"}</span>
-          </div>
-          <div>
-            <h3>${module.title}</h3>
-            <p>${module.summary}</p>
-          </div>
-          <div class="tag-list">${module.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
-        </article>
-      `).join("")}
-    </div>
-  `;
+function renderOsSimpleModules() {
+  const workspace = window.QualifyrOS?.readWorkspace?.() || {};
+  const company = workspace.company || "votre entreprise";
+  const configs = {
+    website: ["Site internet", `Le site de ${company}, prêt à recevoir des demandes.`, "Créer les pages", "Ajouter vos services", "Mettre le site en ligne"],
+    content: ["Contenu", "Préparez vos publications et emails au même endroit.", "Choisir un sujet", "Préparer le contenu", "Vérifier puis publier"],
+    seo: ["Visibilité Google", `Aidez les clients proches de ${workspace.city || "votre ville"} à vous trouver.`, "Vérifier vos informations", "Ajouter vos services", "Suivre les appels et demandes"],
+    forms: ["Formulaires", "Posez les bonnes questions avant de rappeler un prospect.", "Choisir les questions", "Partager le formulaire", "Recevoir la demande dans Clients"],
+    reviews: ["Avis clients", "Demandez un avis au bon moment, sans y penser.", "Choisir les clients satisfaits", "Envoyer la demande", "Suivre les nouveaux avis"],
+    analytics: ["Statistiques", "Comprenez ce qui apporte réellement des clients.", "Demandes reçues", "Devis acceptés", "Temps gagné"]
+  };
+  Object.entries(configs).forEach(([view, [title, intro, ...steps]]) => {
+    const target = el(`view-${view}`);
+    if (!target) return;
+    target.innerHTML = `<header class="os-page-head"><div><p class="eyebrow">Qualifyr OS</p><h2>${title}</h2><p>${intro}</p></div><button class="secondary-button" data-view="modules">Tous mes outils</button></header><section class="os-simple-module"><article class="os-simple-primary"><span class="status warning">À configurer</span><h3>Votre prochaine étape</h3><p>Qualifyr vous guide une étape après l'autre.</p><button class="primary-button" data-os-simple-start="${view}">Commencer</button></article><div class="os-simple-steps">${steps.map((step, index) => `<article><b>${index + 1}</b><span><strong>${step}</strong><small>${index === 0 ? "À faire maintenant" : "Qualifyr vous guidera ensuite"}</small></span></article>`).join("")}</div></section>`;
+  });
 }
 
 function renderLanding() {
@@ -1430,7 +1599,7 @@ function renderPricing() {
   `;
 }
 
-function renderCommercial() {
+function renderCommercialLegacy() {
   const current = subscriptionCenter.currentPlan;
   const progressRows = [
     ["Copilotes", "12 / 20", 60],
@@ -1665,6 +1834,144 @@ function renderCommercial() {
         <button class="primary-button" data-view="onboarding">Revoir mon onboarding</button>
       </article>
     </section>
+  `;
+}
+
+function renderCommercial() {
+  const sessionPlan = getSession()?.plan || subscriptionCenter.currentPlan.name || "Copilote metier";
+  const normalizedPlan = ["Pro", "Copilote metier"].includes(sessionPlan)
+    ? "Copilote metier"
+    : ["Essentiel", "Starter", "Premiers clients"].includes(sessionPlan)
+      ? "Premiers clients"
+      : ["Equipe", "Scale", "Equipe locale"].includes(sessionPlan)
+        ? "Equipe locale"
+        : "Copilote metier";
+  const offers = [
+    {
+      name: "Premiers clients",
+      price: "79 EUR / mois",
+      forWho: "Pour recevoir et suivre vos premieres demandes.",
+      limits: "2 utilisateurs · 500 credits inclus / mois",
+      included: ["2 copilotes au choix", "Clients et devis", "Formulaire ou widget du site", "Relances simples", "Support par email"],
+      copilots: ["Devis IA", "Email IA ou WhatsApp IA"],
+      notIncluded: ["Telephone IA", "Planning d'equipe", "Copilotes illimites"]
+    },
+    {
+      name: "Copilote metier",
+      price: "149 EUR / mois",
+      forWho: "Pour automatiser les demandes d'un artisan ou d'une petite PME.",
+      limits: "5 utilisateurs · 2 500 credits inclus / mois",
+      included: ["4 copilotes metier", "Clients, devis et factures", "Connexions Google et WhatsApp", "Planning et relances", "Support prioritaire"],
+      copilots: ["Telephone IA", "WhatsApp IA", "Planning IA", "Avis Google IA"],
+      notIncluded: ["Plus de 5 utilisateurs", "Configuration sur mesure", "Copilotes supplementaires hors formule"]
+    },
+    {
+      name: "Equipe locale",
+      price: "229 EUR / mois",
+      forWho: "Pour une entreprise avec plusieurs collaborateurs et plusieurs canaux.",
+      limits: "10 utilisateurs · 7 500 credits inclus / mois",
+      included: ["Tous les copilotes standards", "Planning partage", "Facturation et performance", "Plusieurs canaux", "Accompagnement prioritaire"],
+      copilots: digitalEmployees.map((item) => item.name),
+      notIncluded: ["Developpement d'un connecteur sur mesure", "Frais eventuels des fournisseurs externes"]
+    }
+  ];
+  const current = offers.find((offer) => offer.name === normalizedPlan) || offers[1];
+  const actionDefinition = "Un credit correspond a une action simple faite par Qualifyr : classer un message, preparer une reponse, creer un rendez-vous ou relancer un devis.";
+
+  el("view-commercial").innerHTML = `
+    <header class="simple-page-header subscription-simple-header">
+      <div>
+        <p class="eyebrow">Mon abonnement</p>
+        <h2>Trois abonnements. Pas plus.</h2>
+        <p>Votre formule inclut les copilotes, les utilisateurs et un nombre de credits mensuels. Si vous utilisez davantage Qualifyr, ajoutez simplement des credits.</p>
+      </div>
+      <button class="secondary-button" data-view="help">Une question ?</button>
+    </header>
+
+    <section class="subscription-current-simple">
+      <div class="current-offer-main">
+        <span class="status success">Votre abonnement actuel</span>
+        <h2>${current.name}</h2>
+        <div class="current-offer-price">${current.price}</div>
+        <p>${current.forWho}</p>
+        <span class="current-offer-limit">${current.limits}</span>
+      </div>
+      <div class="current-offer-included">
+        <p class="eyebrow">Inclus dans votre prix</p>
+        ${current.included.map((item) => `<span>${svg("spark")} <strong>${item}</strong></span>`).join("")}
+      </div>
+    </section>
+
+    <section class="credit-topup-card">
+      <div>
+        <span class="credit-icon">+</span>
+        <div>
+          <p class="eyebrow">Besoin de plus d'utilisation ?</p>
+          <h3>Ajoutez des credits sans changer d'abonnement.</h3>
+          <p>Les credits achetes s'ajoutent une seule fois. Votre prix mensuel et vos copilotes ne changent pas.</p>
+        </div>
+      </div>
+      <div class="credit-topup-action">
+        <label for="creditPack">Quantite</label>
+        <select id="creditPack">
+          <option value="500">+ 500 credits</option>
+          <option value="2000">+ 2 000 credits</option>
+          <option value="5000">+ 5 000 credits</option>
+        </select>
+        <button class="primary-button credit-buy-action">Ajouter des credits</button>
+      </div>
+    </section>
+
+    <section class="section subscription-copilot-summary">
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Vos copilotes inclus</p>
+          <h2>Vous pouvez installer ceux-ci sans changer de formule.</h2>
+          <p>Le client choisit et connecte lui-meme chaque copilote depuis « Ajouter une IA ».</p>
+        </div>
+        <button class="primary-button" data-view="marketplace">Choisir un copilote</button>
+      </div>
+      <div class="included-copilot-pills">
+        ${current.copilots.map((name) => `<span>${name}<small>Inclus</small></span>`).join("")}
+      </div>
+    </section>
+
+    <section class="section" id="subscription-plans">
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Comparer les formules</p>
+          <h2>Les trois seules formules Qualifyr.</h2>
+          <p>${actionDefinition}</p>
+        </div>
+      </div>
+      <div class="simple-plan-grid">
+        ${offers.map((offer) => {
+          const active = offer.name === current.name;
+          return `
+            <article class="simple-plan-card ${active ? "active" : ""}">
+              <div class="simple-plan-head">
+                <span>${active ? "Votre offre" : "Formule"}</span>
+                <h3>${offer.name}</h3>
+                <strong>${offer.price}</strong>
+                <p>${offer.forWho}</p>
+              </div>
+              <div class="simple-plan-limit">${offer.limits}</div>
+              <div class="simple-plan-features">${offer.included.map((item) => `<span>✓ ${item}</span>`).join("")}</div>
+              <button class="${active ? "secondary-button" : "primary-button"}" ${active ? "disabled" : `data-open-checkout="${offer.name}"`}>${active ? "Offre actuelle" : "Choisir cette offre"}</button>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+
+    <details class="section subscription-details-simple" id="subscription-billing">
+      <summary><span><strong>Factures et paiement</strong><small>Consultez seulement si vous en avez besoin.</small></span><span>Ouvrir</span></summary>
+      <div class="subscription-detail-body">
+        <div class="list-row"><span>Prochain renouvellement</span><strong>${subscriptionCenter.currentPlan.renewal}</strong></div>
+        ${subscriptionCenter.paymentHistory.slice(0, 3).map(([number, date, amount, status]) => `<div class="list-row"><span><strong>${number}</strong><small>${date}</small></span><strong>${amount} · ${status}</strong></div>`).join("")}
+        <div class="hero-actions"><button class="secondary-button payment-action">Telecharger mes factures</button><button class="secondary-button payment-action">Modifier mon moyen de paiement</button></div>
+      </div>
+    </details>
   `;
 }
 
@@ -1916,11 +2223,11 @@ function renderAuth() {
         </div>
         <div class="social-auth-grid">
           <button class="secondary-button social-auth-button" type="button" data-social-auth="google">
-            <span class="social-auth-mark">G</span>
+            ${brandIcon("google")}
             Continuer avec Google
           </button>
           <button class="secondary-button social-auth-button" type="button" data-social-auth="apple">
-            <span class="social-auth-mark">A</span>
+            ${brandIcon("apple")}
             Continuer avec Apple
           </button>
         </div>
@@ -1931,6 +2238,7 @@ function renderAuth() {
           <p class="eyebrow">Connexion</p>
           <h3>J'ai deja un compte</h3>
           <div class="field"><label>Email</label><input name="email" placeholder="votre@email.fr"></div>
+          <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="8" autocomplete="current-password"></div>
           <button class="primary-button" type="submit">${svg("shield")} Entrer dans mon espace</button>
           <p class="muted-note">Votre espace affiche vos demandes, votre abonnement et l'installation de vos copilotes.</p>
         </form>
@@ -1949,6 +2257,7 @@ function renderAuth() {
           <div class="field"><label>Nom</label><input name="name" value="Jean Martin"></div>
           <div class="field"><label>Entreprise</label><input name="company" value="Atelier Martin"></div>
           <div class="field"><label>Email</label><input name="email" value="contact@qualifyragence.com"></div>
+          <div class="field"><label>Mot de passe</label><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"></div>
           <div class="field"><label>Metier</label><select name="profession">${professions.map((profession) => `<option ${profession === state.profession ? "selected" : ""}>${profession}</option>`).join("")}</select></div>
           <button class="primary-button" type="submit">${svg("spark")} Creer mon compte</button>
         </form>
@@ -2958,7 +3267,7 @@ const quoteServices = [
   ["Formation equipe 45 min", 1, 95]
 ];
 
-const quotes = Array.from({ length: 60 }, (_, index) => {
+let quotes = Array.from({ length: 60 }, (_, index) => {
   const client = clients[index % clients.length];
   const base = quoteServices[index % quoteServices.length];
   const second = quoteServices[(index + 3) % quoteServices.length];
@@ -3453,14 +3762,51 @@ function renderQuotes() {
           ${quote.lines.slice(0, 2).map(([name, qty, price]) => `<div class="quote-line"><span>${qty} x ${name}</span><strong>${price} EUR</strong></div>`).join("")}
           <p class="mini-muted">TVA ${quote.vat}% · ${quote.signature === "Signe" ? "Signe" : "Signature a faire"}</p>
           <div class="hero-actions">
-            <button class="secondary-button quote-action" data-action="edit">Modifier</button>
-            <button class="secondary-button quote-action" data-action="send">Envoyer</button>
-            <button class="primary-button quote-action" data-action="invoice">Facturer</button>
+            <button class="secondary-button quote-action" data-action="edit" data-quote-id="${quote.id || ""}">Modifier</button>
+            <button class="secondary-button quote-action" data-action="send" data-quote-id="${quote.id || ""}">Marquer envoye</button>
+            <button class="primary-button quote-action" data-action="invoice" data-quote-id="${quote.id || ""}">Facturer</button>
           </div>
         </article>
       `).join("")}
     </div>
   `;
+}
+
+function quoteFromApi(item) {
+  return {
+    id: item.id, number: item.number,
+    date: new Date(item.updated_at || item.created_at || Date.now()).toLocaleDateString("fr-FR"),
+    client: item.client_name, status: item.status,
+    signature: item.status === "Accepte" ? "Signe electroniquement" : "En attente",
+    vat: Number(item.vat_rate || 20), labor: 0, travel: 0, discount: 0,
+    lines: (item.lines || []).map((line) => [line.description, Number(line.quantity || 1), Number(line.unit_price || 0)]),
+    source: item.source || "manual"
+  };
+}
+
+async function loadCompanyQuotes() {
+  const session = getSession();
+  if (!session?.email) return;
+  const response = await fetch(`/api/quotes?email=${encodeURIComponent(session.email)}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Chargement des devis impossible");
+  if (payload.configured) {
+    quotes = (payload.quotes || []).map(quoteFromApi);
+    renderQuotes();
+  }
+}
+
+async function createCompanyQuote(data = {}) {
+  const session = getSession();
+  if (!session?.email) throw new Error("Connectez-vous pour enregistrer ce devis.");
+  const response = await fetch("/api/quotes", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: session.email, client_name: data.client || "Client a confirmer", status: "Brouillon", source: data.source || "manual", lines: data.lines || [{ description: "Prestation a confirmer", quantity: 1, unit_price: 0 }] })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Creation du devis impossible");
+  await loadCompanyQuotes();
+  return payload.quote;
 }
 
 function renderCalendar() {
@@ -4077,8 +4423,8 @@ function renderCopilotLibrary(targetId) {
     },
     Installation: {
       label: "Comment ca se met en place",
-      title: "Activez le copilote sans reglage technique.",
-      text: "Le prospect choisit le mode le plus simple. Aucune configuration technique n'est visible.",
+      title: "Activez votre copilote avec un guide simple.",
+      text: "Vous choisissez les outils necessaires, autorisez vos propres comptes, testez le resultat puis activez le copilote.",
       cards: relevantTradeCopilots
     },
     Concurrents: {
@@ -4108,17 +4454,48 @@ function renderCopilotLibrary(targetId) {
     <section class="trade-copilot-hero card compact-copilot-hero">
       <div>
         <p class="eyebrow">Copilotes IA par metier</p>
-        <h2>Trouvez l'IA qui aide vraiment votre entreprise.</h2>
-        <p>Choisissez un metier, voyez la recommandation, puis demandez l'installation. Le reste est guide, sans vocabulaire technique.</p>
+        <h2>Choisissez et installez vous-meme votre copilote.</h2>
+        <p>Vous gardez la main du debut a la fin. Qualifyr vous explique quoi choisir, quels outils autoriser et comment tester avant l'activation.</p>
         <div class="hero-actions">
           <button class="primary-button trade-scroll-form">${svg("spark")} Trouver mon copilote</button>
           <button class="secondary-button" data-view="commercial">Voir l'abonnement</button>
         </div>
       </div>
       <div class="copilot-path-steps" aria-label="Parcours d'activation">
-        <span><b>1</b><strong>Metier</strong><small>Le prospect choisit son activite.</small></span>
-        <span><b>2</b><strong>Recommandation</strong><small>Qualifyr affiche les IA utiles.</small></span>
-        <span><b>3</b><strong>Activation</strong><small>Vous recevez la demande et le paiement.</small></span>
+        <span><b>1</b><strong>Choisissez</strong><small>Selectionnez ce que vous voulez automatiser.</small></span>
+        <span><b>2</b><strong>Connectez</strong><small>Autorisez vos outils, un par un.</small></span>
+        <span><b>3</b><strong>Testez</strong><small>Validez le resultat avant d'activer.</small></span>
+      </div>
+    </section>
+
+    <section class="section all-copilots-section">
+      <div class="section-header compact-header">
+        <div>
+          <p class="eyebrow">Tous les copilotes disponibles</p>
+          <h2>Choisissez d'abord la tache qui vous prend du temps.</h2>
+          <p>Chaque copilote a un role precis. Vous pouvez en installer un seul aujourd'hui et ajouter les autres plus tard.</p>
+        </div>
+        <span class="connection-count">${digitalEmployees.length} copilotes</span>
+      </div>
+      <div class="all-copilots-grid">
+        ${digitalEmployees.map((copilot) => `
+          <article class="all-copilot-card">
+            <div class="all-copilot-head">
+              <span>${copilot.icon}</span>
+              <div><strong>${copilot.name}</strong><small>${copilot.category.replace(/^[^ ]+ /, "")}</small></div>
+            </div>
+            <p>${copilot.description}</p>
+            <div class="copilot-plain-example"><small>Exemple concret</small><span>${copilot.example}</span></div>
+            <details>
+              <summary>Ce qu'il faut connecter</summary>
+              <div class="tag-list">${copilot.compatibility.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
+            </details>
+            <div class="all-copilot-footer">
+              <span><strong>${copilot.savedTime}</strong><small>gain estime</small></span>
+              <button class="primary-button copilot-hire" data-employee="${safeText(copilot.name)}">Installer</button>
+            </div>
+          </article>
+        `).join("")}
       </div>
     </section>
 
@@ -4127,7 +4504,7 @@ function renderCopilotLibrary(targetId) {
         <div>
           <p class="eyebrow">Choisissez un metier</p>
           <h2>${state.profession} : les IA inutiles sont cachees.</h2>
-          <p>Le prospect ne voit pas tout le catalogue. Il voit le copilote qui correspond a son quotidien.</p>
+          <p>La recommandation met en avant le plus utile pour votre metier, sans vous empecher de consulter les autres copilotes.</p>
         </div>
       </div>
       <div class="card profession-setup-card">
@@ -4136,10 +4513,13 @@ function renderCopilotLibrary(targetId) {
           <h3>${state.profession}</h3>
           <p>${hasDedicatedCopilot ? "Copilote dedie trouve. Le parcours se concentre sur ce besoin." : "Aucun copilote dedie pour ce metier. Qualifyr propose une IA sur mesure."}</p>
         </div>
-        <div class="profession-chip-grid">
-          ${["Plombier", "Electricien", "Chauffagiste", "Garage automobile", "Restaurant", "Dentiste", "Societe de nettoyage", "Paysagiste", "Macon", "Menuisier", "Agence immobiliere", "Autre"].map((profession) => `
-            <button class="profession-chip ${state.profession === profession ? "active" : ""}" data-profession="${profession}" data-stay-view="${stayView}">${profession}</button>
-          `).join("")}
+        <div class="profession-single-choice">
+          <label for="professionPicker">Quel est votre metier ?</label>
+          <select id="professionPicker">
+            ${professions.map((profession) => `<option value="${profession}" ${state.profession === profession ? "selected" : ""}>${profession}</option>`).join("")}
+          </select>
+          <button class="primary-button profession-apply" data-stay-view="${stayView}">Voir ma recommandation</button>
+          <small>Une seule reponse suffit. Vous pourrez la modifier plus tard.</small>
         </div>
       </div>
 
@@ -4254,7 +4634,7 @@ function renderCopilotLibrary(targetId) {
       <article class="card trade-lead-form" id="tradeCopilotForm">
         <p class="eyebrow">Demande d'activation</p>
         <h2>Recevoir la demande du prospect.</h2>
-        <p>Le prospect laisse ses informations. Vous pouvez ensuite valider le besoin, envoyer le paiement et preparer l'installation.</p>
+        <p>Renseignez votre entreprise pour preparer votre propre espace. Vous choisirez ensuite les autorisations, le test et l'activation.</p>
         <div class="trade-form-grid">
           <div class="field"><label>Metier</label><select><option>Plombier</option><option>Electricien</option><option>Garage</option><option>Restaurant</option><option>Dentiste</option><option>Autre</option></select></div>
           <div class="field"><label>Nom de l'entreprise</label><input value="Atelier Martin"></div>
@@ -4389,6 +4769,53 @@ function openCopilotSetup(name, mode = "install") {
   showView("copilot-setup");
 }
 
+function oauthProviderForRequirement(title = "") {
+  if (/Google|Gmail|Calendar|Drive/i.test(title)) return "google";
+  if (/Outlook|Microsoft/i.test(title)) return "microsoft";
+  if (/WhatsApp|Facebook|Instagram|Reseaux/i.test(title)) return "meta";
+  if (/Mollie|paiement/i.test(title)) return "mollie";
+  return "";
+}
+
+async function startProviderConnection(provider) {
+  const session = getSession();
+  if (!session?.email) {
+    showView("auth");
+    toast("Connectez-vous d'abord a votre compte Qualifyr.");
+    return;
+  }
+  const response = await fetch(`/api/oauth?action=start&provider=${encodeURIComponent(provider)}&email=${encodeURIComponent(session.email)}&returnTo=${encodeURIComponent("/#copilot-setup")}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.authorizeUrl) throw new Error(payload.error || "Connexion indisponible.");
+  window.location.assign(payload.authorizeUrl);
+}
+
+function saveCopilotInstallation(action) {
+  const session = getSession();
+  if (!session?.email) {
+    showView("auth");
+    toast("Connectez-vous pour enregistrer l'installation dans votre entreprise.");
+    return Promise.reject(new Error("Session client requise"));
+  }
+  const account = getClientAccountByEmail(session.email) || {};
+  return fetch("/api/copilots", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: session.email,
+      company: account.company || session.company || "Entreprise",
+      profession: state.profession,
+      copilot: state.selectedCopilotName,
+      plan: account.plan || "Copilote metier",
+      action
+    })
+  }).then(async (response) => {
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Installation impossible");
+    return payload;
+  });
+}
+
 function renderCopilotSetup() {
   const root = el("view-copilot-setup");
   if (!root) return;
@@ -4401,10 +4828,10 @@ function renderCopilotSetup() {
       <div>
         <button class="secondary-button setup-back" data-view="marketplace">${svg("grid")} Retour aux IA</button>
         <p class="eyebrow">${isDemo ? "Demo guidee" : "Installation guidee"}</p>
-        <h2>${employee.icon} ${isDemo ? "Tester" : "Installer"} ${employee.name} sans configuration compliquee.</h2>
-        <p>Qualifyr AI vous guide une seule etape a la fois. Vous voyez ce qui manque, pourquoi c'est utile et combien de temps vous pouvez gagner.</p>
+        <h2>${employee.icon} ${isDemo ? "Tester" : "Installer"} ${employee.name}, etape par etape.</h2>
+        <p>C'est vous qui connectez ce copilote a votre entreprise. Qualifyr vous dit exactement ou cliquer et ne vous demande jamais votre mot de passe.</p>
         <div class="hero-actions">
-          <button class="primary-button setup-auto">${svg("spark")} ✨ Configurer automatiquement</button>
+          <button class="primary-button setup-auto">${svg("spark")} Commencer l'installation</button>
           <button class="secondary-button setup-test">${svg("message")} Tester avec un faux client</button>
         </div>
       </div>
@@ -4421,7 +4848,7 @@ function renderCopilotSetup() {
 
     <div class="setup-summary-grid">
       <article class="card setup-summary-card"><span>${svg("spark")}</span><strong>${employee.savedTime}</strong><small>Temps gagne estime</small></article>
-      <article class="card setup-summary-card"><span>${svg("calendar")}</span><strong>Moins de 2 min</strong><small>Pour le rendre operationnel</small></article>
+      <article class="card setup-summary-card"><span>${svg("calendar")}</span><strong>5 a 10 min</strong><small>Pour suivre toutes les etapes</small></article>
       <article class="card setup-summary-card"><span>${svg("grid")}</span><strong>${connectedCount} / ${profile.missing.length}</strong><small>Elements deja prets</small></article>
       <article class="card setup-summary-card"><span>${svg("star")}</span><strong>${employee.rating}</strong><small>Avis des utilisateurs</small></article>
     </div>
@@ -4429,10 +4856,12 @@ function renderCopilotSetup() {
     <section class="setup-layout">
       <article class="card setup-checklist-card">
         <p class="eyebrow">Ce qu'il faut pour demarrer</p>
-        <h2>Qualifyr AI s'occupe de la partie compliquee.</h2>
-        <p>Vous n'avez pas de reglage technique a faire. Le logiciel vous demande seulement les autorisations utiles.</p>
+        <h2>Faites une chose a la fois.</h2>
+        <p>Quand un outil est necessaire, cliquez sur « Connecter ». Le site de l'outil s'ouvre, vous choisissez votre compte, puis vous acceptez les autorisations affichees.</p>
         <div class="setup-checklist">
-          ${profile.missing.map(([title, description, status, gain], index) => `
+          ${profile.missing.map(([title, description, status, gain], index) => {
+            const provider = oauthProviderForRequirement(title);
+            return `
             <div class="setup-check-row">
               <span class="setup-check-mark ${index === 0 && status.includes("connect") ? "pending" : "done"}">${index === 0 && status.includes("connect") ? "!" : "✓"}</span>
               <div>
@@ -4440,9 +4869,9 @@ function renderCopilotSetup() {
                 <p>${description}</p>
                 <small>Gain estime : ${gain}</small>
               </div>
-              <button class="${status.includes("connect") ? "primary-button" : "secondary-button"} setup-configure" data-item="${title}">${status.includes("connect") ? "Connecter" : "Verifier"}</button>
+              <button class="${status.includes("connect") ? "primary-button" : "secondary-button"} ${status.includes("connect") ? "setup-connect-provider" : "setup-configure"}" ${status.includes("connect") && provider ? `data-oauth-provider="${provider}"` : status.includes("connect") ? 'data-view="integrations"' : `data-item="${title}"`}>${status.includes("connect") ? "Connecter mon outil" : "Verifier"}</button>
             </div>
-          `).join("")}
+          `}).join("")}
         </div>
       </article>
 
@@ -4458,8 +4887,8 @@ function renderCopilotSetup() {
           `).join("")}
         </div>
         <div class="setup-final-card">
-          <strong>Aucune cle, aucun reglage technique.</strong>
-          <p>Si une connexion reelle est necessaire, l'equipe Qualifyr finalise l'onboarding avec vous. Le prospect voit seulement les benefices.</p>
+          <strong>Vos comptes restent sous votre controle.</strong>
+          <p>Vous autorisez chaque connexion vous-meme et pouvez la retirer a tout moment. Qualifyr ne connait jamais le mot de passe de Google, WhatsApp ou de votre banque.</p>
         </div>
       </article>
     </section>
@@ -5079,11 +5508,22 @@ function renderIntegrations() {
             ${integration.history.map((item) => `<div class="list-row"><span>${item}</span><strong>Fait</strong></div>`).join("")}
           </details>
           <div class="hero-actions">
-            <button class="${integration.connected ? "secondary-button" : "primary-button"} connection-action" data-tool="${integration.name}">
+            <button class="${integration.connected ? "secondary-button" : "primary-button"} connection-action" data-tool="${safeText(integration.name)}">
               ${integration.connected ? "Configurer" : "Connecter"}
             </button>
-            <button class="secondary-button connection-test" data-tool="${integration.name}">Tester</button>
-            <button class="danger-button connection-disconnect" data-tool="${integration.name}">Deconnecter</button>
+            <button
+              class="secondary-button connection-test"
+              data-tool="${safeText(integration.name)}"
+              data-category="${safeText(integration.category)}"
+              data-state="${safeText(integration.state)}"
+              data-connected="${integration.connected ? "true" : "false"}"
+              data-last-sync="${safeText(integration.lastSync)}"
+              data-next-sync="${safeText(integration.nextSync)}"
+              data-health="${safeText(integration.health)}"
+              data-saved-time="${safeText(integration.savedTime)}"
+              data-why="${safeText(integration.why)}"
+            >Tester</button>
+            <button class="danger-button connection-disconnect" data-tool="${safeText(integration.name)}">Deconnecter</button>
           </div>
         </article>
       `).join("")}
@@ -5124,6 +5564,187 @@ function renderIntegrations() {
       </article>
     </div>
   `;
+}
+
+const simpleConnectionCatalog = [
+  { id: "google-calendar", logo: "GC", name: "Google Calendar", category: "Organisation", description: "Synchronisez les rendez-vous et evitez les doubles saisies.", gain: "2 h / semaine", recommended: true },
+  { id: "gmail", logo: "GM", name: "Gmail", category: "Communication", description: "Classez les demandes et preparez les reponses utiles.", gain: "3 h / semaine", recommended: true },
+  { id: "whatsapp", logo: "WA", name: "WhatsApp Business", category: "Communication", description: "Transformez les messages entrants en demandes clients suivies.", gain: "5 h / semaine", recommended: true },
+  { id: "mollie", logo: "MO", name: "Mollie", category: "Paiements", description: "Suivez les paiements et les acomptes au meme endroit.", gain: "2 h / semaine", recommended: true },
+  { id: "google-drive", logo: "GD", name: "Google Drive", category: "Documents", description: "Rangez devis, factures et photos par client.", gain: "1 h / semaine", recommended: false },
+  { id: "google-business", logo: "GB", name: "Google Business", category: "Visibilite", description: "Suivez les avis et les demandes locales.", gain: "2 h / semaine", recommended: false }
+];
+
+let connectionRecords = {};
+let connectionLoadStarted = false;
+
+function connectionAccountEmail() {
+  return getSession()?.email || "";
+}
+
+function connectionStatusLabel(record) {
+  if (!record || record.status === "not_connected") return "A connecter";
+  if (record.status === "error") return "Action requise";
+  return record.last_test_status === "success" ? "Operationnelle" : "Configuree";
+}
+
+async function loadConnectionRecords() {
+  const email = connectionAccountEmail();
+  if (!email) return;
+  try {
+    const response = await fetch(`/api/connections?email=${encodeURIComponent(email)}`);
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload.error || "Chargement impossible");
+    connectionRecords = Object.fromEntries((payload.connections || []).map((item) => [item.provider, item]));
+    renderIntegrations();
+  } catch (error) {
+    toast("Les connexions n'ont pas pu etre chargees pour le moment.");
+  }
+}
+
+async function saveConnectionAction(provider, action, settings = {}) {
+  const email = connectionAccountEmail();
+  if (!email) {
+    showView("auth");
+    toast("Connectez-vous pour enregistrer vos connexions.");
+    return null;
+  }
+  const response = await fetch("/api/connections", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, provider, action, settings })
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) throw new Error(payload.error || "Action impossible");
+  connectionRecords[provider] = payload.connection;
+  renderIntegrations();
+  return payload;
+}
+
+function openConnectionConfigModal(provider) {
+  const tool = simpleConnectionCatalog.find((item) => item.id === provider);
+  if (!tool) return;
+  const record = connectionRecords[provider] || {};
+  openModal(`
+    <form class="modal-content connection-config-form" data-connection-save="${safeText(provider)}">
+      <p class="eyebrow">Configuration</p>
+      <h2>${safeText(tool.name)}</h2>
+      <p>Vous allez connecter votre propre compte. Aucun mot de passe ni cle secrete n'est demande dans Qualifyr.</p>
+      <div class="plain-connection-steps">
+        <span><b>1</b><small>Choisissez les reglages ci-dessous.</small></span>
+        <span><b>2</b><small>Enregistrez votre choix.</small></span>
+        <span><b>3</b><small>Autorisez ensuite ${safeText(tool.name)} sur sa page securisee.</small></span>
+        <span><b>4</b><small>Revenez ici et cliquez sur Tester.</small></span>
+      </div>
+      <div class="field">
+        <label>Nom du compte</label>
+        <input name="accountLabel" value="${safeText(record.settings?.accountLabel || "Compte principal")}" required>
+      </div>
+      <div class="field">
+        <label>Utilisation</label>
+        <select name="usage">
+          <option value="automatic" ${record.settings?.usage === "automatic" ? "selected" : ""}>Automatique, avec validation</option>
+          <option value="draft" ${record.settings?.usage === "draft" ? "selected" : ""}>Preparer seulement des brouillons</option>
+          <option value="manual" ${record.settings?.usage === "manual" ? "selected" : ""}>Manuel</option>
+        </select>
+      </div>
+      <label class="simple-consent"><input type="checkbox" name="notifications" ${record.settings?.notifications !== false ? "checked" : ""}> Me prevenir si la connexion demande une action</label>
+      <div class="modal-actions">
+        <button class="primary-button" type="submit">Enregistrer et continuer</button>
+        <button class="secondary-button" type="button" data-close-modal>Annuler</button>
+      </div>
+    </form>
+  `);
+}
+
+function renderIntegrations() {
+  const connected = simpleConnectionCatalog.filter((item) => {
+    const status = connectionRecords[item.id]?.status;
+    return status === "configured" || status === "connected";
+  }).length;
+  const recommended = simpleConnectionCatalog.filter((item) => item.recommended);
+  const others = simpleConnectionCatalog.filter((item) => !item.recommended);
+  const renderRow = (integration) => {
+    const record = connectionRecords[integration.id];
+    const configured = record?.status === "configured" || record?.status === "connected";
+    const tested = record?.last_test_status === "success";
+    return `
+      <article class="simple-connection-row">
+        <span class="integration-logo">${integration.logo}</span>
+        <span class="simple-connection-copy">
+          <span class="connection-name-line"><strong>${integration.name}</strong><small>${integration.category}</small></span>
+          <span>${integration.description}</span>
+        </span>
+        <span class="simple-connection-value">${integration.gain}</span>
+        <span class="connection-status-dot ${tested ? "is-ready" : configured ? "is-configured" : ""}">${connectionStatusLabel(record)}</span>
+        <span class="simple-connection-actions">
+          <button class="${configured ? "secondary-button" : "primary-button"} connection-configure" data-provider="${integration.id}">${configured ? "Configurer" : "Connecter"}</button>
+          <button class="secondary-button connection-test-live" data-provider="${integration.id}" ${configured ? "" : "disabled"}>Tester</button>
+          ${configured ? `<button class="text-button connection-disconnect-live" data-provider="${integration.id}">Deconnecter</button>` : ""}
+        </span>
+      </article>
+    `;
+  };
+
+  el("view-integrations").innerHTML = `
+    <header class="simple-page-header">
+      <div>
+        <p class="eyebrow">Connexions</p>
+        <h2>Connectez vos outils a vos copilotes.</h2>
+        <p>C'est vous qui autorisez vos propres comptes. Qualifyr ne vous demandera jamais vos mots de passe.</p>
+      </div>
+      <span class="connection-count">${connected} sur ${simpleConnectionCatalog.length} configurees</span>
+    </header>
+
+    <section class="copilot-tool-explainer">
+      <div>
+        <span class="explainer-icon">IA</span>
+        <div><strong>Un copilote fait le travail</strong><small>Exemple : Planning IA organise vos rendez-vous.</small></div>
+      </div>
+      <span class="explainer-arrow">utilise</span>
+      <div>
+        <span class="explainer-icon tool">GC</span>
+        <div><strong>Un outil lui donne l'autorisation</strong><small>Exemple : Google Calendar lui montre vos disponibilites.</small></div>
+      </div>
+      <button class="secondary-button" data-view="marketplace">Voir tous les copilotes</button>
+    </section>
+
+    <section class="connection-howto">
+      ${[
+        ["1", "Cliquez sur Connecter", "Choisissez l'outil demande par votre copilote."],
+        ["2", "Choisissez votre compte", "Google, WhatsApp ou l'autre service s'ouvre sur sa propre page."],
+        ["3", "Acceptez les autorisations", "Lisez ce qui est demande, puis revenez automatiquement dans Qualifyr."],
+        ["4", "Lancez le test", "Verifiez avec un exemple avant d'activer le copilote."]
+      ].map(([step, title, copy]) => `<div><b>${step}</b><span><strong>${title}</strong><small>${copy}</small></span></div>`).join("")}
+    </section>
+
+    <section class="connection-next-step">
+      <span class="connection-next-icon">1</span>
+      <div><small>Prochaine etape conseillee</small><strong>${connected ? "Testez une connexion configuree" : "Connectez votre agenda"}</strong><span>${connected ? "Une verification ne modifie aucune donnee." : "C'est le moyen le plus rapide d'eviter les doubles saisies."}</span></div>
+      <button class="primary-button ${connected ? "connection-test-live" : "connection-configure"}" data-provider="google-calendar">${connected ? "Tester" : "Commencer"}</button>
+    </section>
+
+    <section class="simple-connections-section">
+      <div class="simple-section-title"><div><p class="eyebrow">Recommande pour vous</p><h3>Les outils essentiels</h3></div><span>4 choix</span></div>
+      <div class="simple-connections-list">${recommended.map(renderRow).join("")}</div>
+    </section>
+
+    <details class="other-connections section">
+      <summary><span><strong>Voir les autres connexions</strong><small>Documents et visibilite locale</small></span><span>${others.length}</span></summary>
+      <div class="simple-connections-list">${others.map(renderRow).join("")}</div>
+    </details>
+
+    <aside class="connection-help-note">
+      <strong>Besoin d'aide ?</strong>
+      <span>Vous faites la connexion vous-meme. Qualifyr vous explique chaque clic et les acces sensibles restent chez chaque fournisseur.</span>
+      <button class="text-button connection-optimize">Me faire guider</button>
+    </aside>
+  `;
+
+  if (!connectionLoadStarted && connectionAccountEmail()) {
+    connectionLoadStarted = true;
+    loadConnectionRecords();
+  }
 }
 
 function renderMarketplace() {
@@ -5474,6 +6095,42 @@ function renderDashboard() {
   `;
 }
 
+const dashboardUi={status:"idle",data:null,error:"",customizing:false};
+const dashboardHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+async function loadDashboard(force=false){if(!getSession()?.accessToken){dashboardUi.status="guest";renderDashboard();return;}if(dashboardUi.status==="loading"||(!force&&dashboardUi.status==="ready"))return;dashboardUi.status="loading";renderDashboard();try{const response=await fetch("/api/dashboard",{headers:dashboardHeaders()});const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Le tableau de bord est indisponible.");dashboardUi.data=payload;dashboardUi.status="ready";dashboardUi.error="";}catch(error){dashboardUi.status="error";dashboardUi.error=error.message;}renderDashboard();}
+async function saveDashboardPreferences(changes){const data=dashboardUi.data;if(!data)return;const next={...data.preferences,...changes};dashboardUi.data={...data,preferences:next,widgets:window.QualifyrDashboard.visibleWidgets(data.workspace.packId,data.modules,{widget_order:next.widgetOrder,hidden_widgets:next.hiddenWidgets})};renderDashboard();try{const response=await fetch("/api/dashboard",{method:"POST",headers:dashboardHeaders(),body:JSON.stringify({action:"save_preferences",widgetOrder:next.widgetOrder,hiddenWidgets:next.hiddenWidgets,preferredPeriod:next.preferredPeriod})});if(!response.ok)throw new Error();}catch{toast("La préférence n’a pas pu être enregistrée.");loadDashboard(true);}}
+function dashboardWidget(id,data){
+  const empty=(title,text,view,label)=>`<div class="os-empty"><strong>${title}</strong><p>${text}</p>${view?`<button class="secondary-button" data-view="${view}">${label}</button>`:""}</div>`;
+  if(id==="attention_center")return `<article class="os-widget os-attention"><header><div><span class="eyebrow">Priorité</span><h3>À traiter maintenant</h3></div></header>${data.attention.length?data.attention.map(item=>`<button class="os-attention-row" data-view="${item.view}"><span class="priority-dot ${item.priority}"></span><span><strong>${item.title}</strong><small>${item.detail}</small></span><b>Continuer →</b></button>`).join(""):empty("Rien d’urgent pour le moment","Les prochaines actions utiles apparaîtront ici.")}</article>`;
+  if(id==="primary_metrics"){const cards=[["Nouveaux prospects",data.metrics.newProspects,`Sur ${data.period.days} jours`,"crm"],["À contacter",data.metrics.prospectsToContact,"Contacts encore ouverts","crm"],["Rendez-vous à venir",data.metrics.upcomingAppointments,"Agenda connecté","calendar"],["Devis à relancer",data.metrics.quotesToFollow,"Devis envoyés ou relancés","quotes"]];return `<section class="os-widget os-metrics" aria-label="Indicateurs principaux">${cards.map(([label,value,help,view])=>`<button data-view="${view}"><span>${label}</span><strong>${value}</strong><small>${help}</small><em>${value===0?"Aucune donnée pour le moment":"Ouvrir →"}</em></button>`).join("")}</section>`;}
+  if(id==="today_schedule")return `<article class="os-widget"><header><h3>Aujourd’hui</h3><button class="text-button" data-view="calendar">Ouvrir l’agenda</button></header>${empty("Rien n’est encore prévu aujourd’hui","Ajoutez une première action ou configurez votre agenda.","calendar","Planifier un rendez-vous")}</article>`;
+  if(id==="commercial_overview")return `<article class="os-widget"><header><h3>Suivi commercial</h3><button class="text-button" data-view="crm">Voir les prospects</button></header>${data.metrics.totalProspects?`<div class="os-commercial-count"><strong>${data.metrics.totalProspects}</strong><span>contacts enregistrés</span></div>`:empty("Votre suivi est prêt","Ajoutez un premier contact pour commencer à centraliser vos échanges.","crm","Ajouter un prospect")}</article>`;
+  if(id==="recent_activity")return `<article class="os-widget"><header><h3>Activité récente</h3></header>${data.activities.length?`<ol class="os-activity">${data.activities.map(a=>`<li><span>${a.event_type==="onboarding_completed"?"✓":"•"}</span><div><strong>${a.event_type==="onboarding_completed"?"Espace entreprise configuré":"Configuration mise à jour"}</strong><time datetime="${a.created_at}" title="${new Date(a.created_at).toLocaleString(data.workspace.locale,{timeZone:data.workspace.timezone})}">${new Date(a.created_at).toLocaleDateString(data.workspace.locale,{timeZone:data.workspace.timezone})}</time></div></li>`).join("")}</ol>`:empty("Aucune activité récente","Les actions réalisées dans votre entreprise apparaîtront ici.")}</article>`;
+  if(id==="active_modules")return `<article class="os-widget"><header><h3>Outils de l’entreprise</h3><button class="text-button" data-view="modules">Gérer</button></header><div class="os-module-list">${data.modules.filter(m=>m.status==="enabled").slice(0,6).map(m=>{const module=window.QualifyrOS.modules.find(x=>x.id===m.module_id);return module?`<button data-view="${module.route}"><span>${svg(module.icon||"grid")}</span><strong>${module.name}</strong><small>Actif</small></button>`:"";}).join("")}</div></article>`;
+  if(id==="business_recommendations")return `<article class="os-widget"><header><h3>Pour avancer</h3><small>Conseils basés sur votre configuration</small></header>${data.recommendations.length?`<div class="os-recommendations">${data.recommendations.map(r=>`<div><span><strong>${r.title}</strong><small>${r.reason} ${r.benefit}</small></span><button class="secondary-button" data-view="${r.view}">Faire</button><button class="icon-button" data-dashboard-dismiss="${r.id}" aria-label="Masquer ${r.title}">×</button></div>`).join("")}</div>`:empty("Tout est à jour","Aucune recommandation utile pour le moment.")}</article>`;
+  if(id==="workspace_readiness")return `<article class="os-widget os-readiness"><header><h3>Préparation de votre espace</h3><strong>${data.readiness.completed} étapes sur ${data.readiness.total}</strong></header><div class="readiness-bar" aria-label="${data.readiness.completed} étapes terminées sur ${data.readiness.total}"><i style="width:${data.readiness.completed/data.readiness.total*100}%"></i></div><ul>${data.readiness.checks.filter(x=>!x.complete).slice(0,3).map(x=>`<li>${x.label}</li>`).join("")}</ul>${data.readiness.next?`<button class="secondary-button" data-view="settings">Continuer la configuration</button>`:""}</article>`;
+  return "";
+}
+function renderDashboard(){const root=el("view-dashboard");if(dashboardUi.status==="idle"){root.innerHTML=`<div class="os-dashboard-loading" aria-busy="true"><div></div><div></div><div></div></div>`;queueMicrotask(()=>loadDashboard());return;}if(dashboardUi.status==="loading"){root.innerHTML=`<div class="os-dashboard-loading" aria-label="Chargement du tableau de bord" aria-busy="true"><div></div><div></div><div></div></div>`;return;}if(dashboardUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><span class="eyebrow">Votre entreprise, au même endroit</span><h2>Connectez-vous pour afficher vos vraies données.</h2><p>Votre tableau de bord sera adapté à votre métier, sans chiffres de démonstration.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(dashboardUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Le tableau de bord n’a pas pu être chargé.</h2><p>${dashboardUi.error}</p><button class="primary-button" data-dashboard-retry>Réessayer</button></section>`;return;}const d=dashboardUi.data;const hour=Number(new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",hour12:false,timeZone:d.workspace.timezone}).format(new Date()));const greeting=hour<12?"Bonjour":hour<18?"Bon après-midi":"Bonsoir";const date=new Intl.DateTimeFormat(d.workspace.locale,{dateStyle:"full",timeZone:d.workspace.timezone}).format(new Date());root.innerHTML=`<header class="os-dashboard-hero"><div><span class="eyebrow">${date} · Pack ${d.workspace.packId.replace("_"," ")}</span><h2>${greeting}${d.profile.managerName?` ${d.profile.managerName}`:""}, voici l’essentiel.</h2><p>${d.workspace.name} · Tout ce qui compte pour votre entreprise, au même endroit.</p></div><div class="os-hero-actions">${d.quickActions.slice(0,1).map(a=>`<button class="primary-button" data-view="${a.view}">${a.label}</button>`).join("")}<button class="secondary-button" data-dashboard-customize>${dashboardUi.customizing?"Terminer":"Personnaliser"}</button></div></header>${dashboardUi.customizing?`<section class="os-customize" aria-label="Personnaliser le tableau de bord"><div><strong>Organisez vos sections</strong><span>Utilisez les boutons, accessibles aussi au clavier.</span></div>${d.preferences.widgetOrder.map((id,index)=>`<div><span>${window.QualifyrDashboard.registry[id]?.name||id}</span><button data-dashboard-move="up" data-widget-id="${id}" ${index===0?"disabled":""}>Monter</button><button data-dashboard-move="down" data-widget-id="${id}" ${index===d.preferences.widgetOrder.length-1?"disabled":""}>Descendre</button>${window.QualifyrDashboard.registry[id]?.required?"":`<button data-dashboard-hide="${id}">${d.preferences.hiddenWidgets.includes(id)?"Afficher":"Masquer"}</button>`}</div>`).join("")}<button class="text-button" data-dashboard-reset>Restaurer la disposition recommandée</button></section>`:""}<section class="os-quick-actions" aria-label="Actions rapides">${d.quickActions.map(a=>`<button data-view="${a.view}"><span>＋</span>${a.label}</button>`).join("")}</section><div class="os-widget-stack">${d.widgets.map(id=>dashboardWidget(id,d)).join("")}</div>`;}
+
+const crmUi={status:"idle",data:null,error:"",tab:"overview",search:"",pipelineId:""};
+const crmHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+const crmSafe=value=>String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+async function loadCrm(force=false){if(!getSession()?.accessToken){crmUi.status="guest";renderCrm();return;}if(crmUi.status==="loading"||(!force&&crmUi.status==="ready"))return;crmUi.status="loading";renderCrm();try{const response=await fetch(`/api/crm?search=${encodeURIComponent(crmUi.search)}&limit=25`,{headers:crmHeaders()});const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Le CRM est indisponible.");crmUi.data=payload;crmUi.pipelineId=crmUi.pipelineId||payload.pipelines[0]?.id||"";crmUi.status="ready";crmUi.error="";}catch(error){crmUi.status="error";crmUi.error=error.message;}renderCrm();}
+async function crmAction(action,payload={}){const response=await fetch("/api/crm",{method:"POST",headers:crmHeaders(),body:JSON.stringify({action,...payload})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Cette action n’a pas pu être terminée.");crmUi.status="idle";dashboardUi.status="idle";await loadCrm(true);return data;}
+function crmContactModal(contact){const activities=(crmUi.data.activities||[]).filter(a=>a.resource_id===contact.id);openModal(`<div class="modal-content crm-record-modal"><p class="eyebrow">Fiche contact</p><h2 id="actionModalTitle">${crmSafe(contact.display_name)}</h2><div class="crm-record-summary"><span><small>Email</small><strong>${crmSafe(contact.email||"À compléter")}</strong></span><span><small>Téléphone</small><strong>${crmSafe(contact.phone||"À compléter")}</strong></span><span><small>Statut</small><strong>${crmSafe(contact.status)}</strong></span></div><section><h3>Historique</h3>${activities.length?activities.map(a=>`<p class="crm-timeline-row"><strong>${crmSafe(a.summary)}</strong><time>${new Date(a.created_at).toLocaleDateString("fr-FR")}</time></p>`).join(""):`<p class="crm-empty-inline">Aucune activité supplémentaire.</p>`}</section><form data-modal-form="crm-note"><input type="hidden" name="contactId" value="${contact.id}"><label for="crmNoteContent">Ajouter une note</label><textarea id="crmNoteContent" name="content" required maxlength="5000"></textarea><button class="primary-button" type="submit">Enregistrer la note</button></form></div>`);}
+function crmCreateModal(type){const d=crmUi.data||{},pipeline=d.pipelines.find(p=>p.id===crmUi.pipelineId)||d.pipelines[0],stages=d.stages.filter(s=>s.pipeline_id===pipeline?.id);if(type==="contact")return openModal(`<form class="modal-content" data-modal-form="crm-contact"><p class="eyebrow">Création rapide</p><h2 id="actionModalTitle">Ajouter un ${crmSafe(d.terminology?.contact||"contact")}</h2><div class="modal-grid"><div class="modal-field"><label>Nom affiché</label><input name="displayName" autocomplete="name"></div><div class="modal-field"><label>Email</label><input name="email" type="email" autocomplete="email"></div><div class="modal-field"><label>Téléphone</label><input name="phone" type="tel" autocomplete="tel"></div><div class="modal-field"><label>Besoin</label><input name="need"></div></div><p class="form-help">Un nom, un email ou un téléphone suffit pour commencer.</p><button class="primary-button" type="submit">Ajouter le contact</button></form>`);if(type==="organization")return openModal(`<form class="modal-content" data-modal-form="crm-organization"><p class="eyebrow">Organisation</p><h2 id="actionModalTitle">Ajouter une organisation</h2><div class="modal-grid"><div class="modal-field"><label>Nom</label><input name="name" required></div><div class="modal-field"><label>Type</label><select name="type"><option>Client</option><option>Prospect</option><option>Partenaire</option><option>Donneur d’ordre</option><option>Sous-traitant</option></select></div><div class="modal-field"><label>Email</label><input name="email" type="email"></div><div class="modal-field"><label>Téléphone</label><input name="phone" type="tel"></div></div><button class="primary-button" type="submit">Ajouter l’organisation</button></form>`);if(type==="task")return openModal(`<form class="modal-content" data-modal-form="crm-task"><p class="eyebrow">Prochaine action</p><h2 id="actionModalTitle">Créer une tâche</h2><label>Titre</label><input name="title" required><label>Échéance</label><input name="dueAt" type="datetime-local"><label>Type</label><select name="type"><option value="call">Appel</option><option value="followup">Relance</option><option value="meeting">Rendez-vous</option><option value="other">Autre</option></select><button class="primary-button" type="submit">Créer la tâche</button></form>`);return openModal(`<form class="modal-content" data-modal-form="crm-opportunity"><p class="eyebrow">${crmSafe(d.terminology?.pipeline||"Pipeline")}</p><h2 id="actionModalTitle">Ajouter une ${crmSafe(d.terminology?.opportunity||"opportunité")}</h2><div class="modal-grid"><div class="modal-field full"><label>Nom du dossier</label><input name="name" required></div><div class="modal-field"><label>Pipeline</label><select name="pipelineId">${d.pipelines.map(p=>`<option value="${p.id}" ${p.id===pipeline?.id?"selected":""}>${crmSafe(p.name)}</option>`).join("")}</select></div><div class="modal-field"><label>Première étape</label><select name="stageId">${stages.map(s=>`<option value="${s.id}">${crmSafe(s.name)}</option>`).join("")}</select></div><div class="modal-field"><label>Contact principal</label><select name="contactId"><option value="">À choisir plus tard</option>${d.contacts.map(c=>`<option value="${c.id}">${crmSafe(c.display_name)}</option>`).join("")}</select></div><div class="modal-field"><label>Valeur estimée</label><input name="value" type="number" min="0" step="0.01"></div><div class="modal-field full"><label>Prochaine action</label><input name="nextAction"></div></div><button class="primary-button" type="submit">Ajouter au pipeline</button></form>`);}
+function renderCrm(){const root=el("view-crm");if(crmUi.status==="idle"){root.innerHTML=`<div class="crm-loading"><i></i><i></i><i></i></div>`;queueMicrotask(()=>loadCrm());return;}if(crmUi.status==="loading"){root.innerHTML=`<div class="crm-loading" aria-busy="true" aria-label="Chargement du CRM"><i></i><i></i><i></i></div>`;return;}if(crmUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><h2>Connectez-vous pour retrouver vos vrais contacts.</h2><p>Aucune donnée de démonstration n’est affichée dans le CRM.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(crmUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Le CRM n’a pas pu être chargé.</h2><p>${crmSafe(crmUi.error)}</p><button class="primary-button" data-crm-retry>Réessayer</button></section>`;return;}const d=crmUi.data,pipeline=d.pipelines.find(p=>p.id===crmUi.pipelineId)||d.pipelines[0],stages=d.stages.filter(s=>s.pipeline_id===pipeline?.id),openTasks=d.tasks.filter(t=>!["completed","cancelled"].includes(t.status));root.innerHTML=`<header class="crm-os-header"><div><span class="eyebrow">Relation commerciale · Pack ${crmSafe(d.pack)}</span><h2>Chaque prospect et sa prochaine action.</h2><p>Un suivi clair, sans jargon et sans contact inventé.</p></div><button class="primary-button" data-crm-create="contact">＋ Ajouter un contact</button></header><nav class="crm-tabs" aria-label="Sections du CRM">${[["overview","Vue d’ensemble"],["contacts","Contacts"],["pipeline","Pipeline"],["organizations","Organisations"],["tasks","Tâches"]].map(([id,label])=>`<button data-crm-tab="${id}" class="${crmUi.tab===id?"active":""}">${label}</button>`).join("")}</nav><div class="crm-toolbar"><label class="crm-search"><span class="sr-only">Rechercher</span><input id="crmOsSearch" value="${crmSafe(crmUi.search)}" placeholder="Nom, email ou téléphone"><button data-crm-search>Rechercher</button></label><div><button class="secondary-button" data-crm-create="organization">Organisation</button><button class="secondary-button" data-crm-create="opportunity">Opportunité</button><button class="secondary-button" data-crm-create="task">Tâche</button>${d.permissions.export?`<a class="secondary-button" href="/api/crm?action=export" data-crm-export>Exporter</a>`:""}</div></div>${crmUi.tab==="overview"?`<section class="crm-overview-grid"><article><span>Contacts</span><strong>${d.metrics.contacts}</strong><small>Données enregistrées</small></article><article><span>Dossiers ouverts</span><strong>${d.metrics.openOpportunities}</strong><small>Dans vos pipelines</small></article><article><span>Tâches en retard</span><strong>${d.metrics.overdueTasks}</strong><small>À traiter</small></article><article><span>Sans prochaine action</span><strong>${d.metrics.withoutNextAction}</strong><small>À organiser</small></article></section><section class="crm-os-two"><article class="os-widget"><header><h3>À suivre</h3></header>${d.recommendations.length?d.recommendations.slice(0,5).map(r=>`<button class="crm-insight" data-crm-open-opportunity="${r.opportunityId}"><span><strong>${crmSafe(r.title)}</strong><small>${crmSafe(r.reasons.join(" · "))}</small></span><b>${crmSafe(r.priority)}</b></button>`).join(""):`<div class="os-empty"><strong>Aucune alerte commerciale</strong><p>Les dossiers oubliés apparaîtront ici.</p></div>`}</article><article class="os-widget"><header><h3>Activité récente</h3></header>${d.activities.length?d.activities.slice(0,6).map(a=>`<p class="crm-timeline-row"><strong>${crmSafe(a.summary)}</strong><time>${new Date(a.created_at).toLocaleDateString("fr-FR")}</time></p>`).join(""):`<div class="os-empty"><strong>Aucune activité</strong><p>Ajoutez votre premier contact.</p></div>`}</article></section>`:""}${crmUi.tab==="contacts"?`<section class="crm-contact-list">${d.contacts.length?d.contacts.map(c=>`<button class="crm-contact-card" data-crm-contact="${c.id}"><span class="crm-avatar">${crmSafe(c.display_name.slice(0,1).toUpperCase())}</span><span><strong>${crmSafe(c.display_name)}</strong><small>${crmSafe(c.email||c.phone||"Coordonnées à compléter")}</small></span><em>${crmSafe(c.status)}</em></button>`).join(""):`<div class="os-empty"><strong>Aucun contact pour le moment</strong><p>Ajoutez votre premier prospect avec son nom, son email ou son téléphone.</p><button class="primary-button" data-crm-create="contact">Ajouter un contact</button></div>`}</section>`:""}${crmUi.tab==="organizations"?`<section class="crm-contact-list">${d.organizations.length?d.organizations.map(o=>`<article class="crm-contact-card"><span class="crm-avatar">${crmSafe(o.name.slice(0,1))}</span><span><strong>${crmSafe(o.name)}</strong><small>${crmSafe(o.organization_type)} · ${crmSafe(o.email||o.phone||"Coordonnées à compléter")}</small></span></article>`).join(""):`<div class="os-empty"><strong>Aucune organisation</strong><p>Cette information reste facultative pour les particuliers et indépendants.</p><button class="primary-button" data-crm-create="organization">Ajouter une organisation</button></div>`}</section>`:""}${crmUi.tab==="pipeline"?`<section class="crm-pipeline-head"><label>Pipeline <select id="crmPipelineSelect">${d.pipelines.map(p=>`<option value="${p.id}" ${p.id===pipeline?.id?"selected":""}>${crmSafe(p.name)}</option>`).join("")}</select></label><button class="primary-button" data-crm-create="opportunity">Ajouter un dossier</button></section><section class="crm-kanban" aria-label="Pipeline ${crmSafe(pipeline?.name||"")}">${stages.map((stage,index)=>{const cards=d.opportunities.filter(o=>o.stage_id===stage.id);return`<article class="crm-stage"><header><strong>${crmSafe(stage.name)}</strong><span>${cards.length}</span></header>${cards.length?cards.map(o=>`<div class="crm-opportunity-card"><button data-crm-open-opportunity="${o.id}"><strong>${crmSafe(o.name)}</strong><small>${crmSafe(o.next_action||"Aucune prochaine action")}</small>${o.value_minor!=null?`<em>${(o.value_minor/100).toLocaleString("fr-FR",{style:"currency",currency:o.currency})}</em>`:""}</button><div><button data-crm-move="${o.id}" data-stage="${stages[index-1]?.id||""}" data-version="${o.version}" ${index===0?"disabled":""} aria-label="Déplacer ${crmSafe(o.name)} vers l’étape précédente">←</button><button data-crm-move="${o.id}" data-stage="${stages[index+1]?.id||""}" data-version="${o.version}" ${index===stages.length-1?"disabled":""} aria-label="Déplacer ${crmSafe(o.name)} vers l’étape suivante">→</button></div></div>`).join(""):`<p>Aucun dossier</p>`}</article>`;}).join("")}</section>`:""}${crmUi.tab==="tasks"?`<section class="crm-contact-list">${openTasks.length?openTasks.map(t=>`<article class="crm-task-row"><span><strong>${crmSafe(t.title)}</strong><small>${t.due_at?new Date(t.due_at).toLocaleString("fr-FR"):"Sans échéance"}</small></span><button class="secondary-button" data-crm-complete-task="${t.id}">Terminer</button></article>`).join(""):`<div class="os-empty"><strong>Aucune tâche ouverte</strong><p>Créez une prochaine action pour un prospect ou un dossier.</p><button class="primary-button" data-crm-create="task">Créer une tâche</button></div>`}</section>`:""}`;}
+
+const websiteUi={status:"idle",data:null,error:"",pageId:"",device:"desktop",save:"Enregistré",undo:[],redo:[]};
+const websiteHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+async function loadWebsite(force=false){if(!getSession()?.accessToken){websiteUi.status="guest";renderWebsite();return;}if(websiteUi.status==="loading"||(!force&&websiteUi.status==="ready"))return;websiteUi.status="loading";renderWebsite();try{const r=await fetch("/api/website",{headers:websiteHeaders()}),d=await r.json();if(!r.ok)throw new Error(d.error);websiteUi.data=d;websiteUi.pageId=websiteUi.pageId||d.pages?.[0]?.id||"";websiteUi.status="ready";websiteUi.error="";}catch(e){websiteUi.status="error";websiteUi.error=e.message;}renderWebsite();}
+async function websiteAction(action,payload={}){websiteUi.save="Enregistrement…";renderWebsite();const r=await fetch("/api/website",{method:"POST",headers:websiteHeaders(),body:JSON.stringify({action,...payload})}),d=await r.json();if(!r.ok)throw Object.assign(new Error(d.error||"Action impossible."),{data:d});websiteUi.data=d.site!==undefined?d:websiteUi.data;websiteUi.status="ready";websiteUi.save="Enregistré";if(d.pages)websiteUi.data=d;renderWebsite();return d;}
+function websiteSavePage(page,blocks,extra={}){return websiteAction("save_page",{pageId:page.id,version:page.version,name:extra.name??page.name,slug:extra.slug??page.slug,seoTitle:extra.seoTitle??page.seo_title,seoDescription:extra.seoDescription??page.seo_description,blocks});}
+function websiteEditBlock(page,index){const block=page.draft_content.blocks[index],p=block.props||{};openModal(`<form class="modal-content" data-modal-form="website-block"><p class="eyebrow">Section contrôlée · ${crmSafe(block.type)}</p><h2 id="actionModalTitle">Modifier cette section</h2><input type="hidden" name="pageId" value="${page.id}"><input type="hidden" name="index" value="${index}">${Object.entries(p).filter(([,v])=>typeof v==="string").map(([k,v])=>`<label>${crmSafe(k)}${v.length>120?`<textarea name="${k}" maxlength="1500">${crmSafe(v)}</textarea>`:`<input name="${k}" value="${crmSafe(v)}" maxlength="500">`}</label>`).join("")}<label>Disposition<select name="variant">${window.QualifyrWebsite.blockTypes[block.type].variants.map(v=>`<option ${v===block.variant?"selected":""}>${v}</option>`).join("")}</select></label><button class="primary-button" type="submit">Enregistrer la section</button></form>`);}
+function websitePreview(page){const theme=window.QualifyrWebsite.themes[websiteUi.data.theme?.theme_key||"professional"],blocks=page.draft_content?.blocks||[];return`<div class="wb-draft" style="--wb-primary:${theme.tokens.primary};--wb-bg:${theme.tokens.background};--wb-text:${theme.tokens.text}">${blocks.filter(b=>!b.hidden).map(b=>{const p=b.props||{};if(b.type==="header")return`<header><strong>${crmSafe(p.brand)}</strong><span>${crmSafe(p.ctaLabel)}</span></header>`;if(b.type==="hero")return`<section class="hero"><small>${crmSafe(p.eyebrow)}</small><h1>${crmSafe(p.title)}</h1><p>${crmSafe(p.text)}</p><b>${crmSafe(p.ctaLabel)}</b></section>`;if(b.type==="services_grid"||b.type==="process_steps")return`<section><h2>${crmSafe(p.title)}</h2><div class="cards">${(p.items||[]).map(x=>`<article><strong>${crmSafe(x.title)}</strong><p>${crmSafe(x.text)}</p></article>`).join("")}</div></section>`;if(b.type==="contact_form")return`<section><h2>${crmSafe(p.title)}</h2><div class="fake-form">Aperçu du formulaire — aucun prospect ne sera créé</div></section>`;return`<section><h2>${crmSafe(p.title||p.brand||"")}</h2><p>${crmSafe(p.text||(p.paragraphs||[]).join(" "))}</p></section>`;}).join("")}</div>`;}
+function renderWebsite(){const root=el("view-website");if(!root)return;if(websiteUi.status==="idle"){root.innerHTML=`<div class="crm-loading"><i></i><i></i><i></i></div>`;queueMicrotask(()=>loadWebsite());return;}if(websiteUi.status==="loading"){root.innerHTML=`<div class="crm-loading" aria-label="Chargement du Website Builder"><i></i><i></i><i></i></div>`;return;}if(websiteUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><h2>Créez le site de votre entreprise.</h2><p>Connectez-vous pour utiliser les vraies informations de votre profil.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(websiteUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Le module Site est indisponible.</h2><p>${crmSafe(websiteUi.error)}</p><button data-website-retry class="primary-button">Réessayer</button></section>`;return;}const d=websiteUi.data;if(!d.site){root.innerHTML=`<section class="website-welcome"><span>✦</span><p class="eyebrow">Website Builder Qualifyr</p><h2>Créons votre site internet.</h2><p>Qualifyr utilise les informations confirmées de votre entreprise pour préparer une première version. Rien ne sera publié sans votre accord.</p><div class="website-choices"><label>Objectif principal<select id="websiteObjective"><option value="quote">Recevoir des demandes de devis</option><option value="contact">Recevoir des contacts</option><option value="booking">Obtenir des rendez-vous</option><option value="services">Présenter les services</option><option value="estimate">Recevoir des demandes d’estimation</option></select></label><label>Style<select id="websiteStyle">${Object.entries(window.QualifyrWebsite.themes).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("")}</select></label></div><button class="primary-button" data-website-generate>Générer mon site</button><small>Génération structurée et déterministe : aucun code arbitraire, aucun faux avis ou chiffre.</small></section>`;return;}const page=d.pages.find(p=>p.id===websiteUi.pageId)||d.pages[0],blocks=page?.draft_content?.blocks||[],validation=d.validation?.result||null;root.innerHTML=`<header class="website-head"><div><span class="eyebrow">${crmSafe(d.site.status)} · ${websiteUi.save}</span><h2>${crmSafe(d.site.name)}</h2><p>Le brouillon reste séparé du site publié.</p></div><div><button class="secondary-button" data-website-validate>Vérifier</button>${d.publicUrl?`<a class="secondary-button" href="${d.publicUrl}" target="_blank" rel="noopener">Voir le site</a>`:""}${d.permissions.publish?`<button class="primary-button" data-website-publish>Publier</button>`:""}</div></header>${validation&&!validation.ready?`<aside class="website-validation"><strong>${validation.issues.filter(x=>x.level==="error").length} correction(s) avant publication</strong>${validation.issues.slice(0,4).map(x=>`<span>${crmSafe(x.message)}</span>`).join("")}</aside>`:""}<div class="website-builder"><aside class="website-pages"><h3>Pages</h3>${d.pages.map(p=>`<button class="${p.id===page?.id?"active":""}" data-website-page="${p.id}"><span>${crmSafe(p.name)}</span><small>/${crmSafe(p.slug)}</small></button>`).join("")}<h3>Thème</h3><select id="websiteTheme">${Object.entries(d.themes).map(([k,v])=>`<option value="${k}" ${k===d.theme?.theme_key?"selected":""}>${crmSafe(v.name)}</option>`).join("")}</select><button class="secondary-button" data-website-save-theme>Appliquer</button><h3>Historique</h3>${d.revisions.slice(0,5).map(r=>`<button data-website-restore="${r.id}"><span>Version ${r.revision_number}</span><small>${crmSafe(r.origin)}</small></button>`).join("")}</aside><main class="website-canvas"><div class="website-device"><button data-website-device="desktop" class="${websiteUi.device==="desktop"?"active":""}">Ordinateur</button><button data-website-device="tablet" class="${websiteUi.device==="tablet"?"active":""}">Tablette</button><button data-website-device="mobile" class="${websiteUi.device==="mobile"?"active":""}">Mobile</button></div><div class="website-frame ${websiteUi.device}">${websitePreview(page)}</div></main><aside class="website-sections"><h3>Sections</h3>${blocks.map((b,i)=>`<article><button data-website-block="${i}"><strong>${crmSafe(b.props?.title||b.props?.brand||b.type)}</strong><small>${crmSafe(b.type)}${b.hidden?" · Masqué":""}</small></button><div><button data-website-move="${i}" data-direction="up" ${i===0?"disabled":""} aria-label="Monter la section">↑</button><button data-website-move="${i}" data-direction="down" ${i===blocks.length-1?"disabled":""} aria-label="Descendre la section">↓</button><button data-website-hide="${i}" aria-label="${b.hidden?"Afficher":"Masquer"} la section">${b.hidden?"◉":"◌"}</button></div></article>`).join("")}<form data-website-page-form><h3>Page et SEO</h3><input type="hidden" name="pageId" value="${page.id}"><input type="hidden" name="version" value="${page.version}"><label>Nom<input name="name" value="${crmSafe(page.name)}" maxlength="120"></label><label>Adresse<input name="slug" value="${crmSafe(page.slug)}" maxlength="70" ${page.page_type==="home"?"disabled":""}></label><label>Titre SEO<input name="seoTitle" value="${crmSafe(page.seo_title||"")}" maxlength="70"></label><label>Description SEO<textarea name="seoDescription" maxlength="170">${crmSafe(page.seo_description||"")}</textarea></label><button class="primary-button" type="submit">Enregistrer la page</button></form></aside></div>`;}
+
 function renderAll() {
   renderNav();
   renderBottomNav();
@@ -5503,16 +6160,108 @@ function renderAll() {
   renderAdmin();
   renderBilling();
   renderHelp();
+  renderOsSimpleModules();
+  renderWebsite();
   showView(state.view);
   renderAccountButton();
 }
 
 document.addEventListener("click", (event) => {
+  if(event.target.closest("[data-website-retry]")){loadWebsite(true);return;}
+  if(event.target.closest("[data-website-generate]")){websiteAction("generate",{objective:el("websiteObjective")?.value,style:el("websiteStyle")?.value,idempotencyKey:`initial:${getSession()?.user?.id||"user"}`}).then(()=>toast("Votre brouillon est prêt.")).catch(e=>toast(e.message));return;}
+  const wp=event.target.closest("[data-website-page]");if(wp){websiteUi.pageId=wp.dataset.websitePage;renderWebsite();return;}
+  const wd=event.target.closest("[data-website-device]");if(wd){websiteUi.device=wd.dataset.websiteDevice;renderWebsite();return;}
+  if(event.target.closest("[data-website-save-theme]")){websiteAction("save_theme",{themeKey:el("websiteTheme")?.value}).then(()=>toast("Thème appliqué.")).catch(e=>toast(e.message));return;}
+  if(event.target.closest("[data-website-validate]")){websiteAction("validate").then(d=>{websiteUi.data.validation={result:d.validation};renderWebsite();toast(d.validation.ready?"Votre site est prêt à publier.":"Des corrections sont nécessaires.");}).catch(e=>toast(e.message));return;}
+  if(event.target.closest("[data-website-publish]")){websiteAction("publish").then(d=>toast(`Site publié : ${d.publicUrl}`)).catch(e=>{if(e.data?.validation)websiteUi.data.validation={result:e.data.validation};renderWebsite();toast(e.message);});return;}
+  const wr=event.target.closest("[data-website-restore]");if(wr&&confirm("Restaurer cette version comme nouveau brouillon ?")){websiteAction("restore",{revisionId:wr.dataset.websiteRestore}).then(()=>toast("Version restaurée dans le brouillon.")).catch(e=>toast(e.message));return;}
+  const wb=event.target.closest("[data-website-block]");if(wb){const page=websiteUi.data.pages.find(p=>p.id===websiteUi.pageId)||websiteUi.data.pages[0];websiteEditBlock(page,Number(wb.dataset.websiteBlock));return;}
+  const wm=event.target.closest("[data-website-move]");if(wm){const page=websiteUi.data.pages.find(p=>p.id===websiteUi.pageId)||websiteUi.data.pages[0],blocks=structuredClone(page.draft_content.blocks),i=Number(wm.dataset.websiteMove),j=wm.dataset.direction==="up"?i-1:i+1;if(j>=0&&j<blocks.length){websiteUi.undo.push(structuredClone(blocks));[blocks[i],blocks[j]]=[blocks[j],blocks[i]];websiteSavePage(page,blocks).then(()=>toast("Section déplacée.")).catch(e=>toast(e.message));}return;}
+  const wh=event.target.closest("[data-website-hide]");if(wh){const page=websiteUi.data.pages.find(p=>p.id===websiteUi.pageId)||websiteUi.data.pages[0],blocks=structuredClone(page.draft_content.blocks),i=Number(wh.dataset.websiteHide);blocks[i].hidden=!blocks[i].hidden;websiteSavePage(page,blocks).then(()=>toast(blocks[i].hidden?"Section masquée.":"Section affichée.")).catch(e=>toast(e.message));return;}
+  if(event.target.closest("[data-crm-retry]")){loadCrm(true);return;}
+  const crmTab=event.target.closest("[data-crm-tab]");if(crmTab){crmUi.tab=crmTab.dataset.crmTab;renderCrm();return;}
+  const crmCreate=event.target.closest("[data-crm-create]");if(crmCreate){crmCreateModal(crmCreate.dataset.crmCreate);return;}
+  if(event.target.closest("[data-crm-search]")){crmUi.search=el("crmOsSearch")?.value||"";crmUi.status="idle";loadCrm(true);return;}
+  const crmContact=event.target.closest("[data-crm-contact]");if(crmContact){const contact=crmUi.data.contacts.find(c=>c.id===crmContact.dataset.crmContact);if(contact)crmContactModal(contact);return;}
+  const crmMove=event.target.closest("[data-crm-move]");if(crmMove&&crmMove.dataset.stage){crmAction("move_opportunity",{id:crmMove.dataset.crmMove,stageId:crmMove.dataset.stage,version:Number(crmMove.dataset.version)}).then(()=>toast("Dossier déplacé.")).catch(error=>toast(error.message));return;}
+  const crmTask=event.target.closest("[data-crm-complete-task]");if(crmTask){crmAction("complete_task",{id:crmTask.dataset.crmCompleteTask}).then(()=>toast("Tâche terminée.")).catch(error=>toast(error.message));return;}
+  const crmExport=event.target.closest("[data-crm-export]");if(crmExport){event.preventDefault();fetch("/api/crm?action=export",{headers:{Authorization:`Bearer ${getSession()?.accessToken||""}`}}).then(async response=>{if(!response.ok)throw new Error("Export non autorisé.");const blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="contacts-qualifyr.csv";a.click();URL.revokeObjectURL(url);toast("Export préparé.");}).catch(error=>toast(error.message));return;}
+  if(event.target.closest("[data-dashboard-retry]")){loadDashboard(true);return;}
+  if(event.target.closest("[data-dashboard-customize]")){dashboardUi.customizing=!dashboardUi.customizing;renderDashboard();return;}
+  const moveWidget=event.target.closest("[data-dashboard-move]");if(moveWidget){saveDashboardPreferences({widgetOrder:window.QualifyrDashboard.applyPreference(dashboardUi.data.preferences.widgetOrder,moveWidget.dataset.widgetId,moveWidget.dataset.dashboardMove)});return;}
+  const hideWidget=event.target.closest("[data-dashboard-hide]");if(hideWidget){const id=hideWidget.dataset.dashboardHide,hidden=new Set(dashboardUi.data.preferences.hiddenWidgets);hidden.has(id)?hidden.delete(id):hidden.add(id);saveDashboardPreferences({hiddenWidgets:[...hidden]});return;}
+  if(event.target.closest("[data-dashboard-reset]")){saveDashboardPreferences({widgetOrder:[...dashboardUi.data.defaultWidgets],hiddenWidgets:[]});return;}
+  const dismissRecommendation=event.target.closest("[data-dashboard-dismiss]");if(dismissRecommendation){const id=dismissRecommendation.dataset.dashboardDismiss;dashboardUi.data.recommendations=dashboardUi.data.recommendations.filter(item=>item.id!==id);renderDashboard();fetch("/api/dashboard",{method:"POST",headers:dashboardHeaders(),body:JSON.stringify({action:"dismiss_recommendation",recommendationKey:id})}).catch(()=>toast("La recommandation n’a pas pu être masquée."));return;}
+  const tradeChoice=event.target.closest("[data-trade-id]");
+  if(tradeChoice){persistOnboardingDraft({tradeId:tradeChoice.dataset.tradeId});onboardingUi.error="";renderOnboarding();return;}
+  const goalChoice=event.target.closest("[data-goal-id]");
+  if(goalChoice){const goals=new Set(onboardingDraft().goals||[]);goals.has(goalChoice.dataset.goalId)?goals.delete(goalChoice.dataset.goalId):goals.add(goalChoice.dataset.goalId);const list=[...goals];persistOnboardingDraft({goals:list,primaryGoal:list.includes(onboardingDraft().primaryGoal)?onboardingDraft().primaryGoal:(list[0]||"")});renderOnboarding();return;}
+  const editStep=event.target.closest("[data-ob-edit]");if(editStep){onboardingUi.step=Number(editStep.dataset.obEdit);renderOnboarding();return;}
+  if(event.target.closest("[data-ob-resume]")){onboardingUi.step=Math.max(2,Number(onboardingDraft().lastStep||2));renderOnboarding();return;}
+  if(event.target.closest("[data-ob-back]")){onboardingUi.step=Math.max(1,onboardingUi.step-1);onboardingUi.error="";renderOnboarding();return;}
+  if(event.target.closest("[data-ob-next]")){
+    const step=onboardingUi.step; if(step===1){onboardingUi.step=2;persistOnboardingDraft({lastStep:2});renderOnboarding();return;}
+    const data=onboardingStepData(step); const merged={...onboardingDraft(),...data}; const errors=window.QualifyrOnboarding.validateStep(step,merged);
+    if(Object.keys(errors).length){onboardingUi.error=Object.values(errors)[0];renderOnboarding();return;}
+    const logo=el("obLogo")?.files?.[0];if(logo&&(!["image/png","image/jpeg","image/webp"].includes(logo.type)||logo.size>2*1024*1024)){onboardingUi.error="Le logo doit être un PNG, JPG ou WebP de moins de 2 Mo.";renderOnboarding();return;}
+    onboardingUi.saving=true;onboardingUi.error="";renderOnboarding();
+    syncOnboardingStep(step,{...data,lastStep:Math.min(7,step+1)}).then(()=>{onboardingUi.step=Math.min(7,step+1);onboardingUi.saving=false;renderOnboarding();}).catch(error=>{onboardingUi.saving=false;onboardingUi.error=error.message;renderOnboarding();});return;
+  }
+  if(event.target.closest("[data-ob-provision]")){
+    onboardingUi.step=8;onboardingUi.error="";onboardingUi.operations=[];renderOnboarding();
+    const token=getSession()?.accessToken;if(!token){onboardingUi.recommendation=onboardingRecommendation();onboardingUi.operations=["workspace","profile","pack","crm","modules","goals","finalize"].map((operation_key,index)=>({operation_key,position:index+1,status:"completed"}));persistOnboardingDraft({status:"completed",lastStep:9});onboardingUi.step=9;renderOnboarding();return;}
+    fetch("/api/onboarding",{method:"POST",headers:onboardingHeaders(),body:JSON.stringify({action:"provision"})}).then(async response=>{const payload=await response.json();onboardingUi.operations=payload.operations||[];if(!response.ok)throw new Error(payload.error||"Configuration incomplète.");onboardingUi.recommendation=payload.recommendation;persistOnboardingDraft({status:"completed",lastStep:9});onboardingUi.step=9;renderOnboarding();}).catch(error=>{onboardingUi.error=error.message;renderOnboarding();});return;
+  }
+  if(event.target.closest("[data-ob-finish]")){const d=onboardingDraft();window.QualifyrOS?.saveWorkspace?.({company:d.companyName,activity:d.customTrade||window.QualifyrOnboarding.allTrades.find(t=>t.id===d.tradeId)?.label,city:d.city,phone:d.phone,email:d.email,website:d.website,color:d.primaryColor,goals:d.goals,onboardingComplete:true,enabledModules:onboardingUi.recommendation?.enabledModules||onboardingRecommendation().enabledModules});renderAll();showView("dashboard");toast("Bienvenue dans votre espace Qualifyr.");return;}
+  const moduleToggle = event.target.closest("[data-os-toggle-module]");
+  if (moduleToggle) {
+    const id = moduleToggle.dataset.osToggleModule;
+    const enabled = moduleToggle.getAttribute("aria-pressed") !== "true";
+    window.QualifyrOS?.setModuleEnabled?.(id, enabled);
+    renderModules();
+    toast(enabled ? "Outil activé." : "Outil masqué. Vos données sont conservées.");
+    return;
+  }
+
+  if (event.target.closest("[data-os-create-workspace]")) {
+    const value = (id) => el(id)?.value?.trim?.() || "";
+    const goals = [...document.querySelectorAll('input[name="osGoal"]:checked')].map((input) => input.value);
+    const company = value("osCompany");
+    const activity = value("osActivity");
+    const email = value("osEmail");
+    if (!company || !activity || !email) {
+      toast("Indiquez le nom, l'activité et l'email de l'entreprise.");
+      return;
+    }
+    state.profession = activity;
+    window.QualifyrOS?.saveWorkspace?.({ company, activity, city: value("osCity"), phone: value("osPhone"), email, website: value("osWebsite"), color: value("osColor"), goals, onboardingComplete: true, enabledModules: window.QualifyrOS.enabledModules() });
+    renderAll();
+    showView("dashboard");
+    toast("Votre entreprise digitale est prête.");
+    return;
+  }
+
+  const simpleStart = event.target.closest("[data-os-simple-start]");
+  if (simpleStart) {
+    toast("Module prêt : la configuration guidée sera disponible ici.");
+    return;
+  }
+
   if (event.target.closest("[data-mobile-menu-close]")) {
     document.body.classList.remove("mobile-menu-open");
     const menuToggle = el("menuToggle");
     if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
     return;
+  }
+
+  const authToggle = event.target.closest("[data-auth-menu-toggle]");
+  if (authToggle) {
+    toggleAuthMenu();
+    return;
+  }
+
+  if (!event.target.closest(".account-menu-wrap")) {
+    closeAuthMenu();
   }
 
   if (event.target.closest("[data-close-modal]")) {
@@ -5556,6 +6305,7 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest("[data-logout]")) {
+    closeAuthMenu();
     clearSession();
     renderAll();
     showView("auth");
@@ -5642,6 +6392,9 @@ document.addEventListener("click", (event) => {
     showView(viewButton.dataset.view);
     if (viewButton.closest("#actionModal")) closeModal();
     document.body.classList.remove("mobile-menu-open");
+    const menuToggle = el("menuToggle");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+    closeAuthMenu();
     return;
   }
 
@@ -5653,6 +6406,16 @@ document.addEventListener("click", (event) => {
     renderAll();
     showView(stayView || "onboarding");
     toast(`Copilotes adaptes au metier ${state.profession}.`);
+    return;
+  }
+
+  const professionApply = event.target.closest(".profession-apply");
+  if (professionApply) {
+    state.profession = el("professionPicker")?.value || state.profession;
+    state.selectedCopilotLayers = null;
+    renderAll();
+    showView(professionApply.dataset.stayView || "marketplace");
+    toast(`Recommandation simplifiee pour ${state.profession}.`);
     return;
   }
 
@@ -5677,6 +6440,29 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest(".license-action")) {
     toast("Invitation collaborateur preparee avec les bons droits.");
+    return;
+  }
+
+  if (event.target.closest(".credit-buy-action")) {
+    const credits = el("creditPack")?.value || "500";
+    openModal(`
+      <div class="modal-content">
+        <p class="eyebrow">Credits supplementaires</p>
+        <h2>Ajouter ${Number(credits).toLocaleString("fr-FR")} credits.</h2>
+        <p>Cet achat est ponctuel. Il ne change ni votre abonnement mensuel, ni vos copilotes, ni le nombre d'utilisateurs inclus.</p>
+        <div class="modal-actions">
+          <button class="primary-button credit-checkout-action" data-credits="${credits}">Continuer vers le paiement</button>
+          <button class="secondary-button" data-close-modal>Annuler</button>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  const creditCheckout = event.target.closest(".credit-checkout-action");
+  if (creditCheckout) {
+    closeModal();
+    toast(`${Number(creditCheckout.dataset.credits).toLocaleString("fr-FR")} credits selectionnes. Le prix final sera affiche avant paiement.`);
     return;
   }
 
@@ -5914,25 +6700,52 @@ document.addEventListener("click", (event) => {
 
   const setupAuto = event.target.closest(".setup-auto");
   if (setupAuto) {
-    toast("Qualifyr AI configure automatiquement les reglages utiles. Une seule validation vous sera demandee.");
+    saveCopilotInstallation("prepare").then(() => {
+      showView("integrations");
+      toast("Installation preparee. Autorisez maintenant uniquement l'outil demande.");
+    }).catch((error) => { if (error.message !== "Session client requise") toast(error.message); });
     return;
   }
 
   const setupTest = event.target.closest(".setup-test");
   if (setupTest) {
-    toast("Test lance avec un faux client : vous voyez le resultat avant activation.");
+    const session = getSession();
+    const employee = findDigitalEmployee(state.selectedCopilotName);
+    const profile = copilotSetupProfile(employee);
+    saveCopilotInstallation("test")
+      .then(() => fetch("/api/copilot-run", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: session.email, copilot: employee.name, profession: state.profession, input: profile.test[0], channel: "test", context: { simulation: true } })
+      }))
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Test impossible");
+        toast(`Test reussi : ${payload.result?.next_action || "action preparee"}. Aucun client n'a ete contacte.`);
+      })
+      .catch((error) => { if (error.message !== "Session client requise") toast(error.message); });
     return;
   }
 
   const setupActivate = event.target.closest(".setup-activate");
   if (setupActivate) {
-    toast(`${state.selectedCopilotName} est actif. Il peut maintenant travailler pour votre entreprise.`);
+    saveCopilotInstallation("activate").then(() => {
+      findDigitalEmployee(state.selectedCopilotName).status = "Installe";
+      renderCopilotSetup();
+      toast(`${state.selectedCopilotName} est actif et l'installation est enregistree.`);
+    }).catch((error) => { if (error.message !== "Session client requise") toast(error.message); });
     return;
   }
 
   const setupConfigure = event.target.closest(".setup-configure");
   if (setupConfigure) {
     toast(`${setupConfigure.dataset.item} : Qualifyr AI ouvre une etape simple, sans reglage technique.`);
+    return;
+  }
+
+  const setupProvider = event.target.closest("[data-oauth-provider]");
+  if (setupProvider) {
+    startProviderConnection(setupProvider.dataset.oauthProvider)
+      .catch((error) => toast(error.message));
     return;
   }
 
@@ -5980,13 +6793,51 @@ document.addEventListener("click", (event) => {
 
   const connectionAction = event.target.closest(".connection-action");
   if (connectionAction) {
+    closeModal();
     toast(`${connectionAction.dataset.tool} : l'assistant ouvre la connexion et vous guide etape par etape.`);
+    return;
+  }
+
+  const connectionConfigure = event.target.closest(".connection-configure");
+  if (connectionConfigure) {
+    openConnectionConfigModal(connectionConfigure.dataset.provider);
+    return;
+  }
+
+  const connectionTestLive = event.target.closest(".connection-test-live");
+  if (connectionTestLive) {
+    const provider = connectionTestLive.dataset.provider;
+    connectionTestLive.disabled = true;
+    connectionTestLive.textContent = "Test en cours...";
+    saveConnectionAction(provider, "test")
+      .then((payload) => {
+        const result = payload?.connection?.last_test_status;
+        toast(result === "success" ? "Connexion verifiee et resultat enregistre." : "Configurez d'abord cette connexion.");
+      })
+      .catch((error) => toast(error.message));
+    return;
+  }
+
+  const connectionDisconnectLive = event.target.closest(".connection-disconnect-live");
+  if (connectionDisconnectLive) {
+    saveConnectionAction(connectionDisconnectLive.dataset.provider, "disconnect")
+      .then(() => toast("Connexion retiree. Les autres donnees restent conservees."))
+      .catch((error) => toast(error.message));
     return;
   }
 
   const connectionTest = event.target.closest(".connection-test");
   if (connectionTest) {
-    toast(`${connectionTest.dataset.tool} fonctionne correctement.`);
+    openConnectionTestModal(connectionTest.dataset);
+    return;
+  }
+
+  const connectionRetest = event.target.closest(".connection-retest");
+  if (connectionRetest) {
+    const result = event.target.closest(".connection-test-result");
+    const marker = result?.querySelector("[data-test-result]");
+    if (marker) marker.textContent = "Test relance a l'instant. Rien n'a ete modifie.";
+    toast(`${connectionRetest.dataset.tool} : test relance.`);
     return;
   }
 
@@ -6064,6 +6915,15 @@ document.addEventListener("click", (event) => {
       pdf: "Le devis est pret a etre telecharge.",
       invoice: "Le devis est transforme en facture."
     };
+    const quoteId = quoteAction.dataset.quoteId;
+    const session = getSession();
+    if (quoteId && session?.email && ["send", "invoice"].includes(quoteAction.dataset.action)) {
+      const status = quoteAction.dataset.action === "send" ? "Envoye" : "Accepte";
+      fetch("/api/quotes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: quoteId, email: session.email, status }) })
+        .then(async (response) => { const payload = await response.json().catch(() => ({})); if (!response.ok) throw new Error(payload.error || "Action impossible"); await loadCompanyQuotes(); toast(labels[quoteAction.dataset.action]); })
+        .catch((error) => toast(error.message));
+      return;
+    }
     toast(labels[quoteAction.dataset.action] || "Action devis executee.");
     return;
   }
@@ -6118,7 +6978,7 @@ document.addEventListener("click", (event) => {
   }
 
   if (event.target.closest("#updateQuote") && !el("quoteClient")) {
-    toast("Nouveau devis cree avec numerotation automatique QAI-2026-017.");
+    createCompanyQuote().then((quote) => toast(`Devis ${quote.number} cree dans l'entreprise.`)).catch((error) => toast(error.message));
     return;
   }
 
@@ -6136,6 +6996,11 @@ document.addEventListener("click", (event) => {
   if (event.target.closest("#publishWorkflow")) {
     openAutomationModal("create");
   }
+});
+
+document.addEventListener("input",(event)=>{
+  if(event.target.id==="obTradeSearch"){persistOnboardingDraft({tradeSearch:event.target.value});renderOnboarding();const input=el("obTradeSearch");if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}}
+  if(event.target.name==="primaryGoal"){persistOnboardingDraft({primaryGoal:event.target.value});}
 });
 
 el("menuToggle").addEventListener("click", () => {
@@ -6175,12 +7040,54 @@ document.addEventListener("input", (event) => {
   }
 });
 
+document.addEventListener("change",event=>{if(event.target.id==="crmPipelineSelect"){crmUi.pipelineId=event.target.value;renderCrm();}});
+
 document.addEventListener("submit", async (event) => {
+  const websitePageForm=event.target.closest("[data-website-page-form]");
+  if(websitePageForm){event.preventDefault();const data=Object.fromEntries(new FormData(websitePageForm).entries()),page=websiteUi.data.pages.find(p=>p.id===data.pageId);try{await websiteSavePage(page,page.draft_content.blocks,data);toast("Page enregistrée.");}catch(e){toast(e.message);}return;}
+  const connectionForm = event.target.closest("[data-connection-save]");
+  if (connectionForm) {
+    event.preventDefault();
+    const submit = connectionForm.querySelector('[type="submit"]');
+    const data = new FormData(connectionForm);
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = "Enregistrement...";
+    }
+    try {
+      await saveConnectionAction(connectionForm.dataset.connectionSave, "configure", {
+        accountLabel: data.get("accountLabel"),
+        usage: data.get("usage"),
+        notifications: data.get("notifications") === "on"
+      });
+      closeModal();
+      toast("Configuration enregistree. Vous pouvez maintenant la tester.");
+    } catch (error) {
+      toast(error.message);
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Enregistrer et continuer";
+      }
+    }
+    return;
+  }
+
   const form = event.target.closest("[data-modal-form]");
   if (!form) return;
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form).entries());
   const type = form.dataset.modalForm;
+
+  if(type==="website-block"){
+    const page=websiteUi.data.pages.find(p=>p.id===data.pageId),blocks=structuredClone(page.draft_content.blocks),index=Number(data.index),block=blocks[index];
+    for(const key of Object.keys(block.props||{}))if(typeof block.props[key]==="string"&&data[key]!==undefined)block.props[key]=data[key];
+    block.variant=data.variant;try{await websiteSavePage(page,blocks);closeModal();toast("Section enregistrée.");}catch(e){toast(e.message);}return;
+  }
+
+  if(type.startsWith("crm-")){
+    const action={"crm-contact":"create_contact","crm-organization":"create_organization","crm-opportunity":"create_opportunity","crm-task":"create_task","crm-note":"create_note"}[type];
+    try{await crmAction(action,data);closeModal();toast(type==="crm-contact"?"Contact ajouté.":type==="crm-task"?"Tâche créée.":"Enregistrement terminé.");}catch(error){toast(error.message);}return;
+  }
 
   if (type === "talk") {
     const lead = saveLead({ type: "Demande Qualifyr", ...data });
@@ -6339,18 +7246,14 @@ document.addEventListener("submit", async (event) => {
       openAdminLoginModal("Cet email est reserve a l'administration. Utilisez le mot de passe admin.");
       return;
     }
-    const storedAccount = getAccounts().find((item) => item.email === email && item.role !== "admin");
-    const account = storedAccount || saveAccount({
-      role: "client",
-      email,
-      name: "Client Qualifyr",
-      company: "Entreprise cliente",
-      profession: state.profession,
-      plan: "Copilote metier"
-    });
-    setSession(account);
-    renderAll();
-    showView(account.role === "admin" ? "admin" : "auth");
+    try{
+      const response=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",email,password:data.password})});
+      const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Connexion impossible.");
+      const storedAccount=getAccounts().find(item=>item.email===email&&item.role!=="admin");
+      const account=saveAccount({...storedAccount,role:"client",email,name:storedAccount?.name||"Client Qualifyr",company:storedAccount?.company||"Entreprise cliente",profession:storedAccount?.profession||state.profession,plan:storedAccount?.plan||"Copilote metier",accessToken:payload.accessToken,refreshToken:payload.refreshToken});
+      setSession(account);renderAll();onboardingUi.draft=null;
+      try{const ob=await fetch("/api/onboarding",{headers:onboardingHeaders()});const statePayload=await ob.json();if(ob.ok&&statePayload.progress){onboardingUi.draft=statePayload.progress.answers||{};localStorage.setItem("qualifyr_onboarding_draft_v2",JSON.stringify(onboardingUi.draft));onboardingUi.step=window.QualifyrOnboarding.resumeStep(statePayload.progress);renderOnboarding();showView(onboardingUi.step===9?"dashboard":"onboarding");}else{onboardingUi.step=1;showView("onboarding");}}catch{showView("onboarding");}
+    }catch(error){toast(error.message);}
     return;
   }
 
@@ -6384,6 +7287,11 @@ document.addEventListener("submit", async (event) => {
   }
 
   if (type === "auth-signup") {
+    try{
+      const response=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"signup",email:data.email,password:data.password,name:data.name})});
+      const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Création du compte impossible.");
+      data.accessToken=payload.accessToken;data.refreshToken=payload.refreshToken;
+    }catch(error){toast(error.message);return;}
     const account = saveAccount({ role: "client", ...data, plan: "Copilote metier", status: "Compte cree" });
     setSession(account);
     saveLead({
@@ -6396,8 +7304,9 @@ document.addEventListener("submit", async (event) => {
       status: "Compte cree",
       goal: "Finaliser l'installation du premier copilote."
     });
+    onboardingUi.draft={companyName:account.company,managerName:account.name,email:account.email,tradeId:"",goals:[]};localStorage.setItem("qualifyr_onboarding_draft_v2",JSON.stringify(onboardingUi.draft));onboardingUi.step=1;
     renderAll();
-    showView("auth");
+    showView("onboarding");
     return;
   }
 

@@ -1,5 +1,11 @@
 # Qualifyr AI
 
+> La fondation **Qualifyr OS V1** est décrite dans [`docs/QUALIFYR_OS_ARCHITECTURE.md`](docs/QUALIFYR_OS_ARCHITECTURE.md). Le registre modulaire exécutable se trouve dans `qualifyr-os.js`. Le CRM de l’étape 4 est documenté dans [`docs/CRM_INTELLIGENT.md`](docs/CRM_INTELLIGENT.md) et le Website Builder de l’étape 5 dans [`docs/WEBSITE_BUILDER.md`](docs/WEBSITE_BUILDER.md).
+
+## Connexions des copilotes
+
+`/api/oauth` gere le demarrage OAuth, le retour fournisseur et le stockage chiffre des jetons pour Google, Microsoft, Meta/WhatsApp et Mollie. Copiez les variables de `.env.example` dans Vercel, puis declarez pour chaque fournisseur l'URL de retour `https://qualifyr-ai.vercel.app/api/oauth?action=callback&provider=FOURNISSEUR` (`google`, `microsoft`, `meta` ou `mollie`).
+
 Prototype SaaS premium pour un copilote IA modulaire dedie aux PME et artisans.
 
 ## Ouvrir l'application
@@ -71,6 +77,7 @@ Avant chaque nouveau module, verifier qu'il respecte au moins un de ces criteres
 - Route serveur `POST /api/webhooks/payment` pour verifier le paiement Mollie et preparer l'activation.
 - Route serveur `POST /api/leads` pour envoyer les demandes vers Supabase quand la base est configuree.
 - Route serveur `POST /api/admin-login` pour verifier l'acces admin sans exposer le mot de passe cote client.
+- Routes serveur `GET` et `POST /api/connections` pour charger, configurer, tester et deconnecter les outils du compte.
 - Les donnees sont pretes a etre remplacees par Supabase : les points d'entree sont `saveLead`, `saveAccount`, `setSession` et `upsertLeadStatus`.
 
 ## Acces admin
@@ -126,6 +133,9 @@ Quand ces variables existent :
 - `/api/checkout` enregistre la demande, le compte et le paiement en cours.
 - `/api/webhooks/payment` verifie Mollie, cree le client, le paiement, l'abonnement et l'installation du copilote.
 - Resend envoie l'email client et l'email admin apres paiement confirme.
+- Les configurations et resultats de test des outils sont conserves dans `connections`.
+
+Executer de nouveau `supabase/schema.sql` dans le SQL Editor avant le redeploiement afin de creer cette table. La cle Supabase serveur reste uniquement dans les routes `/api` et n'est jamais envoyee au navigateur.
 
 ## Parcours commercial prioritaire
 
@@ -171,3 +181,10 @@ Pour ajouter un module, ajouter une entree dans `modules`; l'interface se met a 
 Pour ajouter un assistant, ajouter une entree dans `platformRegistry.assistants`.
 Pour ajouter un copilote marketplace, ajouter une entree dans `platformRegistry.copilots`.
 Pour ajouter un copilote produit, ajouter une entree dans `platformRegistry.copilotCategories`.
+# Qualifyr OS
+
+Architecture et modules : `docs/QUALIFYR_OS_ARCHITECTURE.md`
+
+Onboarding et packs métier : `onboarding-engine.js` / `api/onboarding.js`
+
+Dashboard entreprise : `docs/DASHBOARD_ENTREPRISE.md` / `dashboard-engine.js` / `api/dashboard.js`

@@ -1,0 +1,10 @@
+const test=require("node:test");const assert=require("node:assert/strict");const d=require("../dashboard-engine");
+test("sélectionne une disposition adaptée au pack",()=>{assert.equal(d.defaultLayout("telecom")[1],"today_schedule");assert.ok(d.defaultLayout("artisan").includes("commercial_overview"));});
+test("conserve toujours les widgets obligatoires",()=>{const widgets=d.visibleWidgets("generic",[],{hidden_widgets:["attention_center","recent_activity"]});assert.ok(widgets.includes("attention_center"));assert.ok(!widgets.includes("recent_activity"));});
+test("respecte les modules actifs pour les actions",()=>{const actions=d.quickActions({packId:"artisan",modules:[{module_id:"pipelines",status:"enabled"},{module_id:"quotes",status:"recommended"}],profile:{},role:"member"});assert.deepEqual(actions.map(x=>x.id),["add_prospect"]);});
+test("calcule une préparation transparente",()=>{const state=d.readiness({onboarding:{status:"completed"},profile:{company_name:"A",trade_id:"plumber",email:"a@b.fr"},modules:[{status:"enabled"}],metrics:{primaryGoal:"leads",totalProspects:0}});assert.equal(state.completed,6);assert.equal(state.total,9);assert.equal(state.next,"Téléphone professionnel");});
+test("recommande uniquement à partir des manques",()=>{const recs=d.recommendations({profile:{phone:"0600"},modules:[{module_id:"forms",status:"enabled"}],metrics:{totalProspects:0},goals:[]});assert.ok(recs.some(x=>x.id==="first_prospect"));assert.ok(!recs.some(x=>x.id==="add_phone"));});
+test("réordonne au clavier sans perdre de widget",()=>{assert.deepEqual(d.applyPreference(["a","b","c"],"b","up"),["b","a","c"]);});
+test("restaure une nouvelle copie du layout",()=>{const a=d.defaultLayout("generic"),b=d.defaultLayout("generic");a.pop();assert.notEqual(a.length,b.length);});
+test("accepte seulement les périodes prévues",()=>{assert.equal(d.periodBounds(7,"Asia/Makassar").days,7);assert.equal(d.periodBounds(12,"Europe/Paris").days,30);});
+test("n'invente aucune tendance",()=>{assert.equal("trend" in d.periodBounds(30,"UTC"),false);});

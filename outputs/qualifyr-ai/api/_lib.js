@@ -29,6 +29,9 @@ async function readBody(req) {
   for await (const chunk of req) chunks.push(chunk);
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};
+  if (String(req.headers?.["content-type"] || "").includes("application/x-www-form-urlencoded")) {
+    return Object.fromEntries(new URLSearchParams(raw));
+  }
   try {
     return JSON.parse(raw);
   } catch {
@@ -64,7 +67,7 @@ function publicLead(lead = {}) {
 
 function supabaseConfig() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   return { configured: Boolean(url && key), url: url?.replace(/\/$/, ""), key };
 }
 
@@ -93,6 +96,65 @@ async function supabaseInsert(table, row) {
   } catch {
     return { skipped: false, data: text };
   }
+}
+
+async function supabaseSelect(table, query = "") {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, reason: "Supabase is not configured", data: [] };
+  const response = await fetch(`${config.url}/rest/v1/${table}?${query}`, {
+    headers: {
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`
+    }
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase select failed on ${table}: ${response.status} ${text}`);
+  return { skipped: false, data: JSON.parse(text || "[]") };
+}
+
+async function supabaseUpsert(table, row, conflict = "id") {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, reason: "Supabase is not configured", data: [row] };
+  const response = await fetch(`${config.url}/rest/v1/${table}?on_conflict=${encodeURIComponent(conflict)}`, {
+    method: "POST",
+    headers: {
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=representation"
+    },
+    body: JSON.stringify(row)
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase upsert failed on ${table}: ${response.status} ${text}`);
+  return { skipped: false, data: JSON.parse(text || "[]") };
+}
+
+async function supabasePatch(table, query, patch) {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, data: [] };
+  const response = await fetch(`${config.url}/rest/v1/${table}?${query}`, { method: "PATCH", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json", Prefer: "return=representation" }, body: JSON.stringify(patch) });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase patch failed on ${table}: ${response.status} ${text}`);
+  return { skipped: false, data: JSON.parse(text || "[]") };
+}
+
+async function supabaseDelete(table, query) {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, data: [] };
+  const response = await fetch(`${config.url}/rest/v1/${table}?${query}`, { method: "DELETE", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, Prefer: "return=representation" } });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase delete failed on ${table}: ${response.status} ${text}`);
+  return { skipped: false, data: JSON.parse(text || "[]") };
+}
+
+async function supabaseRpc(functionName, args = {}) {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, data: null };
+  const response = await fetch(`${config.url}/rest/v1/rpc/${functionName}`, { method: "POST", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json" }, body: JSON.stringify(args) });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase RPC failed on ${functionName}: ${response.status} ${text}`);
+  return { skipped: false, data: text ? JSON.parse(text) : null };
 }
 
 function normalizeLead(lead) {
@@ -224,5 +286,10 @@ module.exports = {
   publicLead,
   readBody,
   sendEmail,
-  supabaseInsert
+  supabaseInsert,
+  supabasePatch,
+  supabaseDelete,
+  supabaseRpc,
+  supabaseSelect,
+  supabaseUpsert
 };

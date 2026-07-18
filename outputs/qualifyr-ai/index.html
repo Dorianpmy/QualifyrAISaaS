@@ -52,7 +52,10 @@
             <button class="icon-button" title="Notifications" aria-label="Notifications" data-view="notifications">
               <svg viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 21h4"/></svg>
             </button>
-            <button class="secondary-button account-button" id="accountButton" data-view="auth">Se connecter</button>
+            <div class="account-menu-wrap">
+              <button class="secondary-button account-button" id="accountButton" type="button" data-auth-menu-toggle aria-haspopup="menu" aria-expanded="false">Se connecter</button>
+              <div class="account-popover" id="accountMenu" role="menu" aria-label="Connexion" hidden></div>
+            </div>
             <button class="primary-button" data-open-talk="Je veux savoir quel copilote installer">
               <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
               Demander a Qualifyr
@@ -85,6 +88,12 @@
         <section class="view" id="view-admin"></section>
         <section class="view" id="view-billing"></section>
         <section class="view" id="view-help"></section>
+        <section class="view" id="view-website"></section>
+        <section class="view" id="view-content"></section>
+        <section class="view" id="view-seo"></section>
+        <section class="view" id="view-forms"></section>
+        <section class="view" id="view-reviews"></section>
+        <section class="view" id="view-analytics"></section>
       </main>
     </div>
 
@@ -111,6 +120,11 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <script src="./onboarding-engine.js"></script>
+    <script src="./dashboard-engine.js"></script>
+    <script src="./crm-engine.js"></script>
+    <script src="./website-engine.js"></script>
+    <script src="./qualifyr-os.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
