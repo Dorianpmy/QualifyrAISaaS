@@ -9,8 +9,11 @@ const PLAN_PRICES = {
   Scale: { value: "229.00", label: "Equipe locale" }
 };
 
+const { applyPrivateHeaders } = require("./_security");
+
 function json(res, statusCode, payload) {
   res.statusCode = statusCode;
+  applyPrivateHeaders(res);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload));
 }
@@ -24,9 +27,14 @@ function methodNotAllowed(res) {
   return json(res, 405, { ok: false, error: "Method not allowed" });
 }
 
-async function readBody(req) {
+async function readBody(req, maxBytes = 256 * 1024) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxBytes) throw Object.assign(new Error("REQUEST_TOO_LARGE"), { status: 413, publicMessage: "La demande est trop volumineuse." });
+    chunks.push(chunk);
+  }
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};
   if (String(req.headers?.["content-type"] || "").includes("application/x-www-form-urlencoded")) {
@@ -87,9 +95,7 @@ async function supabaseInsert(table, row) {
   });
 
   const text = await response.text();
-  if (!response.ok) {
-    throw new Error(`Supabase insert failed on ${table}: ${response.status} ${text}`);
-  }
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_WRITE_FAILED"), { status: 502, operation: "insert", table, providerStatus: response.status });
 
   try {
     return { skipped: false, data: JSON.parse(text) };
@@ -108,7 +114,7 @@ async function supabaseSelect(table, query = "") {
     }
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase select failed on ${table}: ${response.status} ${text}`);
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_READ_FAILED"), { status: 502, operation: "select", table, providerStatus: response.status });
   return { skipped: false, data: JSON.parse(text || "[]") };
 }
 
@@ -126,7 +132,7 @@ async function supabaseUpsert(table, row, conflict = "id") {
     body: JSON.stringify(row)
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase upsert failed on ${table}: ${response.status} ${text}`);
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_WRITE_FAILED"), { status: 502, operation: "upsert", table, providerStatus: response.status });
   return { skipped: false, data: JSON.parse(text || "[]") };
 }
 
@@ -135,7 +141,7 @@ async function supabasePatch(table, query, patch) {
   if (!config.configured) return { skipped: true, data: [] };
   const response = await fetch(`${config.url}/rest/v1/${table}?${query}`, { method: "PATCH", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json", Prefer: "return=representation" }, body: JSON.stringify(patch) });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase patch failed on ${table}: ${response.status} ${text}`);
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_WRITE_FAILED"), { status: 502, operation: "patch", table, providerStatus: response.status });
   return { skipped: false, data: JSON.parse(text || "[]") };
 }
 
@@ -144,7 +150,7 @@ async function supabaseDelete(table, query) {
   if (!config.configured) return { skipped: true, data: [] };
   const response = await fetch(`${config.url}/rest/v1/${table}?${query}`, { method: "DELETE", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, Prefer: "return=representation" } });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase delete failed on ${table}: ${response.status} ${text}`);
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_DELETE_FAILED"), { status: 502, operation: "delete", table, providerStatus: response.status });
   return { skipped: false, data: JSON.parse(text || "[]") };
 }
 
@@ -153,8 +159,33 @@ async function supabaseRpc(functionName, args = {}) {
   if (!config.configured) return { skipped: true, data: null };
   const response = await fetch(`${config.url}/rest/v1/rpc/${functionName}`, { method: "POST", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json" }, body: JSON.stringify(args) });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase RPC failed on ${functionName}: ${response.status} ${text}`);
+  if (!response.ok) throw Object.assign(new Error("DATASTORE_RPC_FAILED"), { status: 502, operation: "rpc", functionName, providerStatus: response.status });
   return { skipped: false, data: text ? JSON.parse(text) : null };
+}
+
+async function supabaseStorageRemove(bucket, paths = []) {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true, data: [] };
+  if (!Array.isArray(paths) || !paths.length) return { skipped: false, data: [] };
+  const response = await fetch(`${config.url}/storage/v1/object/${encodeURIComponent(bucket)}`, {
+    method: "DELETE",
+    headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefixes: paths })
+  });
+  const text = await response.text();
+  if (!response.ok) throw Object.assign(new Error("STORAGE_DELETE_FAILED"), { status: 502, operation: "storage_delete", providerStatus: response.status });
+  return { skipped: false, data: text ? JSON.parse(text) : [] };
+}
+
+async function supabaseAuthDeleteUser(userId) {
+  const config = supabaseConfig();
+  if (!config.configured) return { skipped: true };
+  const response = await fetch(`${config.url}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE", headers: { apikey: config.key, Authorization: `Bearer ${config.key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ should_soft_delete: true })
+  });
+  if (!response.ok) throw Object.assign(new Error("AUTH_USER_DELETE_FAILED"), { status: 502, operation: "auth_delete", providerStatus: response.status });
+  return { skipped: false };
 }
 
 function normalizeLead(lead) {
@@ -290,6 +321,8 @@ module.exports = {
   supabasePatch,
   supabaseDelete,
   supabaseRpc,
+  supabaseStorageRemove,
+  supabaseAuthDeleteUser,
   supabaseSelect,
   supabaseUpsert
 };

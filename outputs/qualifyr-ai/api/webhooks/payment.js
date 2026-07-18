@@ -9,6 +9,7 @@ const {
   readBody,
   sendEmail
 } = require("../_lib");
+const { auditLog, correlationId } = require("../_security");
 
 async function readForm(req) {
   const chunks = [];
@@ -19,6 +20,8 @@ async function readForm(req) {
 }
 
 module.exports = async function handler(req, res) {
+  const requestId = correlationId(req);
+  res.setHeader("X-Correlation-ID", requestId);
   if (req.method !== "POST") return methodNotAllowed(res);
 
   try {
@@ -30,13 +33,7 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: "Identifiant paiement manquant." });
     }
 
-    if (!process.env.MOLLIE_API_KEY) {
-      return json(res, 200, {
-        ok: true,
-        received: true,
-        warning: "MOLLIE_API_KEY absente, paiement non verifie."
-      });
-    }
+    if (!process.env.MOLLIE_API_KEY) return json(res, 503, { ok: false, error: "La vérification du paiement est indisponible." });
 
     const mollieResponse = await fetch(`https://api.mollie.com/v2/payments/${paymentId}`, {
       headers: {
@@ -49,7 +46,7 @@ module.exports = async function handler(req, res) {
       return json(res, mollieResponse.status, {
         ok: false,
         error: "Impossible de verifier le paiement Mollie.",
-        details: payment
+        correlationId: requestId
       });
     }
 
@@ -121,6 +118,7 @@ module.exports = async function handler(req, res) {
       }).catch(() => null);
     }
 
+    auditLog("info", "payment.webhook.verified", { correlationId: requestId, paymentId: payment.id, status: payment.status });
     return json(res, 200, {
       ok: true,
       paymentId: payment.id,
@@ -128,10 +126,11 @@ module.exports = async function handler(req, res) {
       paid
     });
   } catch (error) {
+    auditLog("error", "payment.webhook.failed", { correlationId: requestId, code: error.message });
     return json(res, 500, {
       ok: false,
       error: "Webhook paiement impossible a traiter.",
-      details: error.message
+      correlationId: requestId
     });
   }
 };

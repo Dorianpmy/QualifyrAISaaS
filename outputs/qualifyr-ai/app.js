@@ -431,24 +431,34 @@ function saveAccount(account) {
     profession: account.profession || existing?.profession || state.profession,
     plan: account.plan || existing?.plan || state.checkoutPlan || "Pro",
     authProvider: account.authProvider || existing?.authProvider || "email",
-    adminToken: account.adminToken || existing?.adminToken || null,
     adminExpiresAt: account.adminExpiresAt || existing?.adminExpiresAt || null
   };
   const next = [nextAccount, ...accounts.filter((item) => item.email !== nextAccount.email)].slice(0, 80);
   localStorage.setItem("qualifyrAccounts", JSON.stringify(next));
-  return nextAccount;
+  return {
+    ...nextAccount,
+    accessToken: account.accessToken || null,
+    refreshToken: account.refreshToken || null,
+    adminToken: account.adminToken || null
+  };
 }
 
 function getSession() {
   try {
-    return JSON.parse(localStorage.getItem("qualifyrSession") || "null");
+    const current = sessionStorage.getItem("qualifyrSession");
+    if (current) return JSON.parse(current);
+    const legacy = JSON.parse(localStorage.getItem("qualifyrSession") || "null");
+    localStorage.removeItem("qualifyrSession");
+    if (legacy) sessionStorage.setItem("qualifyrSession", JSON.stringify(legacy));
+    return legacy;
   } catch {
     return null;
   }
 }
 
 function setSession(account) {
-  localStorage.setItem("qualifyrSession", JSON.stringify(account));
+  localStorage.removeItem("qualifyrSession");
+  sessionStorage.setItem("qualifyrSession", JSON.stringify(account));
   state.session = account;
   connectionRecords = {};
   connectionLoadStarted = false;
@@ -457,6 +467,7 @@ function setSession(account) {
 
 function clearSession() {
   localStorage.removeItem("qualifyrSession");
+  sessionStorage.removeItem("qualifyrSession");
   state.session = null;
   connectionRecords = {};
   connectionLoadStarted = false;
@@ -1223,6 +1234,8 @@ function simplifyVisibleLanguage(root) {
 function showView(view) {
   if(view==="dashboard"&&typeof dashboardUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(dashboardUi.status)){dashboardUi.status="idle";queueMicrotask(()=>loadDashboard(true));}
   if(view==="crm"&&typeof crmUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(crmUi.status)){crmUi.status="idle";queueMicrotask(()=>loadCrm(true));}
+  if(view==="ai-center"&&typeof brainUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(brainUi.status)){brainUi.status="idle";queueMicrotask(()=>loadBrain(true));}
+  if(view==="settings"&&typeof autopilotUi!=="undefined"&&getSession()?.accessToken&&["idle","guest","error"].includes(autopilotUi.status)){autopilotUi.status="idle";queueMicrotask(()=>loadAutopilot(true));}
   const friendlyTitles = {
     dashboard: "Accueil",
     crm: "Mes clients",
@@ -2954,7 +2967,7 @@ const marketplaceCatalog = [
     rating,
     popularity,
     included,
-    installed: id === "plumber"
+    installed: false
   }))
 }));
 
@@ -3787,7 +3800,7 @@ function quoteFromApi(item) {
 async function loadCompanyQuotes() {
   const session = getSession();
   if (!session?.email) return;
-  const response = await fetch(`/api/quotes?email=${encodeURIComponent(session.email)}`);
+  const response = await fetch("/api/quotes", { headers: { Authorization: `Bearer ${session.accessToken || ""}` } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || "Chargement des devis impossible");
   if (payload.configured) {
@@ -3800,7 +3813,7 @@ async function createCompanyQuote(data = {}) {
   const session = getSession();
   if (!session?.email) throw new Error("Connectez-vous pour enregistrer ce devis.");
   const response = await fetch("/api/quotes", {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken || ""}` },
     body: JSON.stringify({ email: session.email, client_name: data.client || "Client a confirmer", status: "Brouillon", source: data.source || "manual", lines: data.lines || [{ description: "Prestation a confirmer", quantity: 1, unit_price: 0 }] })
   });
   const payload = await response.json().catch(() => ({}));
@@ -4784,13 +4797,13 @@ async function startProviderConnection(provider) {
     toast("Connectez-vous d'abord a votre compte Qualifyr.");
     return;
   }
-  const response = await fetch(`/api/oauth?action=start&provider=${encodeURIComponent(provider)}&email=${encodeURIComponent(session.email)}&returnTo=${encodeURIComponent("/#copilot-setup")}`);
+  const response = await fetch(`/api/oauth?action=start&provider=${encodeURIComponent(provider)}&returnTo=${encodeURIComponent("/#copilot-setup")}`, { headers: { Authorization: `Bearer ${session.accessToken || ""}` } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload.authorizeUrl) throw new Error(payload.error || "Connexion indisponible.");
   window.location.assign(payload.authorizeUrl);
 }
 
-function saveCopilotInstallation(action) {
+function saveCopilotInstallation(action, explicitCopilotId = "") {
   const session = getSession();
   if (!session?.email) {
     showView("auth");
@@ -4800,14 +4813,14 @@ function saveCopilotInstallation(action) {
   const account = getClientAccountByEmail(session.email) || {};
   return fetch("/api/copilots", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken || ""}`, "Idempotency-Key": `${explicitCopilotId || state.selectedCopilotName}:${action}:v1` },
     body: JSON.stringify({
       email: session.email,
       company: account.company || session.company || "Entreprise",
       profession: state.profession,
-      copilot: state.selectedCopilotName,
+      copilotId: explicitCopilotId || String(state.selectedCopilotName || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       plan: account.plan || "Copilote metier",
-      action
+      action: action === "activate" ? "install" : action
     })
   }).then(async (response) => {
     const payload = await response.json().catch(() => ({}));
@@ -5585,14 +5598,15 @@ function connectionAccountEmail() {
 function connectionStatusLabel(record) {
   if (!record || record.status === "not_connected") return "A connecter";
   if (record.status === "error") return "Action requise";
-  return record.last_test_status === "success" ? "Operationnelle" : "Configuree";
+  if (record.status === "revocation_pending") return "Révocation en attente";
+  return record.verifiedAt ? "Operationnelle" : record.lastTestedAt ? "Test échoué" : "Non testée";
 }
 
 async function loadConnectionRecords() {
   const email = connectionAccountEmail();
   if (!email) return;
   try {
-    const response = await fetch(`/api/connections?email=${encodeURIComponent(email)}`);
+    const response = await fetch("/api/connections", { headers: { Authorization: `Bearer ${getSession()?.accessToken || ""}` } });
     const payload = await response.json();
     if (!response.ok || !payload.ok) throw new Error(payload.error || "Chargement impossible");
     connectionRecords = Object.fromEntries((payload.connections || []).map((item) => [item.provider, item]));
@@ -5611,7 +5625,7 @@ async function saveConnectionAction(provider, action, settings = {}) {
   }
   const response = await fetch("/api/connections", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getSession()?.accessToken || ""}` },
     body: JSON.stringify({ email, provider, action, settings })
   });
   const payload = await response.json();
@@ -5667,7 +5681,7 @@ function renderIntegrations() {
   const renderRow = (integration) => {
     const record = connectionRecords[integration.id];
     const configured = record?.status === "configured" || record?.status === "connected";
-    const tested = record?.last_test_status === "success";
+    const tested = Boolean(record?.verifiedAt);
     return `
       <article class="simple-connection-row">
         <span class="integration-logo">${integration.logo}</span>
@@ -5747,8 +5761,24 @@ function renderIntegrations() {
   }
 }
 
+let copilotInstallationLoadStarted = false;
+async function loadCopilotInstallations() {
+  const session = getSession();
+  if (!session?.accessToken) return;
+  const response = await fetch("/api/copilots", { headers: { Authorization: `Bearer ${session.accessToken}` } });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok) throw new Error(payload.error || "Chargement impossible");
+  const installed = new Set((payload.installations || []).filter((item) => item.status === "installed").map((item) => item.copilotId));
+  marketplaceCatalog.flatMap((category) => category.copilots).forEach((copilot) => { copilot.installed = installed.has(copilot.id); });
+  renderCopilotLibrary("view-marketplace");
+}
+
 function renderMarketplace() {
   renderCopilotLibrary("view-marketplace");
+  if (!copilotInstallationLoadStarted && getSession()?.accessToken) {
+    copilotInstallationLoadStarted = true;
+    queueMicrotask(() => loadCopilotInstallations().catch(() => { copilotInstallationLoadStarted = false; }));
+  }
 }
 
 function renderCustomAi() {
@@ -5885,24 +5915,17 @@ function renderDocuments() {
 }
 
 function renderSettings() {
-  el("view-settings").innerHTML = `
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">Mon entreprise</p>
-        <h2>Les informations utiles pour travailler correctement.</h2>
-      </div>
-      <button class="primary-button">Enregistrer</button>
-    </div>
-    <div class="grid grid-2">
-      <article class="card form-grid">
-        ${["Entreprise", "Logo", "TVA", "Adresse", "Telephone", "Email", "Horaires"].map((label) => `<div class="field"><label>${label}</label><input value="${label === "Entreprise" ? "Qualifyr AI Demo - Artisan" : label === "TVA" ? "20%" : label === "Horaires" ? "Lun-Ven 08:00-18:30" : ""}"></div>`).join("")}
-      </article>
-      <article class="card">
-        <p class="eyebrow">Abonnement et utilisateurs</p>
-        ${["Plan Pro actif", "4 personnes dans l'equipe", "11 IA disponibles", "Bibliotheque d'IA active", "Paiement en ligne pret"].map((item) => `<div class="list-row"><span>${item}</span><strong>OK</strong></div>`).join("")}
-      </article>
-    </div>
-  `;
+  const root=el("view-settings");if(!root)return;
+  if(autopilotUi.status==="loading"||autopilotUi.status==="idle"){root.innerHTML=`<div class="empty-state"><span class="loader"></span><h2>Vérification de votre espace…</h2><p>Qualifyr contrôle uniquement la configuration.</p></div>`;return;}
+  if(autopilotUi.status==="guest"){root.innerHTML=`<div class="empty-state"><h2>Connectez-vous pour vérifier votre espace.</h2><button class="primary-button" data-view="auth">Se connecter</button></div>`;return;}
+  if(autopilotUi.status==="error"){root.innerHTML=`<div class="empty-state"><h2>La vérification est indisponible.</h2><p>${safeText(autopilotUi.error)}</p><button class="primary-button" data-autopilot-retry>Réessayer</button></div>`;return;}
+  const d=autopilotUi.data,h=d.health,pack=h.pack,groups={blocked:[],action_required:[],operational:[],unavailable:[]};h.checks.forEach(x=>(groups[x.status]||groups.action_required).push(x));
+  const statusLabel={operational:"Opérationnel",action_required:"À compléter",blocked:"Bloquant",unavailable:"Non disponible"};
+  root.innerHTML=`<div class="section-header"><div><p class="eyebrow">Centre de santé</p><h2>Votre entreprise est prête à ${h.readiness}%.</h2><p>Une seule prochaine action, sans jargon.</p></div><button class="secondary-button" data-autopilot-diagnostic>Copier le diagnostic</button></div>
+  <div class="autopilot-hero"><div><span class="status ${groups.blocked.length?"danger":"success"}">${groups.blocked.length?"Configuration bloquée":"Configuration utilisable"}</span><h3>${safeText(pack?.pack_id||"Pack essentiel")} <small>v${safeText(pack?.pack_version||"—")}</small></h3><p>${d.limitations.durableWorker?"Les traitements sont actifs.":"Les traitements automatiques externes ne sont pas encore disponibles."}</p></div><div class="readiness-ring"><strong>${h.readiness}%</strong><small>prêt</small></div></div>
+  <article class="card autopilot-next"><p class="eyebrow">À faire maintenant</p><h3>${safeText(h.nextAction.label)}</h3><button class="primary-button" data-autopilot-action="${safeText(h.nextAction.fix||"system_test")}">${h.nextAction.fix&&h.nextAction.fix!=="system_test"?"Corriger automatiquement":"Tester mon système"}</button></article>
+  <div class="health-groups">${["blocked","action_required","operational","unavailable"].filter(k=>groups[k].length).map(k=>`<section class="card"><h3>${statusLabel[k]} <span>${groups[k].length}</span></h3>${groups[k].map(x=>`<div class="health-row"><span class="health-dot ${k}"></span><div><strong>${safeText(x.label)}</strong><small>${safeText(x.module)}</small></div>${x.fix?`<button class="text-button" data-autopilot-action="${safeText(x.fix)}">Corriger</button>`:""}</div>`).join("")}</section>`).join("")}</div>
+  ${autopilotUi.test?`<article class="card system-test-result"><h3>${autopilotUi.test.passed?"Test réussi":"Des réglages sont nécessaires"}</h3><p>${safeText(autopilotUi.test.note)}</p>${autopilotUi.test.steps.map(x=>`<div class="list-row"><span>${safeText(x.label)}</span><strong>${x.status==="passed"?"✓":"À revoir"}</strong></div>`).join("")}</article>`:""}`;
 }
 
 function renderMore() {
@@ -6096,6 +6119,10 @@ function renderDashboard() {
 }
 
 const dashboardUi={status:"idle",data:null,error:"",customizing:false};
+const autopilotUi={status:"idle",data:null,error:"",test:null,busy:false};
+const autopilotHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+async function loadAutopilot(force=false){if(!getSession()?.accessToken){autopilotUi.status="guest";renderSettings();return;}if(autopilotUi.status==="loading"||(!force&&autopilotUi.status==="ready"))return;autopilotUi.status="loading";renderSettings();try{const response=await fetch("/api/autopilot",{headers:autopilotHeaders()}),payload=await response.json();if(!response.ok)throw new Error(payload.error||"Le centre de santé est indisponible.");autopilotUi.data=payload;autopilotUi.status="ready";autopilotUi.error="";}catch(error){autopilotUi.status="error";autopilotUi.error=error.message;}renderSettings();}
+async function autopilotAction(action,payload={}){autopilotUi.busy=true;try{const response=await fetch("/api/autopilot",{method:"POST",headers:autopilotHeaders(),body:JSON.stringify({action,...payload})}),data=await response.json();if(!response.ok)throw new Error(data.error||"Cette action n’a pas pu être terminée.");if(action==="system_test")autopilotUi.test=data;await loadAutopilot(true);return data;}finally{autopilotUi.busy=false;renderSettings();}}
 const dashboardHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
 async function loadDashboard(force=false){if(!getSession()?.accessToken){dashboardUi.status="guest";renderDashboard();return;}if(dashboardUi.status==="loading"||(!force&&dashboardUi.status==="ready"))return;dashboardUi.status="loading";renderDashboard();try{const response=await fetch("/api/dashboard",{headers:dashboardHeaders()});const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Le tableau de bord est indisponible.");dashboardUi.data=payload;dashboardUi.status="ready";dashboardUi.error="";}catch(error){dashboardUi.status="error";dashboardUi.error=error.message;}renderDashboard();}
 async function saveDashboardPreferences(changes){const data=dashboardUi.data;if(!data)return;const next={...data.preferences,...changes};dashboardUi.data={...data,preferences:next,widgets:window.QualifyrDashboard.visibleWidgets(data.workspace.packId,data.modules,{widget_order:next.widgetOrder,hidden_widgets:next.hiddenWidgets})};renderDashboard();try{const response=await fetch("/api/dashboard",{method:"POST",headers:dashboardHeaders(),body:JSON.stringify({action:"save_preferences",widgetOrder:next.widgetOrder,hiddenWidgets:next.hiddenWidgets,preferredPeriod:next.preferredPeriod})});if(!response.ok)throw new Error();}catch{toast("La préférence n’a pas pu être enregistrée.");loadDashboard(true);}}
@@ -6131,6 +6158,23 @@ function websiteEditBlock(page,index){const block=page.draft_content.blocks[inde
 function websitePreview(page){const theme=window.QualifyrWebsite.themes[websiteUi.data.theme?.theme_key||"professional"],blocks=page.draft_content?.blocks||[];return`<div class="wb-draft" style="--wb-primary:${theme.tokens.primary};--wb-bg:${theme.tokens.background};--wb-text:${theme.tokens.text}">${blocks.filter(b=>!b.hidden).map(b=>{const p=b.props||{};if(b.type==="header")return`<header><strong>${crmSafe(p.brand)}</strong><span>${crmSafe(p.ctaLabel)}</span></header>`;if(b.type==="hero")return`<section class="hero"><small>${crmSafe(p.eyebrow)}</small><h1>${crmSafe(p.title)}</h1><p>${crmSafe(p.text)}</p><b>${crmSafe(p.ctaLabel)}</b></section>`;if(b.type==="services_grid"||b.type==="process_steps")return`<section><h2>${crmSafe(p.title)}</h2><div class="cards">${(p.items||[]).map(x=>`<article><strong>${crmSafe(x.title)}</strong><p>${crmSafe(x.text)}</p></article>`).join("")}</div></section>`;if(b.type==="contact_form")return`<section><h2>${crmSafe(p.title)}</h2><div class="fake-form">Aperçu du formulaire — aucun prospect ne sera créé</div></section>`;return`<section><h2>${crmSafe(p.title||p.brand||"")}</h2><p>${crmSafe(p.text||(p.paragraphs||[]).join(" "))}</p></section>`;}).join("")}</div>`;}
 function renderWebsite(){const root=el("view-website");if(!root)return;if(websiteUi.status==="idle"){root.innerHTML=`<div class="crm-loading"><i></i><i></i><i></i></div>`;queueMicrotask(()=>loadWebsite());return;}if(websiteUi.status==="loading"){root.innerHTML=`<div class="crm-loading" aria-label="Chargement du Website Builder"><i></i><i></i><i></i></div>`;return;}if(websiteUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><h2>Créez le site de votre entreprise.</h2><p>Connectez-vous pour utiliser les vraies informations de votre profil.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(websiteUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Le module Site est indisponible.</h2><p>${crmSafe(websiteUi.error)}</p><button data-website-retry class="primary-button">Réessayer</button></section>`;return;}const d=websiteUi.data;if(!d.site){root.innerHTML=`<section class="website-welcome"><span>✦</span><p class="eyebrow">Website Builder Qualifyr</p><h2>Créons votre site internet.</h2><p>Qualifyr utilise les informations confirmées de votre entreprise pour préparer une première version. Rien ne sera publié sans votre accord.</p><div class="website-choices"><label>Objectif principal<select id="websiteObjective"><option value="quote">Recevoir des demandes de devis</option><option value="contact">Recevoir des contacts</option><option value="booking">Obtenir des rendez-vous</option><option value="services">Présenter les services</option><option value="estimate">Recevoir des demandes d’estimation</option></select></label><label>Style<select id="websiteStyle">${Object.entries(window.QualifyrWebsite.themes).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("")}</select></label></div><button class="primary-button" data-website-generate>Générer mon site</button><small>Génération structurée et déterministe : aucun code arbitraire, aucun faux avis ou chiffre.</small></section>`;return;}const page=d.pages.find(p=>p.id===websiteUi.pageId)||d.pages[0],blocks=page?.draft_content?.blocks||[],validation=d.validation?.result||null;root.innerHTML=`<header class="website-head"><div><span class="eyebrow">${crmSafe(d.site.status)} · ${websiteUi.save}</span><h2>${crmSafe(d.site.name)}</h2><p>Le brouillon reste séparé du site publié.</p></div><div><button class="secondary-button" data-website-validate>Vérifier</button>${d.publicUrl?`<a class="secondary-button" href="${d.publicUrl}" target="_blank" rel="noopener">Voir le site</a>`:""}${d.permissions.publish?`<button class="primary-button" data-website-publish>Publier</button>`:""}</div></header>${validation&&!validation.ready?`<aside class="website-validation"><strong>${validation.issues.filter(x=>x.level==="error").length} correction(s) avant publication</strong>${validation.issues.slice(0,4).map(x=>`<span>${crmSafe(x.message)}</span>`).join("")}</aside>`:""}<div class="website-builder"><aside class="website-pages"><h3>Pages</h3>${d.pages.map(p=>`<button class="${p.id===page?.id?"active":""}" data-website-page="${p.id}"><span>${crmSafe(p.name)}</span><small>/${crmSafe(p.slug)}</small></button>`).join("")}<h3>Thème</h3><select id="websiteTheme">${Object.entries(d.themes).map(([k,v])=>`<option value="${k}" ${k===d.theme?.theme_key?"selected":""}>${crmSafe(v.name)}</option>`).join("")}</select><button class="secondary-button" data-website-save-theme>Appliquer</button><h3>Historique</h3>${d.revisions.slice(0,5).map(r=>`<button data-website-restore="${r.id}"><span>Version ${r.revision_number}</span><small>${crmSafe(r.origin)}</small></button>`).join("")}</aside><main class="website-canvas"><div class="website-device"><button data-website-device="desktop" class="${websiteUi.device==="desktop"?"active":""}">Ordinateur</button><button data-website-device="tablet" class="${websiteUi.device==="tablet"?"active":""}">Tablette</button><button data-website-device="mobile" class="${websiteUi.device==="mobile"?"active":""}">Mobile</button></div><div class="website-frame ${websiteUi.device}">${websitePreview(page)}</div></main><aside class="website-sections"><h3>Sections</h3>${blocks.map((b,i)=>`<article><button data-website-block="${i}"><strong>${crmSafe(b.props?.title||b.props?.brand||b.type)}</strong><small>${crmSafe(b.type)}${b.hidden?" · Masqué":""}</small></button><div><button data-website-move="${i}" data-direction="up" ${i===0?"disabled":""} aria-label="Monter la section">↑</button><button data-website-move="${i}" data-direction="down" ${i===blocks.length-1?"disabled":""} aria-label="Descendre la section">↓</button><button data-website-hide="${i}" aria-label="${b.hidden?"Afficher":"Masquer"} la section">${b.hidden?"◉":"◌"}</button></div></article>`).join("")}<form data-website-page-form><h3>Page et SEO</h3><input type="hidden" name="pageId" value="${page.id}"><input type="hidden" name="version" value="${page.version}"><label>Nom<input name="name" value="${crmSafe(page.name)}" maxlength="120"></label><label>Adresse<input name="slug" value="${crmSafe(page.slug)}" maxlength="70" ${page.page_type==="home"?"disabled":""}></label><label>Titre SEO<input name="seoTitle" value="${crmSafe(page.seo_title||"")}" maxlength="70"></label><label>Description SEO<textarea name="seoDescription" maxlength="170">${crmSafe(page.seo_description||"")}</textarea></label><button class="primary-button" type="submit">Enregistrer la page</button></form></aside></div>`;}
 
+const contentUi={status:"idle",data:null,error:"",tab:"studio"};
+const contentHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+async function loadContent(force=false){if(!getSession()?.accessToken){contentUi.status="guest";renderContent();return;}if(contentUi.status==="loading"||(!force&&contentUi.status==="ready"))return;contentUi.status="loading";renderContent();try{const r=await fetch("/api/content",{headers:contentHeaders()}),d=await r.json();if(!r.ok)throw new Error(d.error||"Chargement impossible.");contentUi.data=d;contentUi.status="ready";contentUi.error="";}catch(e){contentUi.status="error";contentUi.error=e.message;}renderContent();}
+async function contentAction(action,payload={}){const r=await fetch("/api/content",{method:"POST",headers:contentHeaders(),body:JSON.stringify({action,...payload})}),d=await r.json();if(!r.ok)throw Object.assign(new Error(d.error||"Action impossible."),{data:d});if(d.items)contentUi.data=d;renderContent();return d;}
+const contentStatus={draft:"Brouillon",needs_review:"À valider",approved:"Approuvé",scheduled:"Planifié",published:"Publié",failed:"Échec"};
+function contentText(s={}){return s.body||s.summary||s.introduction||(s.slides||[]).map(x=>`${x.title||""} ${x.text||""}`).join("\n")||"";}
+function contentEditModal(item){const s=item.currentVersion?.structured_content||{};openModal(`<form class="modal-content content-edit-modal" data-modal-form="content-edit"><p class="eyebrow">Version ${item.version} · ${crmSafe(contentStatus[item.status]||item.status)}</p><h2 id="actionModalTitle">Modifier le brouillon</h2><input type="hidden" name="contentId" value="${item.id}"><label>Titre<input name="title" maxlength="200" value="${crmSafe(s.title||item.title)}"></label><label>Accroche<input name="hook" maxlength="500" value="${crmSafe(s.hook||"")}"></label><label>Texte<textarea name="body" maxlength="12000" rows="12">${crmSafe(contentText(s))}</textarea></label><label>Appel à l’action<input name="cta" maxlength="200" value="${crmSafe(s.cta||"")}"></label><p class="form-help">Une modification crée une nouvelle version et retire l’ancienne validation.</p><button class="primary-button" type="submit">Enregistrer une nouvelle version</button></form>`);}
+function contentScheduleModal(item){openModal(`<form class="modal-content" data-modal-form="content-schedule"><p class="eyebrow">Planification contrôlée</p><h2 id="actionModalTitle">Quand publier ce contenu ?</h2><input type="hidden" name="contentId" value="${item.id}"><label>Date et heure<input name="scheduledAt" type="datetime-local" required min="${new Date(Date.now()+60000).toISOString().slice(0,16)}"></label><p class="form-help">Planifier ne publie rien immédiatement. Le contenu restera visible dans votre calendrier.</p><button class="primary-button" type="submit">Ajouter au calendrier</button></form>`);}
+function contentCard(item,d){const s=item.currentVersion?.structured_content||{},claims=item.currentVersion?.claims_to_review||[],website=["blog_article","faq_content","website_section","service_description"].includes(item.type);return`<article class="content-card"><header><span class="content-channel">${crmSafe(d.channels[item.channel]?.name||item.channel)}</span><b class="content-status ${item.status}">${crmSafe(contentStatus[item.status]||item.status)}</b></header><h3>${crmSafe(item.title)}</h3><p>${crmSafe(contentText(s).slice(0,220)||"Brouillon structuré prêt à être complété.")}</p><div class="content-trust"><span>✓ ${s.factsUsed?.length||0} source(s)</span>${claims.length?`<span class="warning">⚠ ${claims.length} point(s) à confirmer</span>`:`<span>✓ Aucun chiffre inventé</span>`}</div><footer><button class="secondary-button" data-content-edit="${item.id}">Modifier</button><button class="secondary-button" data-content-adapt="${item.id}">Adapter</button>${item.status==="draft"||item.status==="needs_review"?`<button class="secondary-button" data-content-review="${item.id}">Demander validation</button>`:""}${d.permissions.approve&&item.status==="needs_review"?`<button class="primary-button" data-content-approve="${item.id}">Approuver</button>`:""}${item.status==="approved"?`<button class="primary-button" data-content-schedule="${item.id}">Planifier</button>`:""}${website?`<button class="secondary-button" data-content-website="${item.id}">Envoyer au site</button>`:""}<button class="secondary-button" data-content-export="${item.id}">Exporter</button></footer></article>`;}
+function renderContent(){const root=el("view-content");if(!root)return;if(contentUi.status==="idle"){root.innerHTML=`<div class="crm-loading"><i></i><i></i><i></i></div>`;queueMicrotask(()=>loadContent());return;}if(contentUi.status==="loading"){root.innerHTML=`<div class="crm-loading" aria-label="Chargement du Studio de contenu"><i></i><i></i><i></i></div>`;return;}if(contentUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><h2>Préparez vos contenus depuis un seul endroit.</h2><p>Connectez-vous pour utiliser les informations vérifiées de votre entreprise.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(contentUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Le Studio de contenu est indisponible.</h2><p>${crmSafe(contentUi.error)}</p><button class="primary-button" data-content-retry>Réessayer</button></section>`;return;}const d=contentUi.data,review=d.items.filter(x=>x.status==="needs_review"),scheduled=d.calendar.filter(x=>x.status==="scheduled");root.innerHTML=`<header class="content-head"><div><span class="eyebrow">Studio de contenu · Pack ${crmSafe(d.pack)}</span><h2>Créez un contenu clair, puis gardez la main.</h2><p>Qualifyr utilise seulement les informations confirmées. Rien n’est publié sans validation.</p></div><button class="primary-button" data-content-ideas>Proposer des idées</button></header><section class="content-summary"><button data-content-tab="studio"><strong>${d.items.length}</strong><span>Contenus</span></button><button data-content-tab="review"><strong>${review.length}</strong><span>À valider</span></button><button data-content-tab="calendar"><strong>${scheduled.length}</strong><span>Planifiés</span></button><button data-content-tab="voice"><strong>${d.usage.generations||0}</strong><span>Créations ce mois</span></button></section><nav class="crm-tabs" aria-label="Sections du Studio">${[["studio","Créer"],["review","À valider"],["calendar","Calendrier"],["library","Bibliothèque"],["ideas","Idées"],["voice","Style de marque"]].map(([id,label])=>`<button data-content-tab="${id}" class="${contentUi.tab===id?"active":""}">${label}</button>`).join("")}</nav>${contentUi.tab==="studio"?`<section class="content-studio"><form data-content-generate><div><p class="eyebrow">Nouveau brouillon</p><h3>Que voulez-vous préparer ?</h3></div><label>Sujet ou service<input name="subject" required maxlength="180" placeholder="Ex. Entretien d’une toiture"></label><label>Objectif<select name="objective">${Object.entries(d.objectives).map(([k,v])=>`<option value="${k}">${crmSafe(v)}</option>`).join("")}</select></label><label>Format<select name="format">${Object.entries(d.formats).filter(([,v])=>!['content_idea','content_series'].includes(v)).map(([k,v])=>`<option value="${k}">${crmSafe(v.name)}</option>`).join("")}</select></label><label>Ton<select name="tone">${d.tones.map(x=>`<option value="${x}" ${x===d.voice.tone?"selected":""}>${crmSafe(x)}</option>`).join("")}</select></label><label>Public<input name="audience" maxlength="160" value="clients et prospects"></label><button class="primary-button" type="submit">Créer le brouillon</button><small>Vous pourrez modifier, adapter et valider avant toute planification.</small></form><aside class="content-guide"><span>1</span><strong>Qualifyr prépare</strong><p>Un brouillon structuré à partir de vos informations.</p><span>2</span><strong>Vous vérifiez</strong><p>Les affirmations sensibles sont signalées.</p><span>3</span><strong>Vous choisissez</strong><p>Export, calendrier ou brouillon du site.</p></aside></section>${d.items.slice(0,3).length?`<section class="content-grid">${d.items.slice(0,3).map(x=>contentCard(x,d)).join("")}</section>`:""}`:""}${contentUi.tab==="review"?`<section class="content-grid">${review.length?review.map(x=>contentCard(x,d)).join(""):`<div class="os-empty"><strong>Rien à valider</strong><p>Les brouillons soumis apparaîtront ici.</p></div>`}</section>`:""}${contentUi.tab==="library"?`<section class="content-grid">${d.items.length?d.items.map(x=>contentCard(x,d)).join(""):`<div class="os-empty"><strong>Aucun contenu</strong><p>Commencez par créer un premier brouillon.</p></div>`}</section>`:""}${contentUi.tab==="calendar"?`<section class="content-calendar">${scheduled.length?scheduled.map(e=>{const item=d.items.find(x=>x.id===e.content_item_id);return`<article><time>${new Date(e.scheduled_at).toLocaleString("fr-FR")}</time><strong>${crmSafe(item?.title||"Contenu planifié")}</strong><span>${crmSafe(contentStatus[e.status]||e.status)}</span></article>`}).join(""):`<div class="os-empty"><strong>Calendrier vide</strong><p>Approuvez un contenu puis choisissez « Planifier ».</p></div>`}</section>`:""}${contentUi.tab==="ideas"?`<section class="content-ideas">${d.ideas.length?d.ideas.map(i=>`<article><span>${crmSafe(i.effort||"simple")}</span><h3>${crmSafe(i.title)}</h3><p>${crmSafe(i.angle)}</p><small>Pourquoi : ${crmSafe(i.reason||"adapté à votre activité")}</small><button class="secondary-button" data-content-use-idea="${i.id}">Utiliser cette idée</button></article>`).join(""):`<div class="os-empty"><strong>Pas encore d’idée</strong><p>Demandez à Qualifyr des sujets adaptés à votre activité.</p><button class="primary-button" data-content-ideas>Proposer des idées</button></div>`}</section>`:""}${contentUi.tab==="voice"?`<form class="content-voice" data-content-voice><div><p class="eyebrow">Style de marque</p><h3>Comment votre entreprise doit-elle parler ?</h3><p>Ces règles s’appliqueront aux prochaines créations.</p></div><label>Ton<select name="tone">${d.tones.map(x=>`<option ${x===d.voice.tone?"selected":""}>${x}</option>`).join("")}</select></label><label>Niveau de langage<select name="formality"><option value="simple" ${d.voice.formality==="simple"?"selected":""}>Simple</option><option value="professionnel" ${d.voice.formality==="professionnel"?"selected":""}>Professionnel</option><option value="soutenu" ${d.voice.formality==="soutenu"?"selected":""}>Soutenu</option></select></label><label>S’adresser au public<select name="address"><option value="vous" ${d.voice.address==="vous"?"selected":""}>Vous</option><option value="tu" ${d.voice.address==="tu"?"selected":""}>Tu</option></select></label><label>Mots à utiliser<input name="vocabulary" value="${crmSafe(d.voice.vocabulary.join(", "))}" placeholder="proximité, conseil"></label><label>Mots interdits<input name="forbiddenTerms" value="${crmSafe(d.voice.forbiddenTerms.join(", "))}" placeholder="garanti, numéro 1"></label><button class="primary-button" type="submit">Enregistrer mon style</button></form>`:""}`;}
+
+const brainUi={status:"idle",data:null,error:"",mode:"understand",pendingPlan:null,busy:false};
+const brainHeaders=()=>({"Content-Type":"application/json",Authorization:`Bearer ${getSession()?.accessToken||""}`});
+async function loadBrain(force=false){if(!getSession()?.accessToken){brainUi.status="guest";renderAiCenter();return;}if(brainUi.status==="loading"||(!force&&brainUi.status==="ready"))return;brainUi.status="loading";renderAiCenter();try{const r=await fetch("/api/brain",{headers:brainHeaders()}),d=await r.json();if(!r.ok)throw new Error(d.error||"Chargement impossible.");brainUi.data=d;brainUi.status="ready";brainUi.error="";}catch(e){brainUi.status="error";brainUi.error=e.message;}renderAiCenter();}
+async function brainAction(action,payload={}){brainUi.busy=true;renderAiCenter();try{const r=await fetch("/api/brain",{method:"POST",headers:brainHeaders(),body:JSON.stringify({action,...payload})}),d=await r.json();if(!r.ok)throw new Error(d.error||"Action impossible.");if(d.plan)brainUi.pendingPlan=d.plan;if(action==="execute_plan")brainUi.pendingPlan=null;await loadBrain(true);return d;}finally{brainUi.busy=false;renderAiCenter();}}
+function renderAiCenter(){const root=el("view-ai-center");if(!root)return;if(brainUi.status==="idle"){root.innerHTML=`<div class="crm-loading"><i></i><i></i><i></i></div>`;queueMicrotask(()=>loadBrain());return;}if(brainUi.status==="loading"){root.innerHTML=`<div class="crm-loading" aria-label="Qualifyr prépare votre contexte"><i></i><i></i><i></i></div>`;return;}if(brainUi.status==="guest"){root.innerHTML=`<section class="os-guest-dashboard"><h2>Votre entreprise, au même endroit.</h2><p>Connectez-vous pour que Qualifyr utilise uniquement les données de votre espace.</p><button class="primary-button" data-view="auth">Se connecter</button></section>`;return;}if(brainUi.status==="error"){root.innerHTML=`<section class="os-error"><h2>Qualifyr est momentanément indisponible.</h2><p>${crmSafe(brainUi.error)}</p><button class="primary-button" data-brain-retry>Réessayer</button></section>`;return;}const d=brainUi.data,plan=brainUi.pendingPlan||d.plans.find(x=>x.status==="pending_approval"||x.status==="approved"),steps=plan?.steps||plan?.plan_json?.steps||[];root.innerHTML=`<header class="brain-head"><div><p class="eyebrow">Qualifyr Brain</p><h2>Que voulez-vous faire aujourd’hui ?</h2><p>Qualifyr comprend votre activité, prépare les étapes et vous demande avant d’agir.</p></div><span class="brain-safety">✓ Rien d’externe sans votre accord</span></header><section class="brain-layout"><aside class="brain-brief"><span>Aujourd’hui</span><h3>${crmSafe(d.brief.summary)}</h3>${d.brief.priorities.map((p,i)=>`<button data-view="${p.view}"><b>${i+1}</b><span><strong>${crmSafe(p.title)}</strong><small>${crmSafe(p.detail)}</small></span></button>`).join("")}</aside><main class="brain-work"><nav class="brain-modes">${[["understand","Comprendre"],["prepare","Préparer"],["act","Agir"]].map(([id,label])=>`<button data-brain-mode="${id}" class="${brainUi.mode===id?"active":""}">${label}</button>`).join("")}</nav><form data-brain-form><textarea name="message" maxlength="2000" required placeholder="Ex. Prépare le suivi de mes prospects sans prochaine action"></textarea><div><small>${brainUi.mode==="act"?"Un plan sera affiché avant toute action.":brainUi.mode==="prepare"?"Qualifyr prépare, mais n’exécute rien.":"Qualifyr explique à partir de vos données."}</small><button class="primary-button" ${brainUi.busy?"disabled":""}>${brainUi.busy?"Préparation…":"Demander à Qualifyr"}</button></div></form>${plan?`<article class="brain-plan"><header><div><span>Plan proposé</span><h3>${crmSafe(plan.title)}</h3><p>${crmSafe(plan.why||plan.reason||"")}</p></div><b>${steps.length} étape${steps.length>1?"s":""}</b></header>${steps.map((s,i)=>`<div class="brain-step"><i>${i+1}</i><span><strong>${crmSafe(s.label)}</strong><small>${s.risk==="internal_write"?"Écrit uniquement dans votre CRM":"Lecture seule"}</small></span><em>${s.approvalRequired!==false?"Votre accord":"Automatique"}</em></div>`).join("")}<footer>${plan.status==="approved"?`<button class="primary-button" data-brain-execute="${plan.id}">Exécuter le plan approuvé</button>`:`<button class="primary-button" data-brain-approve="${plan.id}">Approuver ce plan</button>`}<small>Vous pourrez suivre chaque résultat dans l’historique et dans le CRM.</small></footer></article>`:""}</main><aside class="brain-history"><h3>Historique</h3>${d.runs.length?d.runs.slice(0,6).map(r=>`<article><b>${r.status==="completed"?"✓":"•"}</b><span><strong>${r.status==="completed"?"Plan terminé":r.status==="partial"?"Plan partiel":"Exécution"}</strong><small>${new Date(r.created_at).toLocaleString("fr-FR")}</small></span></article>`).join(""):`<p>Les actions approuvées apparaîtront ici.</p>`}<h3>Outils actifs</h3><p>${d.tools.filter(x=>x.available).length} outils contrôlés · aucun accès direct à la base</p></aside></section>`;}
+
 function renderAll() {
   renderNav();
   renderBottomNav();
@@ -6162,11 +6206,27 @@ function renderAll() {
   renderHelp();
   renderOsSimpleModules();
   renderWebsite();
+  renderContent();
   showView(state.view);
   renderAccountButton();
 }
 
 document.addEventListener("click", (event) => {
+  if(event.target.closest("[data-brain-retry]")){loadBrain(true);return;}
+  const brainMode=event.target.closest("[data-brain-mode]");if(brainMode){brainUi.mode=brainMode.dataset.brainMode;renderAiCenter();return;}
+  const brainApprove=event.target.closest("[data-brain-approve]");if(brainApprove){brainAction("approve_plan",{planId:brainApprove.dataset.brainApprove}).then(()=>{if(brainUi.pendingPlan)brainUi.pendingPlan.status="approved";renderAiCenter();toast("Plan approuvé. Vous pouvez maintenant l’exécuter.");}).catch(e=>toast(e.message));return;}
+  const brainExecute=event.target.closest("[data-brain-execute]");if(brainExecute){brainAction("execute_plan",{planId:brainExecute.dataset.brainExecute}).then(d=>{crmUi.status="idle";dashboardUi.status="idle";toast(d.status==="completed"?"Plan terminé et ajouté au CRM.":"Plan exécuté en partie. Consultez l’historique.");}).catch(e=>toast(e.message));return;}
+  if(event.target.closest("[data-content-retry]")){loadContent(true);return;}
+  const ct=event.target.closest("[data-content-tab]");if(ct){contentUi.tab=ct.dataset.contentTab;renderContent();return;}
+  if(event.target.closest("[data-content-ideas]")){contentAction("ideas").then(()=>{contentUi.tab="ideas";renderContent();toast("Des idées adaptées à votre activité sont prêtes.");}).catch(e=>toast(e.message));return;}
+  const ce=event.target.closest("[data-content-edit]");if(ce){const item=contentUi.data.items.find(x=>x.id===ce.dataset.contentEdit);if(item)contentEditModal(item);return;}
+  const cr=event.target.closest("[data-content-review]");if(cr){contentAction("request_review",{contentId:cr.dataset.contentReview}).then(()=>toast("Le contenu attend maintenant une validation.")).catch(e=>toast(e.message));return;}
+  const ca=event.target.closest("[data-content-approve]");if(ca){const item=contentUi.data.items.find(x=>x.id===ca.dataset.contentApprove),claims=item?.currentVersion?.claims_to_review||[];if(claims.length){openModal(`<form class="modal-content" data-modal-form="content-approve"><p class="eyebrow">Contrôle humain obligatoire</p><h2 id="actionModalTitle">Confirmer les affirmations</h2><input type="hidden" name="contentId" value="${item.id}">${claims.map(x=>`<p class="content-claim">⚠ ${crmSafe(x.message)}</p>`).join("")}<label class="check-row"><input type="checkbox" name="confirmClaims" required> J’ai vérifié ces affirmations avec mes propres informations.</label><button class="primary-button" type="submit">Approuver ce contenu</button></form>`);}else contentAction("approve",{contentId:item.id,confirmClaims:true}).then(()=>toast("Contenu approuvé.")).catch(e=>toast(e.message));return;}
+  const cs=event.target.closest("[data-content-schedule]");if(cs){const item=contentUi.data.items.find(x=>x.id===cs.dataset.contentSchedule);if(item)contentScheduleModal(item);return;}
+  const cw=event.target.closest("[data-content-website]");if(cw){contentAction("send_to_website",{contentId:cw.dataset.contentWebsite}).then(()=>toast("Ajouté au brouillon du site. Le site publié n’a pas changé.")).catch(e=>toast(e.message));return;}
+  const cx=event.target.closest("[data-content-export]");if(cx){contentAction("publish",{contentId:cx.dataset.contentExport}).then(d=>{const blob=new Blob([JSON.stringify(d.content||{},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="contenu-qualifyr.json";a.click();URL.revokeObjectURL(a.href);toast("Export téléchargé. Aucune publication automatique.");}).catch(e=>toast(e.message));return;}
+  const ci=event.target.closest("[data-content-use-idea]");if(ci){const idea=contentUi.data.ideas.find(x=>x.id===ci.dataset.contentUseIdea);contentUi.tab="studio";renderContent();const input=document.querySelector("[data-content-generate] [name=subject]");if(input){input.value=idea.title;input.focus();}return;}
+  const cad=event.target.closest("[data-content-adapt]");if(cad){const item=contentUi.data.items.find(x=>x.id===cad.dataset.contentAdapt);openModal(`<form class="modal-content" data-modal-form="content-adapt"><p class="eyebrow">Adapter sans inventer</p><h2 id="actionModalTitle">Créer une autre version</h2><input type="hidden" name="contentId" value="${item.id}"><label>Nouveau format<select name="targetFormat">${Object.entries(contentUi.data.formats).filter(([k])=>k!==item.type&&!['content_idea','content_series'].includes(k)).map(([k,v])=>`<option value="${k}">${crmSafe(v.name)}</option>`).join("")}</select></label><button class="primary-button" type="submit">Créer l’adaptation</button></form>`);return;}
   if(event.target.closest("[data-website-retry]")){loadWebsite(true);return;}
   if(event.target.closest("[data-website-generate]")){websiteAction("generate",{objective:el("websiteObjective")?.value,style:el("websiteStyle")?.value,idempotencyKey:`initial:${getSession()?.user?.id||"user"}`}).then(()=>toast("Votre brouillon est prêt.")).catch(e=>toast(e.message));return;}
   const wp=event.target.closest("[data-website-page]");if(wp){websiteUi.pageId=wp.dataset.websitePage;renderWebsite();return;}
@@ -6191,6 +6251,9 @@ document.addEventListener("click", (event) => {
   const moveWidget=event.target.closest("[data-dashboard-move]");if(moveWidget){saveDashboardPreferences({widgetOrder:window.QualifyrDashboard.applyPreference(dashboardUi.data.preferences.widgetOrder,moveWidget.dataset.widgetId,moveWidget.dataset.dashboardMove)});return;}
   const hideWidget=event.target.closest("[data-dashboard-hide]");if(hideWidget){const id=hideWidget.dataset.dashboardHide,hidden=new Set(dashboardUi.data.preferences.hiddenWidgets);hidden.has(id)?hidden.delete(id):hidden.add(id);saveDashboardPreferences({hiddenWidgets:[...hidden]});return;}
   if(event.target.closest("[data-dashboard-reset]")){saveDashboardPreferences({widgetOrder:[...dashboardUi.data.defaultWidgets],hiddenWidgets:[]});return;}
+  if(event.target.closest("[data-autopilot-retry]")){loadAutopilot(true);return;}
+  const autopilotButton=event.target.closest("[data-autopilot-action]");if(autopilotButton){const requested=autopilotButton.dataset.autopilotAction;autopilotAction(requested==="system_test"?"system_test":"fix",{fix:requested}).then(()=>toast(requested==="system_test"?"Test terminé sans contacter de client.":"Configuration vérifiée.")).catch(error=>toast(error.message));return;}
+  if(event.target.closest("[data-autopilot-diagnostic]")){autopilotAction("diagnostic").then(data=>navigator.clipboard.writeText(JSON.stringify(data.diagnostic,null,2)).then(()=>toast("Diagnostic anonymisé copié."))).catch(error=>toast(error.message));return;}
   const dismissRecommendation=event.target.closest("[data-dashboard-dismiss]");if(dismissRecommendation){const id=dismissRecommendation.dataset.dashboardDismiss;dashboardUi.data.recommendations=dashboardUi.data.recommendations.filter(item=>item.id!==id);renderDashboard();fetch("/api/dashboard",{method:"POST",headers:dashboardHeaders(),body:JSON.stringify({action:"dismiss_recommendation",recommendationKey:id})}).catch(()=>toast("La recommandation n’a pas pu être masquée."));return;}
   const tradeChoice=event.target.closest("[data-trade-id]");
   if(tradeChoice){persistOnboardingDraft({tradeId:tradeChoice.dataset.tradeId});onboardingUi.error="";renderOnboarding();return;}
@@ -6550,7 +6613,7 @@ document.addEventListener("click", (event) => {
         toast("Decrivez votre besoin pour recevoir un devis personnalise.");
         return;
       }
-      toast("Votre IA est installee. Vous pouvez l'activer quand vous voulez.");
+      toast("Cette IA doit être configurée côté serveur avant son installation.");
       return;
     }
     const copilot = marketplaceCatalog.flatMap((category) => category.copilots).find((item) => item.id === installButton.dataset.copilot);
@@ -6560,9 +6623,15 @@ document.addEventListener("click", (event) => {
         toast("Le copilote IA personnalise se configure via une etude sur devis.");
         return;
       }
-      copilot.installed = true;
-      renderMarketplace();
-      toast(`Copilote ${copilot.name} installe dans votre espace.`);
+      installButton.disabled = true;
+      installButton.textContent = "Installation...";
+      saveCopilotInstallation("install", copilot.id)
+        .then((payload) => {
+          copilot.installed = payload.installation?.status === "installed";
+          renderMarketplace();
+          toast(copilot.installed ? `Copilote ${copilot.name} installé dans votre espace.` : "Installation non disponible.");
+        })
+        .catch((error) => { installButton.disabled = false; installButton.textContent = "Installer"; toast(error.message); });
     }
     return;
   }
@@ -6714,7 +6783,7 @@ document.addEventListener("click", (event) => {
     const profile = copilotSetupProfile(employee);
     saveCopilotInstallation("test")
       .then(() => fetch("/api/copilot-run", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken || ""}` },
         body: JSON.stringify({ email: session.email, copilot: employee.name, profession: state.profession, input: profile.test[0], channel: "test", context: { simulation: true } })
       }))
       .then(async (response) => {
@@ -6811,8 +6880,8 @@ document.addEventListener("click", (event) => {
     connectionTestLive.textContent = "Test en cours...";
     saveConnectionAction(provider, "test")
       .then((payload) => {
-        const result = payload?.connection?.last_test_status;
-        toast(result === "success" ? "Connexion verifiee et resultat enregistre." : "Configurez d'abord cette connexion.");
+        const result = payload?.connection?.status;
+        toast(result === "connected" ? "Connexion vérifiée auprès du fournisseur." : "Le fournisseur n’a pas pu vérifier cette connexion.");
       })
       .catch((error) => toast(error.message));
     return;
@@ -6919,7 +6988,7 @@ document.addEventListener("click", (event) => {
     const session = getSession();
     if (quoteId && session?.email && ["send", "invoice"].includes(quoteAction.dataset.action)) {
       const status = quoteAction.dataset.action === "send" ? "Envoye" : "Accepte";
-      fetch("/api/quotes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: quoteId, email: session.email, status }) })
+      fetch("/api/quotes", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken || ""}` }, body: JSON.stringify({ id: quoteId, status }) })
         .then(async (response) => { const payload = await response.json().catch(() => ({})); if (!response.ok) throw new Error(payload.error || "Action impossible"); await loadCompanyQuotes(); toast(labels[quoteAction.dataset.action]); })
         .catch((error) => toast(error.message));
       return;
@@ -7014,6 +7083,7 @@ el("menuToggle").addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();showView("ai-center");setTimeout(()=>document.querySelector("[data-brain-form] textarea")?.focus(),50);return;}
   if (event.key === "Escape") {
     document.body.classList.remove("mobile-menu-open");
     const menuToggle = el("menuToggle");
@@ -7043,6 +7113,9 @@ document.addEventListener("input", (event) => {
 document.addEventListener("change",event=>{if(event.target.id==="crmPipelineSelect"){crmUi.pipelineId=event.target.value;renderCrm();}});
 
 document.addEventListener("submit", async (event) => {
+  if(event.target.matches("[data-brain-form]")){event.preventDefault();const form=new FormData(event.target),message=String(form.get("message")||"").trim();if(!message)return;try{const d=await brainAction("ask",{message,mode:brainUi.mode});event.target.reset();if(d.answer)toast(d.answer);}catch(e){toast(e.message);}return;}
+  const contentGenerate=event.target.closest("[data-content-generate]");if(contentGenerate){event.preventDefault();const data=Object.fromEntries(new FormData(contentGenerate).entries()),button=contentGenerate.querySelector("button[type=submit]");button.disabled=true;button.textContent="Préparation…";try{await contentAction("generate",data);contentUi.tab="library";renderContent();toast("Brouillon créé. Vérifiez-le avant de le valider.");}catch(e){toast(e.message);button.disabled=false;button.textContent="Créer le brouillon";}return;}
+  const contentVoice=event.target.closest("[data-content-voice]");if(contentVoice){event.preventDefault();const data=Object.fromEntries(new FormData(contentVoice).entries());try{await contentAction("save_voice",{voice:{...data,vocabulary:data.vocabulary.split(",").map(x=>x.trim()).filter(Boolean),forbiddenTerms:data.forbiddenTerms.split(",").map(x=>x.trim()).filter(Boolean)}});toast("Style de marque enregistré.");}catch(e){toast(e.message);}return;}
   const websitePageForm=event.target.closest("[data-website-page-form]");
   if(websitePageForm){event.preventDefault();const data=Object.fromEntries(new FormData(websitePageForm).entries()),page=websiteUi.data.pages.find(p=>p.id===data.pageId);try{await websiteSavePage(page,page.draft_content.blocks,data);toast("Page enregistrée.");}catch(e){toast(e.message);}return;}
   const connectionForm = event.target.closest("[data-connection-save]");
@@ -7055,13 +7128,13 @@ document.addEventListener("submit", async (event) => {
       submit.textContent = "Enregistrement...";
     }
     try {
-      await saveConnectionAction(connectionForm.dataset.connectionSave, "configure", {
+      const saved = await saveConnectionAction(connectionForm.dataset.connectionSave, "configure", {
         accountLabel: data.get("accountLabel"),
         usage: data.get("usage"),
         notifications: data.get("notifications") === "on"
       });
       closeModal();
-      toast("Configuration enregistree. Vous pouvez maintenant la tester.");
+      toast(saved?.connection?.status === "configured" ? "Configuration enregistrée. Vous pouvez maintenant la tester." : "Autorisez d’abord votre compte chez le fournisseur.");
     } catch (error) {
       toast(error.message);
       if (submit) {
@@ -7077,6 +7150,11 @@ document.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form).entries());
   const type = form.dataset.modalForm;
+
+  if(type==="content-edit"){const item=contentUi.data.items.find(x=>x.id===data.contentId),structured={...item.currentVersion.structured_content,title:data.title,hook:data.hook,body:data.body,cta:data.cta};try{await contentAction("update",{contentId:item.id,structuredContent:structured});closeModal();toast("Nouvelle version enregistrée.");}catch(e){toast(e.message);}return;}
+  if(type==="content-adapt"){try{await contentAction("adapt",{contentId:data.contentId,targetFormat:data.targetFormat});closeModal();contentUi.tab="library";renderContent();toast("Adaptation créée avec les mêmes faits.");}catch(e){toast(e.message);}return;}
+  if(type==="content-approve"){try{await contentAction("approve",{contentId:data.contentId,confirmClaims:data.confirmClaims==="on"});closeModal();toast("Contenu approuvé après votre confirmation.");}catch(e){toast(e.message);}return;}
+  if(type==="content-schedule"){try{await contentAction("schedule",{contentId:data.contentId,scheduledAt:new Date(data.scheduledAt).toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone});closeModal();contentUi.tab="calendar";renderContent();toast("Contenu ajouté au calendrier.");}catch(e){toast(e.message);}return;}
 
   if(type==="website-block"){
     const page=websiteUi.data.pages.find(p=>p.id===data.pageId),blocks=structuredClone(page.draft_content.blocks),index=Number(data.index),block=blocks[index];
@@ -7290,6 +7368,7 @@ document.addEventListener("submit", async (event) => {
     try{
       const response=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"signup",email:data.email,password:data.password,name:data.name})});
       const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Création du compte impossible.");
+      if(payload.confirmationRequired){toast(payload.message||"Confirmez votre email avant de vous connecter.");showView("auth");return;}
       data.accessToken=payload.accessToken;data.refreshToken=payload.refreshToken;
     }catch(error){toast(error.message);return;}
     const account = saveAccount({ role: "client", ...data, plan: "Copilote metier", status: "Compte cree" });

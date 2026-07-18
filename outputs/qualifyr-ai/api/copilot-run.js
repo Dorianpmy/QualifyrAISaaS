@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { badRequest, json, readBody, supabaseInsert } = require("./_lib");
 const { runCopilot } = require("./_copilot-engine");
+const { requireWorkspace } = require("./_auth");
 
 const cleanEmail = (value) => {
   const email = String(value || "").trim().toLowerCase();
@@ -10,8 +11,9 @@ const cleanEmail = (value) => {
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return json(res, 405, { ok: false, error: "Method not allowed" });
   try {
+    const context = await requireWorkspace(req);
     const body = await readBody(req);
-    const email = cleanEmail(body.email);
+    const email = cleanEmail(context.user.email);
     const copilot = String(body.copilot || "").trim().slice(0, 120);
     const input = String(body.input || "").trim().slice(0, 12000);
     if (!email || !copilot || !input) return badRequest(res, "Compte, copilote et demande sont necessaires.");
@@ -29,6 +31,6 @@ module.exports = async function handler(req, res) {
     await supabaseInsert("copilot_runs", row).catch(() => null);
     return json(res, 200, { ok: true, result, run: row });
   } catch (error) {
-    return json(res, 500, { ok: false, error: "Le copilote n'a pas pu terminer son action.", details: error.message });
+    return json(res, error.status || 500, { ok: false, error: error.publicMessage || "Le copilote n'a pas pu terminer son action." });
   }
 };

@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { badRequest, json, readBody, supabaseSelect, supabaseUpsert } = require("./_lib");
+const { requireWorkspace } = require("./_auth");
 
 const cleanEmail = (value) => {
   const email = String(value || "").trim().toLowerCase();
@@ -9,16 +10,16 @@ const allowedStatuses = new Set(["Brouillon", "Envoye", "Relance", "Accepte", "R
 
 module.exports = async function handler(req, res) {
   try {
+    const context = await requireWorkspace(req);
+    const email = cleanEmail(context.user.email);
     const url = new URL(req.url, "http://localhost");
     if (req.method === "GET") {
-      const email = cleanEmail(url.searchParams.get("email"));
       if (!email) return badRequest(res, "Une session client valide est necessaire.");
       const result = await supabaseSelect("quotes", `account_email=eq.${encodeURIComponent(email)}&select=*&order=updated_at.desc`);
       return json(res, 200, { ok: true, configured: !result.skipped, quotes: result.data || [] });
     }
     if (!["POST", "PATCH"].includes(req.method)) return json(res, 405, { ok: false, error: "Method not allowed" });
     const body = await readBody(req);
-    const email = cleanEmail(body.email);
     if (!email) return badRequest(res, "Une session client valide est necessaire.");
     const now = new Date().toISOString();
     const id = String(body.id || `quote_${crypto.randomUUID()}`).slice(0, 100);
@@ -46,6 +47,6 @@ module.exports = async function handler(req, res) {
     const saved = await supabaseUpsert("quotes", row);
     return json(res, 200, { ok: true, configured: !saved.skipped, quote: saved.data?.[0] || row });
   } catch (error) {
-    return json(res, 500, { ok: false, error: "Le devis n'a pas pu etre enregistre.", details: error.message });
+    return json(res, error.status || 500, { ok: false, error: error.publicMessage || "Le devis n'a pas pu etre enregistre." });
   }
 };

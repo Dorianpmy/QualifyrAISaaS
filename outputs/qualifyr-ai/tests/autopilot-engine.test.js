@@ -1,0 +1,17 @@
+const test=require("node:test");const assert=require("node:assert/strict");const engine=require("../autopilot-engine");
+test("tous les manifests sont valides",()=>Object.values(engine.manifests).forEach(m=>assert.deepEqual(engine.validateManifest(m),{valid:true,errors:[]})));
+test("artisan est recommandé à un plombier",()=>assert.equal(engine.manifestFor({tradeId:"plumber"}).id,"artisan"));
+test("le fallback est déterministe",()=>assert.equal(engine.manifestFor({tradeId:"unknown"}).id,"generic"));
+test("les versions sont explicites",()=>Object.values(engine.manifests).forEach(m=>assert.match(m.version,/^\d+\.\d+\.\d+$/)));
+test("aucune automatisation externe n'est activée",()=>Object.values(engine.manifests).forEach(m=>m.automations.forEach(a=>assert.equal(a.kind,"internal"))));
+test("les actions externes assistant restent désactivées",()=>Object.values(engine.manifests).forEach(m=>{assert.equal(m.assistant.autoReply,false);assert.equal(m.assistant.externalActions,false);}));
+test("un plan est stable à entrée identique",()=>{const x={workspaceId:"w",userId:"u",answers:{companyName:"A",tradeId:"plumber"}};assert.deepEqual(engine.buildPlan(x),engine.buildPlan(x));});
+test("les clés d'idempotence sont uniques",()=>{const p=engine.buildPlan({workspaceId:"w",userId:"u",answers:{tradeId:"plumber"}});assert.equal(new Set(p.steps.map(x=>x.idempotencyKey)).size,p.steps.length);});
+test("le plan contient les ressources indispensables",()=>{const keys=engine.buildPlan({workspaceId:"w",userId:"u",answers:{tradeId:"plumber"}}).steps.map(x=>x.key);["pipeline","form","assistant","memory","safe_automations","verification"].forEach(x=>assert.ok(keys.includes(x)));});
+test("les capacités ne prétendent pas publier",()=>{const c=engine.capabilities({modules:["website","social-content","automations","ai-assistant"]});assert.equal(c["website.publish.available"],false);assert.equal(c["content.publish.available"],false);assert.equal(c["assistant.auto_reply.available"],false);assert.equal(c["automation.external.available"],false);});
+test("le diagnostic supprime les champs privés",()=>{const d=engine.redactDiagnostic({workspaceOpaqueId:"x",email:"secret@example.com",token:"secret",health:[]});assert.equal(d.email,undefined);assert.equal(d.token,undefined);assert.equal(d.workspaceOpaqueId,"x");});
+test("le diff de pack promet de préserver les données",()=>assert.ok(engine.packDiff(engine.manifests.generic,engine.manifests.artisan).preserves.includes("contacts")));
+test("les checks de santé ont des identifiants uniques",()=>{const h=engine.healthDefinitions();assert.equal(new Set(h.map(x=>x.id)).size,h.length);});
+test("les workers sont distingués des fonctions prêtes",()=>assert.equal(engine.healthDefinitions().find(x=>x.id==="workers.available").severity,"recommended"));
+test("une information optionnelle manquante ne bloque pas",()=>assert.ok(engine.recommendation({tradeId:"plumber"}).nonBlockingMissing.includes("logo")));
+test("une préférence utilisateur gagne dans la fusion",()=>assert.equal(engine.mergeLayers({tone:"a"},{tone:"b"},{},{},{},{tone:"c"}).tone,"c"));

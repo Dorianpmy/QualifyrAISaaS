@@ -1,6 +1,7 @@
 const crypto=require("crypto");
 const {json,readBody,supabaseSelect,supabaseUpsert}=require("./_lib");
 const engine=require("../onboarding-engine");
+const autopilotService=require("./_autopilot-service");
 const supabaseUrl=()=>String(process.env.SUPABASE_URL||"").replace(/\/$/,"");
 const serviceKey=()=>process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY||"";
 async function authenticatedUser(req){
@@ -59,5 +60,5 @@ async function provision(user){
   return {status:200,payload:{ok:true,recommendation:{pack:recommendation.pack,enabledModules:recommendation.enabledModules,recommendedModules:recommendation.recommendedModules,nextActions:recommendation.nextActions},operations}};
 }
 module.exports=async function handler(req,res){
-  try{const user=await authenticatedUser(req);if(req.method==="GET") return json(res,200,{ok:true,...await load(user),catalog:{trades:engine.tradeCategories,goals:engine.goals}});if(req.method!=="POST") return json(res,405,{ok:false});const body=await readBody(req);if(body.action==="save_step"){const result=await saveStep(user,body);return json(res,result.status,result.payload);}if(body.action==="provision"||body.action==="retry"){const result=await provision(user);return json(res,result.status,result.payload);}return json(res,400,{ok:false,error:"Action inconnue."});}catch(error){return json(res,/session|Connectez/i.test(error.message)?401:500,{ok:false,error:error.message});}
+  try{const user=await authenticatedUser(req);if(req.method==="GET") return json(res,200,{ok:true,...await load(user),catalog:{trades:engine.tradeCategories,goals:engine.goals}});if(req.method!=="POST") return json(res,405,{ok:false});const body=await readBody(req);if(body.action==="save_step"){const result=await saveStep(user,body);return json(res,result.status,result.payload);}if(body.action==="provision"||body.action==="retry"){const result=await autopilotService.provisionForUser(user);return json(res,result.status,result.payload);}return json(res,400,{ok:false,error:"Action inconnue."});}catch(error){const unauthorized=/session|Connectez/i.test(error.message);return json(res,unauthorized?401:500,{ok:false,error:unauthorized?"Connectez-vous pour continuer.":"L’installation n’a pas pu être chargée."});}
 };

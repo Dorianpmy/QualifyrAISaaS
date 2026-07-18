@@ -31,8 +31,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     return json(res, 500, {
       ok: false,
-      error: "Impossible d'enregistrer la demande.",
-      details: error.message
+      error: "Impossible d'enregistrer la demande."
     });
   }
 };

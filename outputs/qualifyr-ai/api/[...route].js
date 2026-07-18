@@ -1,8 +1,8 @@
 const handlers={
  "admin-login":require("../server/api/admin-login"),auth:require("../server/api/auth"),checkout:require("../server/api/checkout"),
  connections:require("../server/api/connections"),"copilot-run":require("../server/api/copilot-run"),copilots:require("../server/api/copilots"),
- crm:require("../server/api/crm"),dashboard:require("../server/api/dashboard"),leads:require("../server/api/leads"),oauth:require("../server/api/oauth"),
- onboarding:require("../server/api/onboarding"),quotes:require("../server/api/quotes"),
+ autopilot:require("../server/api/autopilot"),brain:require("../server/api/brain"),content:require("../server/api/content"),crm:require("../server/api/crm"),dashboard:require("../server/api/dashboard"),leads:require("../server/api/leads"),oauth:require("../server/api/oauth"),
+ onboarding:require("../server/api/onboarding"),privacy:require("../server/api/privacy"),"privacy-worker":require("../server/api/privacy-worker"),quotes:require("../server/api/quotes"),
  website:require("../server/api/website"),"site-public":require("../server/api/site-public"),
  "webhooks/payment":require("../server/api/webhooks/payment"),"webhooks/whatsapp":require("../server/api/webhooks/whatsapp")
 };

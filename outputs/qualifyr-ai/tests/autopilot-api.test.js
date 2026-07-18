@@ -1,0 +1,4 @@
+const test=require("node:test");const assert=require("node:assert/strict");const handler=require("../api/autopilot");
+function response(){return{statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},end(value){this.body=JSON.parse(value);}};}
+test("l’API Autopilot refuse une requête sans session",async()=>{const res=response();await handler({method:"GET",headers:{},url:"/api/autopilot"},res);assert.equal(res.statusCode,401);assert.equal(res.body.ok,false);});
+test("un workspace forgé ne contourne pas l’authentification",async()=>{const res=response();await handler({method:"POST",headers:{"content-type":"application/json"},url:"/api/autopilot",async *[Symbol.asyncIterator](){yield Buffer.from(JSON.stringify({action:"health",workspaceId:"ws_victim"}));}},res);assert.equal(res.statusCode,401);});

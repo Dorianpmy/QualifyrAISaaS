@@ -188,3 +188,10 @@ Architecture et modules : `docs/QUALIFYR_OS_ARCHITECTURE.md`
 Onboarding et packs métier : `onboarding-engine.js` / `api/onboarding.js`
 
 Dashboard entreprise : `docs/DASHBOARD_ENTREPRISE.md` / `dashboard-engine.js` / `api/dashboard.js`
+# Qualifyr AI
+
+- [Studio de contenu — architecture et garanties](docs/CONTENT_STUDIO.md)
+- [Qualifyr Brain — architecture et parcours réel](docs/QUALIFYR_BRAIN_ARCHITECTURE.md)
+- [Registre d’outils Brain](docs/QUALIFYR_BRAIN_TOOL_REGISTRY.md)
+- [Sécurité Brain](docs/QUALIFYR_BRAIN_SECURITY.md)
+- [Matrice de tests Brain](docs/QUALIFYR_BRAIN_TEST_MATRIX.md)

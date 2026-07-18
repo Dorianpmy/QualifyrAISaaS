@@ -66,8 +66,7 @@ module.exports = async function handler(req, res) {
     if (!mollieResponse.ok) {
       return json(res, mollieResponse.status, {
         ok: false,
-        error: "Mollie a refuse la creation du paiement.",
-        details: payment
+        error: "Mollie a refuse la creation du paiement."
       });
     }
 
@@ -110,8 +109,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     return json(res, 500, {
       ok: false,
-      error: "Impossible de creer le paiement.",
-      details: error.message
+      error: "Impossible de creer le paiement."
     });
   }
 };

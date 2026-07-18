@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { appUrl, badRequest, json, supabaseSelect, supabaseUpsert } = require("./_lib");
+const { requireWorkspace } = require("./_auth");
 
 const PROVIDERS = {
   google: {
@@ -82,14 +83,17 @@ module.exports = async function handler(req, res) {
     if (!PROVIDERS[provider]) return badRequest(res, "Fournisseur inconnu.");
 
     if (action === "start") {
-      const email = cleanEmail(url.searchParams.get("email"));
+      const context = await requireWorkspace(req);
+      const email = cleanEmail(context.user.email);
       if (!email) return badRequest(res, "Connectez-vous d'abord a votre compte Qualifyr.");
       if (!providerReady(provider)) {
         return json(res, 503, { ok: false, code: "provider_not_configured", error: `La connexion ${provider} attend les identifiants administrateur Qualifyr.` });
       }
       const callback = `${appUrl(req)}/api/oauth?action=callback&provider=${encodeURIComponent(provider)}`;
       const config = PROVIDERS[provider];
-      const state = signState({ email, provider, returnTo: url.searchParams.get("returnTo") || "/#copilot-setup", exp: Date.now() + 10 * 60 * 1000 });
+      const returnTo = String(url.searchParams.get("returnTo") || "/#copilot-setup");
+      const safeReturnTo = /^\/[A-Za-z0-9/_#?&=.-]*$/.test(returnTo) ? returnTo : "/#copilot-setup";
+      const state = signState({ workspaceId: context.workspaceId, userId: context.user.id, provider, returnTo: safeReturnTo, nonce: crypto.randomUUID(), exp: Date.now() + 10 * 60 * 1000 });
       const params = new URLSearchParams({
         client_id: process.env[config.clientId], redirect_uri: callback, response_type: "code", scope: config.scopes, state, ...(config.extra || {})
       });
@@ -99,6 +103,8 @@ module.exports = async function handler(req, res) {
     if (action === "callback") {
       const state = verifyState(url.searchParams.get("state"));
       if (state.provider !== provider) throw new Error("Fournisseur OAuth incoherent.");
+      const membership = (await supabaseSelect("workspace_members", `workspace_id=eq.${encodeURIComponent(state.workspaceId)}&user_id=eq.${encodeURIComponent(state.userId)}&status=eq.active&invitation_status=eq.accepted&select=role&limit=1`)).data?.[0];
+      if (!membership) throw Object.assign(new Error("WORKSPACE_DENIED"), { status: 403, publicMessage: "Cet espace ne vous est plus accessible." });
       const code = url.searchParams.get("code");
       if (!code) throw new Error(url.searchParams.get("error_description") || "Autorisation refusee.");
       const config = PROVIDERS[provider];
@@ -109,15 +115,15 @@ module.exports = async function handler(req, res) {
         body: new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: callback, client_id: process.env[config.clientId], client_secret: process.env[config.clientSecret] })
       });
       const tokens = await tokenResponse.json().catch(() => ({}));
-      if (!tokenResponse.ok) throw new Error(tokens.error_description || tokens.error?.message || "Echange OAuth impossible.");
+      if (!tokenResponse.ok) throw new Error("OAUTH_TOKEN_EXCHANGE_FAILED");
       const now = new Date().toISOString();
-      const id = `${state.email}:${provider}`;
-      const current = await supabaseSelect("connections", `id=eq.${encodeURIComponent(id)}&select=*&limit=1`);
+      const id = `${state.workspaceId}:${provider}`;
+      const current = await supabaseSelect("connections", `workspace_id=eq.${encodeURIComponent(state.workspaceId)}&id=eq.${encodeURIComponent(id)}&select=*&limit=1`);
       const existing = current.data?.[0] || {};
       await supabaseUpsert("connections", {
-        id, account_email: state.email, provider, status: "connected",
+        id, workspace_id: state.workspaceId, account_email: existing.account_email || `${state.userId}@identity.local`, provider, status: "configured",
         settings: { ...(existing.settings || {}), access_token_encrypted: encrypt(tokens.access_token), refresh_token_encrypted: encrypt(tokens.refresh_token), expires_in: tokens.expires_in || null, scope: tokens.scope || config.scopes },
-        last_test_status: "success", last_tested_at: now, created_at: existing.created_at || now, updated_at: now
+        last_test_status: "not_tested", last_tested_at: null, created_at: existing.created_at || now, updated_at: now
       });
       res.statusCode = 302;
       res.setHeader("Location", `${appUrl(req)}${state.returnTo.includes("?") ? "&" : "?"}oauth=success&provider=${encodeURIComponent(provider)}`);
@@ -125,6 +131,6 @@ module.exports = async function handler(req, res) {
     }
     return badRequest(res, "Action OAuth inconnue.");
   } catch (error) {
-    return json(res, 500, { ok: false, error: "La connexion securisee n'a pas pu aboutir.", details: error.message });
+    return json(res, error.status || 500, { ok: false, error: error.publicMessage || "La connexion securisee n'a pas pu aboutir." });
   }
 };
